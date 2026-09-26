@@ -34,5 +34,17 @@
     "is_active": true,
     "plan": "elite_70",
     "winrate_target": "70-76%"
+  },
+  "finalv29b_4@astra6.com": {
+    "email": "finalv29b_4@astra6.com",
+    "salt": "299e1e8b15a9a2358cda30e2c322c568",
+    "hash": "587b4c1be89a6730a5451b78241f77acb90f4714efc25f576e09b1a269eac749",
+    "created": 1790454417.612906,
+    "created_str": "2026-09-26 20:26:57 UTC",
+    "last_login": 1790454417.612906,
+    "login_count": 1,
+    "is_active": true,
+    "plan": "elite_70",
+    "winrate_target": "70-76%"
   }
 }
