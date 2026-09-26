@@ -1,0 +1,14 @@
+{
+  "theoksovanrathanak@gmail.com": {
+    "email": "theoksovanrathanak@gmail.com",
+    "salt": "e51df854681fa1b134d002713efc76d0",
+    "hash": "97a6aa024feb7e6e6c75bb13a0928dfb15f993f385b38c3bf49ed79bb706d42c",
+    "created": 1790455890.279955,
+    "created_str": "2026-09-26 20:51:30 UTC",
+    "last_login": 1790455890.279955,
+    "login_count": 1,
+    "is_active": true,
+    "plan": "elite_70",
+    "winrate_target": "70-76%"
+  }
+}
