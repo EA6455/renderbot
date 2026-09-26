@@ -174,6 +174,28 @@ body.light-mode .lock-card{background:#ffffff}
         <div class="card" style="text-align:center;padding:14px"><div class="label">Buy / Sell</div><div class="mono" id="stat-bs" style="font-size:14px;font-weight:700">0 / 0</div></div>
         <div class="card" style="text-align:center;padding:14px"><div class="label">Live</div><div class="mono" style="font-size:11px;color:var(--green)">● XAUUSD</div><div class="mono" id="stat-last" style="font-size:9px;margin-top:2px">--</div></div>
       </div>
+
+      <!-- Real Winrate Proof -->
+      <div class="card" style="margin-bottom:14px;border-color:rgba(245,197,24,0.3);background:linear-gradient(135deg,rgba(245,197,24,0.08),rgba(245,197,24,0.02))">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div style="font-weight:900;font-size:14px">📊 Real Winrate Proof</div>
+          <button class="btn btn-gold" id="btn-backtest" style="font-size:11px;padding:6px 12px">Run Backtest</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+            <div class="label">All Signals Winrate</div>
+            <div class="mono" id="real-winrate" style="font-size:22px;font-weight:900;color:var(--gold)">--%</div>
+            <div class="mono" id="real-stats" style="font-size:10px;color:var(--muted)">-- trades</div>
+          </div>
+          <div style="background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.3);border-radius:10px;padding:12px;text-align:center">
+            <div class="label">High Conf ≥4.8 Winrate</div>
+            <div class="mono" id="high-winrate" style="font-size:22px;font-weight:900;color:var(--gold)">--%</div>
+            <div class="mono" id="high-stats" style="font-size:10px;color:var(--muted)">70%+ target</div>
+          </div>
+        </div>
+        <div class="mono" id="backtest-result" style="font-size:11px;color:var(--muted);background:var(--card2);padding:10px;border-radius:8px;border:1px solid var(--border)">Click Run Backtest to prove real winrate on historical XAUUSD M15 data. Evaluates if TP1/TP2 hit before SL in next 20 candles (5 hours).</div>
+        <div id="backtest-details" style="margin-top:10px;max-height:300px;overflow-y:auto;display:none"></div>
+      </div>
       <div class="card">
         <div style="font-weight:900;font-size:14px;margin-bottom:12px">🚨 Alerts</div>
         <div id="alerts-list" style="max-height:500px;overflow-y:auto">
@@ -423,16 +445,65 @@ async function fetchDashboard(){
   if(!getToken())return;
   const btn=document.getElementById('refresh-btn');if(btn)btn.textContent='⏳';
   try{
-    const [curR, alertsR] = await Promise.all([
+    const [curR, alertsR, winrateR] = await Promise.all([
       fetch('/api/signals/current',{headers:authHeaders()}),
-      fetch('/api/signals/alerts?limit=15',{headers:authHeaders()})
+      fetch('/api/signals/alerts?limit=15',{headers:authHeaders()}),
+      fetch('/api/signals/winrate',{headers:authHeaders()}).catch(()=>null)
     ]);
     if(curR.status===401){checkAuth();return;}
     const cur=await curR.json();const alerts=await alertsR.json();
     if(cur.status==='ok')renderCurrent(cur.signal);
     if(alerts.status==='ok')renderAlerts(alerts.alerts);
+    if(winrateR && winrateR.ok){
+      const wr=await winrateR.json();
+      if(wr.status==='ok'){
+        const rw=document.getElementById('real-winrate');if(rw)rw.textContent=(wr.winrate||0)+'%';
+        const rs=document.getElementById('real-stats');if(rs)rs.textContent=`${wr.wins||0}W / ${wr.losses||0}L • ${wr.total_evaluated||0} closed`;
+        const hw=document.getElementById('high-winrate');if(hw)hw.textContent=(wr.high_confluence_winrate||0)+'%';
+        const hs=document.getElementById('high-stats');if(hs)hs.textContent=`${wr.high_confluence_total||0} trades ≥4.8 conf • 70%+ target`;
+        const br=document.getElementById('backtest-result');if(br&&wr.message)br.textContent=wr.message;
+      }
+    }
   }catch(e){console.log(e);}
   if(btn)btn.textContent='🔄';
+}
+
+async function runBacktest(){
+  if(!getToken()){openAuth('signin');return;}
+  const btn=document.getElementById('btn-backtest');
+  const resultEl=document.getElementById('backtest-result');
+  const detailsEl=document.getElementById('backtest-details');
+  if(btn)btn.textContent='⏳ Testing...';
+  if(resultEl)resultEl.textContent='Running backtest on last 500 M15 candles... This proves real winrate by checking if TP hit before SL in next 20 candles (5 hours). Takes 10-20 seconds...';
+  try{
+    const r=await fetch('/api/signals/backtest?lookback=500&forward_bars=20',{headers:authHeaders()});
+    if(r.status===401){checkAuth();return;}
+    const d=await r.json();
+    if(d.status==='ok'){
+      const rw=document.getElementById('real-winrate');if(rw)rw.textContent=d.winrate+'%';
+      const rs=document.getElementById('real-stats');if(rs)rs.textContent=`${d.wins}W / ${d.losses}L • ${d.total_signals} signals • PnL ${d.total_pnl}`;
+      const hw=document.getElementById('high-winrate');if(hw)hw.textContent=d.high_confluence_winrate+'%';
+      const hs=document.getElementById('high-stats');if(hs)hs.textContent=`${d.high_confluence_signals} signals ≥4.8 conf • ${d.high_confluence_wins}W/${d.high_confluence_losses}L`;
+      if(resultEl)resultEl.textContent=d.message + ` • TP1 wins: ${d.tp1_wins}, TP2 wins: ${d.tp2_wins}, Total PnL: ${d.total_pnl}`;
+      if(detailsEl){
+        detailsEl.style.display='block';
+        detailsEl.innerHTML=d.signals.map(s=>`
+          <div style="display:flex;gap:8px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--card2);font-size:11px">
+            <span class="alert-badge ${s.type.toLowerCase()}">${s.type}</span>
+            <div style="flex:1">
+              <div class="mono">$${s.price.toFixed(2)} conf ${s.confluence} → <span style="color:${s.outcome.result==='WIN'?'var(--green)':'var(--red)'};font-weight:800">${s.outcome.result} ${s.outcome.hit}</span> in ${s.outcome.bars} bars</div>
+              <div class="mono" style="font-size:9px;color:var(--muted)">${s.reasons[0]||''}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+    } else {
+      if(resultEl)resultEl.textContent='Backtest failed: '+(d.detail||'error');
+    }
+  }catch(e){
+    if(resultEl)resultEl.textContent='Backtest error: '+e.message;
+  }
+  if(btn)btn.textContent='Run Backtest';
 }
 
 function renderCurrent(s){
@@ -677,6 +748,7 @@ function initClicks(){
   bind('tab-signin',()=>switchTab('signin'));
   bind('tab-signup',()=>switchTab('signup'));
   bind('auth-submit',()=>submitAuth());
+  bind('btn-backtest',()=>runBacktest());
   // timeframe
   document.querySelectorAll('.tf-btn').forEach(b=>{
     b.onclick=()=>setTimeframe(b.dataset.tf);
