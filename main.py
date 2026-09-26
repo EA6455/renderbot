@@ -1045,24 +1045,41 @@ def forgot_password(req: dict):
         smtp_port = int(os.getenv("SMTP_PORT", "587"))
         
         if smtp_pass:
+            # Same logo as website - white & black A6
+            logo_url = "https://astra6.onrender.com/logo.png"
             html_content = f"""
             <html>
-            <body style="font-family:Arial,sans-serif;background:#fff;color:#000;padding:20px">
-              <div style="max-width:500px;margin:0 auto;border:2px solid #000;border-radius:14px;padding:24px">
-                <div style="text-align:center;margin-bottom:16px">
-                  <h2 style="margin:0;font-weight:900">ASTRA6</h2>
-                  <p style="margin:4px 0;color:#666;font-size:12px">Best Gold Trading Signals</p>
+            <body style="font-family:Arial,sans-serif;background:#ffffff;color:#000000;padding:20px;margin:0">
+              <div style="max-width:500px;margin:0 auto;border:2px solid #000000;border-radius:14px;padding:0;overflow:hidden;background:#ffffff">
+                <div style="background:#ffffff;padding:20px;text-align:center;border-bottom:2px solid #000000">
+                  <img src="{logo_url}" alt="ASTRA6 Best Logo" style="height:60px;width:auto;max-width:200px;margin-bottom:8px">
+                  <h2 style="margin:8px 0 0 0;font-weight:900;font-size:22px;letter-spacing:1px;color:#000000">ASTRA6</h2>
+                  <p style="margin:4px 0;color:#666666;font-size:11px;letter-spacing:0.5px">BEST GOLD TRADING SIGNALS • ELITE 70%+</p>
                 </div>
-                <h3>Password Reset</h3>
-                <p>Hi {email},</p>
-                <p>You requested password reset for ASTRA6.</p>
-                <p><strong>Reset Link (expires 1 hour):</strong></p>
-                <p style="background:#f5f5f5;padding:12px;border-radius:8px;word-break:break-all"><a href="{reset_link}" style="color:#000;font-weight:900">{reset_link}</a></p>
-                <p><strong>Or copy token and paste to website:</strong></p>
-                <p style="background:#000;color:#fff;padding:12px;border-radius:8px;word-break:break-all;font-family:monospace">{reset_token}</p>
-                <p>Go to <a href="https://astra6.onrender.com">https://astra6.onrender.com</a> → Sign In → Forgot password? → Paste token + new password</p>
-                <p style="font-size:11px;color:#666">If you didn't request, ignore this email.</p>
-                <p style="font-size:11px;color:#666">From: {OWNER_EMAIL} - ASTRA6 Owner</p>
+                <div style="padding:24px;background:#ffffff">
+                  <h3 style="margin:0 0 12px 0;font-size:16px;font-weight:900">Password Reset</h3>
+                  <p style="margin:0 0 8px 0;font-size:14px">Hi {email},</p>
+                  <p style="margin:0 0 16px 0;font-size:14px">You requested password reset for ASTRA6.</p>
+                  
+                  <p style="margin:0 0 6px 0;font-size:12px;font-weight:700">Reset Link (expires 1 hour):</p>
+                  <div style="background:#f5f5f5;border:1px solid #000000;padding:12px;border-radius:10px;margin-bottom:16px;word-break:break-all">
+                    <a href="{reset_link}" style="color:#000000;font-weight:900;text-decoration:none;font-size:13px">{reset_link}</a>
+                  </div>
+                  
+                  <p style="margin:0 0 6px 0;font-size:12px;font-weight:700">Or copy token and paste to website:</p>
+                  <div style="background:#000000;color:#ffffff;padding:12px;border-radius:10px;margin-bottom:16px;word-break:break-all;font-family:monospace;font-size:12px">{reset_token}</div>
+                  
+                  <div style="background:#ffffff;border:2px solid #000000;border-radius:10px;padding:12px;margin-bottom:16px;text-align:center">
+                    <p style="margin:0 0 8px 0;font-size:12px">Go to website and paste token:</p>
+                    <p style="margin:0;font-size:12px"><strong>https://astra6.onrender.com</strong> → Sign In → Forgot password? → Paste token + new password</p>
+                  </div>
+                  
+                  <p style="font-size:11px;color:#666666;margin:0">If you didn't request, ignore this email.</p>
+                </div>
+                <div style="background:#000000;color:#ffffff;padding:12px;text-align:center;font-size:10px">
+                  <div>From: {OWNER_EMAIL} - ASTRA6 Owner</div>
+                  <div style="margin-top:4px;opacity:0.7">White & Black Design • Best Logo • All Devices</div>
+                </div>
               </div>
             </body>
             </html>
