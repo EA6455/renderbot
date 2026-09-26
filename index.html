@@ -7,7 +7,17 @@
 <style>
 :root{--bg:#070709;--card:#111113;--card2:#1a1a1e;--border:#222226;--gold:#f5c518;--green:#22c55e;--red:#ef4444;--text:#e6e6e6;--muted:#888;--active:#1e1e22}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:system-ui,-apple-system,Inter,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+body{font-family:system-ui,-apple-system,Inter,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;transition:background 0.3s,color 0.3s}
+body.light-mode{--bg:#f5f5f7;--card:#ffffff;--card2:#f0f0f2;--border:#e0e0e6;--text:#1a1a1e;--muted:#666;--active:#e8e8ea}
+body.light-mode .sidebar{background:#ffffff;border-right-color:#e0e0e6}
+body.light-mode .topbar{background:#ffffff;border-bottom-color:#e0e0e6}
+body.light-mode .card{background:#ffffff;border-color:#e0e0e6}
+body.light-mode .terminal{background:#ffffff;border-color:#e0e0e6}
+body.light-mode .terminal-top{background:#f5f5f7}
+body.light-mode .info-bar{background:#f0f0f2}
+body.light-mode #oanda_chart{background:#ffffff}
+body.light-mode .auth-box{background:#ffffff}
+body.light-mode .lock-card{background:#ffffff}
 .mono{font-family:monospace}
 .sidebar{width:220px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:9999}
 .side-top{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
@@ -123,7 +133,21 @@ body{font-family:system-ui,-apple-system,Inter,sans-serif;background:var(--bg);c
         <div class="bidask mono" id="bidask">BID -- / ASK --</div>
       </div>
     </div>
-    <div style="display:flex;gap:8px"><button class="btn" id="refresh-btn">🔄</button><button class="btn" id="sound-btn">🔔</button></div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <button class="btn" id="theme-btn" title="Light/Dark Mode" style="font-size:16px">🌙</button>
+      <button class="btn" id="refresh-btn">🔄</button>
+      <button class="btn" id="sound-btn">🔔</button>
+    </div>
+  </div>
+  <!-- View Switch Buttons - All Devices -->
+  <div style="padding:12px 16px 0 16px;display:flex;gap:6px;flex-wrap:wrap;align-items:center" id="view-switch-bar">
+    <button class="btn active" data-switch="dashboard" id="sw-dashboard" style="font-size:11px;padding:8px 14px;border-radius:20px">🎯 Dashboard</button>
+    <button class="btn" data-switch="signals" id="sw-signals" style="font-size:11px;padding:8px 14px;border-radius:20px">📈 ASTRA6 CHART</button>
+    <button class="btn" data-switch="account" id="sw-account" style="font-size:11px;padding:8px 14px;border-radius:20px">👤 Account</button>
+    <button class="btn" data-switch="contact" id="sw-contact" style="font-size:11px;padding:8px 14px;border-radius:20px">📞 Contact</button>
+    <button class="btn" data-switch="signin" id="sw-signin" style="font-size:11px;padding:8px 14px;border-radius:20px">🔐 Sign In</button>
+    <button class="btn" data-switch="signup" id="sw-signup" style="font-size:11px;padding:8px 14px;border-radius:20px">📝 Sign Up</button>
+    <button class="btn btn-gold" id="sw-theme" style="font-size:11px;padding:8px 14px;border-radius:20px">🌙 Light/Dark</button>
   </div>
 
   <div class="content">
@@ -257,6 +281,10 @@ function showView(v){
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   const nav=document.getElementById('nav-'+v);
   if(nav)nav.classList.add('active');
+  // update switch bar
+  document.querySelectorAll('#view-switch-bar .btn').forEach(b=>b.classList.remove('active','btn-gold'));
+  const sw=document.getElementById('sw-'+v);
+  if(sw){sw.classList.add('active'); sw.classList.add('btn-gold');}
   if(v==='account')loadAccount();
   if(v==='dashboard')fetchDashboard();
   if(v==='signals' && getToken()){initChart();fetchChart(currentTF);}
@@ -357,6 +385,34 @@ async function loadAccount(){
 }
 
 function toggleSound(){soundOn=!soundOn;const b=document.getElementById('sound-btn');if(b)b.textContent=soundOn?'🔔':'🔕';localStorage.setItem('astra6_sound',soundOn?'1':'0');}
+function toggleTheme(){
+  const isLight=document.body.classList.contains('light-mode');
+  if(isLight){
+    document.body.classList.remove('light-mode');
+    localStorage.setItem('astra6_theme','dark');
+    const tb=document.getElementById('theme-btn');if(tb)tb.textContent='🌙';
+    const sw=document.getElementById('sw-theme');if(sw)sw.textContent='🌙 Light/Dark';
+    console.log('theme dark');
+  } else {
+    document.body.classList.add('light-mode');
+    localStorage.setItem('astra6_theme','light');
+    const tb=document.getElementById('theme-btn');if(tb)tb.textContent='☀️';
+    const sw=document.getElementById('sw-theme');if(sw)sw.textContent='☀️ Light/Dark';
+    console.log('theme light');
+  }
+}
+function initTheme(){
+  const saved=localStorage.getItem('astra6_theme');
+  if(saved==='light'){
+    document.body.classList.add('light-mode');
+    const tb=document.getElementById('theme-btn');if(tb)tb.textContent='☀️';
+    const sw=document.getElementById('sw-theme');if(sw)sw.textContent='☀️ Light/Dark';
+  } else {
+    document.body.classList.remove('light-mode');
+    const tb=document.getElementById('theme-btn');if(tb)tb.textContent='🌙';
+    const sw=document.getElementById('sw-theme');if(sw)sw.textContent='🌙 Light/Dark';
+  }
+}
 
 async function fetchDashboard(){
   if(!getToken())return;
@@ -490,15 +546,32 @@ async function fetchLive(){
   }catch(e){}
 }
 
-// INIT CLICKS - GUARANTEED TO WORK ON ALL DEVICES
+// INIT CLICKS - GUARANTEED TO WORK ON ALL DEVICES + LIGHT/DARK + VIEW SWITCH
 function initClicks(){
-  console.log('initClicks all devices');
-  // nav items
+  console.log('initClicks all devices + light/dark');
+  initTheme();
+  // nav items (sidebar)
   document.querySelectorAll('.nav-item').forEach(el=>{
     const handler=(e)=>{
       if(e){e.preventDefault(); e.stopPropagation();}
       const v=el.dataset.view;
       console.log('click nav',v);
+      if(v==='signin')openAuth('signin');
+      else if(v==='signup')openAuth('signup');
+      else showView(v);
+      if(navigator.vibrate)navigator.vibrate(10);
+    };
+    el.onclick=handler;
+    el.ontouchend=(e)=>{e.preventDefault(); handler(e);};
+  });
+  // view switch bar buttons
+  document.querySelectorAll('#view-switch-bar .btn').forEach(el=>{
+    const handler=(e)=>{
+      if(e){e.preventDefault(); e.stopPropagation();}
+      const v=el.dataset.switch;
+      if(!v)return;
+      if(v==='theme'){toggleTheme();return;}
+      console.log('switch bar',v);
       if(v==='signin')openAuth('signin');
       else if(v==='signup')openAuth('signup');
       else showView(v);
@@ -522,6 +595,14 @@ function initClicks(){
   bind('btn-close-auth',()=>closeAuth());
   bind('refresh-btn',()=>fetchDashboard());
   bind('sound-btn',()=>toggleSound());
+  bind('theme-btn',()=>toggleTheme());
+  bind('sw-theme',()=>toggleTheme());
+  bind('sw-dashboard',()=>showView('dashboard'));
+  bind('sw-signals',()=>showView('signals'));
+  bind('sw-account',()=>showView('account'));
+  bind('sw-contact',()=>showView('contact'));
+  bind('sw-signin',()=>openAuth('signin'));
+  bind('sw-signup',()=>openAuth('signup'));
   bind('tab-signin',()=>switchTab('signin'));
   bind('tab-signup',()=>switchTab('signup'));
   bind('auth-submit',()=>submitAuth());
@@ -535,7 +616,7 @@ function initClicks(){
   if(modal){
     modal.onclick=(e)=>{if(e.target===modal)closeAuth();};
   }
-  console.log('ASTRA6 all devices ready - clicks bound');
+  console.log('ASTRA6 all devices + light/dark ready - clicks bound');
 }
 
 // Run immediately + on DOMContentLoaded + after 500ms
