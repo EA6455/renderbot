@@ -46,5 +46,17 @@
     "is_active": true,
     "plan": "elite_70",
     "winrate_target": "70-76%"
+  },
+  "theoksovanrathanak@gmail.com": {
+    "email": "theoksovanrathanak@gmail.com",
+    "salt": "f248ef43b5410a921d6aa28eda745fa6",
+    "hash": "5f6b5238f1a1fb534dc772ef54e2388dc76dd4eedcf7c9992b7763d809fdd58c",
+    "created": 1790454756.9139917,
+    "created_str": "2026-09-26 20:32:36 UTC",
+    "last_login": 1790454756.9139917,
+    "login_count": 1,
+    "is_active": true,
+    "plan": "elite_70",
+    "winrate_target": "70-76%"
   }
 }
