@@ -60,7 +60,7 @@ def fetch_oanda_candles(granularity="M15", count=100, include_incomplete=True):
         return None
     try:
         import oandapyV20.endpoints.instruments as instruments
-        params = {"granularity": granularity, "count": count, "includeFirst": "false"}
+        params = {"granularity": granularity, "count": count}
         r = instruments.InstrumentsCandles(instrument="XAU_USD", params=params)
         client.request(r)
         rows = []
