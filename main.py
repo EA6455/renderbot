@@ -47,13 +47,32 @@ def save_json_file(p, data):
         tmp.write_text(json.dumps(data, indent=2))
         tmp.replace(p)
         print(f"Saved {p} {len(data) if isinstance(data, (dict,list)) else 'ok'}")
-        # try backup to git if token available (for persistence on free plan)
-        try:
-            if os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN"):
-                # backup is handled via external cron, not here to avoid loop
-                pass
-        except:
-            pass
+        # Persist users.json to GitHub for free plan ephemeral FS fix
+        if p.name == "users.json":
+            try:
+                import threading
+                def backup_users():
+                    try:
+                        import subprocess, os
+                        token = os.getenv("GITHUB_TOKEN")
+                        if not token:
+                            return
+                        if not Path("users.json").exists():
+                            return
+                        subprocess.run(["git","config","user.email","astra@render.bot"], capture_output=True, timeout=5)
+                        subprocess.run(["git","config","user.name","ASTRA6 Bot"], capture_output=True, timeout=5)
+                        subprocess.run(["git","add","users.json"], capture_output=True, timeout=5)
+                        result = subprocess.run(["git","diff","--cached","--quiet"], capture_output=True, timeout=5)
+                        if result.returncode != 0:
+                            subprocess.run(["git","commit","-m",f"Persist users {len(data)} accounts"], capture_output=True, timeout=5)
+                            remote_url = f"https://{token}@github.com/EA6455/renderbot.git"
+                            subprocess.run(["git","push",remote_url,"HEAD:main"], capture_output=True, timeout=10)
+                            print(f"✅ Backed up users.json {len(data)} users")
+                    except Exception as e:
+                        print(f"Backup users error {e}")
+                threading.Thread(target=backup_users, daemon=True).start()
+            except Exception as e:
+                print(f"Backup thread error {e}")
     except Exception as e:
         print(f"Save {p} error {e}")
 
