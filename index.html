@@ -70,6 +70,8 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
 .alert-badge.buy{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
 .alert-badge.sell{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
 .alert-badge.hold{background:var(--card2);color:var(--muted)}
+.tf-btn{padding:5px 10px;font-size:11px;border-radius:8px;min-width:36px}
+.tf-btn.active{background:var(--gold);color:#000;border-color:var(--gold);box-shadow:0 0 10px rgba(245,197,24,0.3)}
 .mobile-logo{display:none;align-items:center;gap:8px}
 .mobile-logo .logo-icon{width:32px;height:32px;font-size:16px}
 .auth-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
@@ -107,7 +109,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
   </div>
   <div class="ladder">
     <div class="nav-item active" id="nav-dashboard" onclick="showView('dashboard')"><span class="ico">🎯</span><span class="hide-m">Dashboard</span></div>
-    <div class="nav-item" id="nav-signals" onclick="showView('signals')"><span class="ico">📊</span><span class="hide-m">Chart</span></div>
+    <div class="nav-item" id="nav-signals" onclick="showView('signals')"><span class="ico">📈</span><span class="hide-m">ASTRA6 CHART</span></div>
     <div class="nav-item" id="nav-signin" onclick="openAuth('signin')"><span class="ico">🔐</span><span class="hide-m">Sign In</span></div>
     <div class="nav-item" id="nav-signup" onclick="openAuth('signup')"><span class="ico">📝</span><span class="hide-m">Sign Up</span></div>
     <div class="nav-item" id="nav-account" onclick="showView('account')"><span class="ico">👤</span><span class="hide-m">Account</span></div>
@@ -177,12 +179,27 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
       </div>
     </div>
 
-    <!-- Chart View -->
+    <!-- Chart View - ASTRA6 CHART with Timeframes -->
     <div class="view" id="view-signals">
       <div class="terminal" id="terminal">
-        <div class="terminal-top"><div class="pair-name">XAUUSD / GOLD</div><div class="mono" style="font-size:10px;color:var(--muted)">Easy chart view</div></div>
+        <div class="terminal-top">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div class="pair-name">ASTRA6 CHART <span style="color:var(--muted);font-weight:400">• XAUUSD / GOLD</span></div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap" id="tf-buttons">
+              <button class="btn tf-btn" data-tf="M1" onclick="setTimeframe('M1')">M1</button>
+              <button class="btn tf-btn" data-tf="M5" onclick="setTimeframe('M5')">M5</button>
+              <button class="btn tf-btn active" data-tf="M15" onclick="setTimeframe('M15')">M15</button>
+              <button class="btn tf-btn" data-tf="M30" onclick="setTimeframe('M30')">M30</button>
+              <button class="btn tf-btn" data-tf="H1" onclick="setTimeframe('H1')">H1</button>
+              <button class="btn tf-btn" data-tf="H4" onclick="setTimeframe('H4')">H4</button>
+              <button class="btn tf-btn" data-tf="D" onclick="setTimeframe('D')">D1</button>
+              <button class="btn tf-btn" data-tf="W" onclick="setTimeframe('W')">W1</button>
+            </div>
+          </div>
+          <div class="mono" style="font-size:10px;color:var(--muted)" id="chart-tf-label">M15 • Live</div>
+        </div>
         <div id="oanda_chart"></div>
-        <div class="info-bar"><span>ASTRA6 • Easy</span><span class="mono">M15 • Live</span></div>
+        <div class="info-bar"><span>ASTRA6 CHART • <span id="chart-info-tf">M15</span> • Easy • All devices</span><span class="mono" id="chart-candle-count">Loading...</span></div>
         <div class="lock-overlay" id="lock-overlay">
           <div class="lock-card">
             <div class="lock-icon">🔒</div>
@@ -241,7 +258,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
 </div>
 
 <script>
-let chart, candleSeries, lastCandles=[], currentTab='signin', currentView='dashboard', soundOn=true, lastAlertId=null;
+let chart, candleSeries, lastCandles=[], currentTab='signin', currentView='dashboard', soundOn=true, lastAlertId=null, currentTF='M15';
 function getToken(){return localStorage.getItem('astra6_token');}
 function setToken(t,e){if(t){localStorage.setItem('astra6_token',t);if(e)localStorage.setItem('astra6_email',e);}else{localStorage.removeItem('astra6_token');localStorage.removeItem('astra6_email');}}
 function authHeaders(){const t=getToken();return t?{'Authorization':'Bearer '+t}:{};}
@@ -254,8 +271,34 @@ function showView(v){
   if(nav)nav.classList.add('active');
   if(v==='account')loadAccount();
   if(v==='dashboard')fetchDashboard();
-  if(v==='signals' && getToken()){if(!chart)initChart();fetchLive();}
+  if(v==='signals' && getToken()){if(!chart)initChart();fetchChart(currentTF);}
   window.scrollTo({top:0,behavior:'smooth'});
+}
+function setTimeframe(tf){
+  currentTF=tf;
+  localStorage.setItem('astra6_tf', tf);
+  document.querySelectorAll('.tf-btn').forEach(b=>b.classList.toggle('active', b.dataset.tf===tf));
+  const label=document.getElementById('chart-tf-label');
+  const info=document.getElementById('chart-info-tf');
+  if(label)label.textContent=tf+' • Live';
+  if(info)info.textContent=tf;
+  fetchChart(tf);
+}
+async function fetchChart(tf){
+  if(!getToken())return;
+  tf=tf||currentTF;
+  try{
+    const r=await fetch(`/api/xauusd/history?granularity=${tf}&count=100`,{headers:authHeaders()});
+    if(r.status===401){checkAuth();return;}
+    const d=await r.json();
+    if(d.status==='ok' && candleSeries){
+      const data=d.candles.map(c=>({time:Math.floor(new Date(c.time).getTime()/1000),open:c.open,high:c.high,low:c.low,close:c.close}));
+      candleSeries.setData(data);
+      lastCandles=data;
+      const cc=document.getElementById('chart-candle-count');
+      if(cc)cc.textContent=`${data.length} candles • ${tf} • ${d.from.substring(0,10)} → ${d.to.substring(0,10)}`;
+    }
+  }catch(e){console.log('chart fetch err',e);}
 }
 function openAuth(tab){currentTab=tab||'signin';switchTab(currentTab);document.getElementById('auth-modal').classList.add('active');document.getElementById('auth-error').style.display='none';document.getElementById('auth-success').style.display='none';}
 function closeAuth(){document.getElementById('auth-modal').classList.remove('active');}
@@ -281,6 +324,12 @@ async function checkAuth(){
   const lock=document.getElementById('lock-overlay');
   const dashLock=document.getElementById('dash-lock');
   const userBox=document.getElementById('user-box'), guestBox=document.getElementById('guest-box');
+  // Restore timeframe
+  const savedTF=localStorage.getItem('astra6_tf');
+  if(savedTF){currentTF=savedTF;}
+  document.querySelectorAll('.tf-btn').forEach(b=>b.classList.toggle('active', b.dataset.tf===currentTF));
+  const label=document.getElementById('chart-tf-label');if(label)label.textContent=currentTF+' • Live';
+  const info=document.getElementById('chart-info-tf');if(info)info.textContent=currentTF;
   if(!token){
     if(lock)lock.style.display='flex';
     if(dashLock)dashLock.style.display='flex';
@@ -298,6 +347,7 @@ async function checkAuth(){
     if(!chart)initChart();
     fetchLive();
     fetchDashboard();
+    fetchChart(currentTF);
     return true;
   }catch(e){setToken(null);if(lock)lock.style.display='flex';if(dashLock)dashLock.style.display='flex';userBox.classList.remove('show');guestBox.style.display='block';document.getElementById('nav-signin').style.display='flex';document.getElementById('nav-signup').style.display='flex';return false;}
 }
@@ -402,10 +452,8 @@ async function fetchLive(){
       document.getElementById('price').textContent='$'+d.price.toFixed(2);
       if(d.live_price){document.getElementById('bidask').textContent=`BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)}`;}
       document.getElementById('live-time').textContent=new Date().toLocaleTimeString();
-      if(d.last_10 && candleSeries && lastCandles.length===0){
-        const r2=await fetch('/api/xauusd/history?granularity=M15&count=100',{headers:authHeaders()});
-        const d2=await r2.json();
-        if(d2.status==='ok'){const data=d2.candles.map(c=>({time:Math.floor(new Date(c.time).getTime()/1000),open:c.open,high:c.high,low:c.low,close:c.close}));candleSeries.setData(data);lastCandles=data;}
+      if(lastCandles.length===0 && candleSeries){
+        fetchChart(currentTF);
       }
     }
   }catch(e){}
