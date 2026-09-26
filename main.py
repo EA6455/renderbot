@@ -666,6 +666,18 @@ def backtest_elite(m15_candles, h1_candles=None, lookback=500, forward_bars=20):
         try:
             sig = elite_gold_sniper(hist_slice, h1_slice, None)
             if sig and sig['type'] != 'HOLD' and sig.get('should_alert'):
+                # Override timestamp to historical candle time for real replay
+                candle_time_str = hist_slice[-1]['time']
+                try:
+                    import datetime
+                    dt = datetime.datetime.fromisoformat(candle_time_str.replace('Z','+00:00'))
+                    hist_timestamp = dt.timestamp()
+                except:
+                    hist_timestamp = time.time() - (len(m15_candles)-i)*900  # approx M15
+                sig['timestamp'] = hist_timestamp
+                sig['time_str'] = candle_time_str
+                sig['candle_time'] = candle_time_str
+                sig['candle_index'] = i
                 # Evaluate outcome in next forward_bars candles
                 future = m15_candles[i+1:i+1+forward_bars]
                 outcome = evaluate_outcome(sig, future)
@@ -709,10 +721,12 @@ def backtest_elite(m15_candles, h1_candles=None, lookback=500, forward_bars=20):
         "high_confluence_wins": high_wins,
         "high_confluence_losses": high_losses,
         "high_confluence_winrate": round(high_winrate,1),
-        "signals": signals_tested[-20:],  # last 20 for detail
+        "signals": signals_tested,  # ALL signals for chart with old long/short
+        "signals_last20": signals_tested[-20:],  # last 20 for detail list
         "lookback": lookback,
         "forward_bars": forward_bars,
-        "message": f"Backtest {total} signals: {winrate:.1f}% winrate, High conf (≥4.8) {high_total} signals: {high_winrate:.1f}% winrate"
+        "candles_used": len(m15_candles),
+        "message": f"Backtest {total} signals: {winrate:.1f}% winrate, High conf (≥4.8) {high_total} signals: {high_winrate:.1f}% winrate - All old LONG/SHORT shown on chart"
     }
 
 # Routes

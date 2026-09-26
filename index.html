@@ -600,82 +600,85 @@ async function fetchHistoricalForReplay(backtestData){
     const container=document.getElementById('backtest_chart');
     const equityContainer=document.getElementById('equity_chart');
     if(!container)return;
-    // Fetch M15 history for real chart
-    const r=await fetch('/api/xauusd/history?granularity=M15&count=500',{headers:authHeaders()});
+    // Fetch M15 history for real chart - use same lookback as backtest
+    const lookback=backtestData.lookback||500;
+    const r=await fetch(`/api/xauusd/history?granularity=M15&count=${Math.min(lookback+100,1000)}`,{headers:authHeaders()});
     const d=await r.json();
-    if(d.status!=='ok'){container.innerHTML='<div style="padding:20px;color:var(--muted)">Failed to load historical data</div>';return;}
-    replayCandles=d.candles.map(c=>({time:Math.floor(new Date(c.time).getTime()/1000),open:c.open,high:c.high,low:c.low,close:c.close}));
+    if(d.status!=='ok'){container.innerHTML='<div style="padding:20px;color:var(--muted)">Failed to load historical XAUUSD data</div>';return;}
+    replayCandles=d.candles.map(c=>({time:Math.floor(new Date(c.time).getTime()/1000),open:c.open,high:c.high,low:c.low,close:c.close,origTime:c.time}));
     const isLight=document.body.classList.contains('light-mode');
-    // Real trading chart - candlesticks
+    // Real trading chart - candlesticks - ACTUAL XAUUSD
     backtestChart=LightweightCharts.createChart(container,{
       layout:{background:{color:isLight?'#ffffff':'#111113'},textColor:'#888'},
       grid:{vertLines:{color:isLight?'#e0e0e6':'#1a1a1e'},horzLines:{color:isLight?'#e0e0e6':'#1a1a1e'}},
       width:container.clientWidth,
-      height:380,
+      height:420,
       timeScale:{timeVisible:true,borderColor:'#222226'},
       rightPriceScale:{borderColor:'#222226'}
     });
     const candleSeries=backtestChart.addCandlestickSeries({upColor:'#22c55e',downColor:'#ef4444',borderVisible:false,wickUpColor:'#22c55e',wickDownColor:'#ef4444'});
     candleSeries.setData(replayCandles);
-    // Add BUY/SELL markers from backtest
+    // Add OLD signals LONG/SHORT from backtest - show all
     const markers=[];
-    backtestData.signals.forEach((sig,idx)=>{
-      // Find closest candle time
-      const sigTime=Math.floor(sig.timestamp);
-      // Find index in replayCandles closest to signal price time
-      let closestIdx=0;
-      let minDiff=Infinity;
-      replayCandles.forEach((c,i)=>{
-        const diff=Math.abs(c.time - sigTime);
-        if(diff<minDiff){minDiff=diff;closestIdx=i;}
-      });
-      if(closestIdx<replayCandles.length){
+    const allSignals=backtestData.signals||[];
+    allSignals.forEach((sig)=>{
+      // Use backtest_index to place at correct historical candle
+      const idx=sig.backtest_index||sig.candle_index||0;
+      if(idx>=0 && idx<replayCandles.length){
+        const isWin=sig.outcome&&sig.outcome.result==='WIN';
         markers.push({
-          time:replayCandles[closestIdx].time,
+          time:replayCandles[idx].time,
           position:sig.type==='BUY'?'belowBar':'aboveBar',
-          color:sig.type==='BUY'?'#22c55e':'#ef4444',
+          color:isWin?'#22c55e':'#ef4444',
           shape:sig.type==='BUY'?'arrowUp':'arrowDown',
-          text:`${sig.type} ${sig.confluence} ${sig.outcome?sig.outcome.result:''}`
+          text:`${sig.type} ${sig.confluence} ${sig.outcome?sig.outcome.result+' '+sig.outcome.hit:''}`
         });
       }
     });
-    candleSeries.setMarkers(markers);
-    // Add SL/TP lines for last signal as example
-    if(backtestData.signals.length>0){
-      const last=backtestData.signals[backtestData.signals.length-1];
-      if(last.sl){
-        const slLine={price:last.sl,color:'#ef4444',lineWidth:1,lineStyle:2,title:`SL ${last.sl}`};
-        const tp1Line={price:last.tp1,color:'#22c55e',lineWidth:1,lineStyle:2,title:`TP1 ${last.tp1}`};
-        const tp2Line={price:last.tp2,color:'#22c55e',lineWidth:1,lineStyle:0,title:`TP2 ${last.tp2}`};
-        candleSeries.createPriceLine(slLine);
-        candleSeries.createPriceLine(tp1Line);
-        candleSeries.createPriceLine(tp2Line);
-      }
+    // Sort markers by time
+    markers.sort((a,b)=>a.time-b.time);
+    if(markers.length>0){
+      candleSeries.setMarkers(markers);
+      console.log(`Added ${markers.length} old LONG/SHORT markers to XAUUSD chart`);
+    } else {
+      console.log('No markers to show - backtest had no signals');
     }
+    // Add SL/TP lines for selected signal - show last 3 signals SL/TP
+    const recent=allSignals.slice(-3);
+    recent.forEach((sig,ri)=>{
+      if(sig.sl){
+        const alpha=0.3+ri*0.2;
+        try{
+          candleSeries.createPriceLine({price:sig.sl,color:`rgba(239,68,68,${alpha})`,lineWidth:1,lineStyle:2,title:`${sig.type} SL ${sig.sl}`});
+          candleSeries.createPriceLine({price:sig.tp1,color:`rgba(34,197,94,${alpha})`,lineWidth:1,lineStyle:2,title:`${sig.type} TP1 ${sig.tp1}`});
+          if(sig.tp2)candleSeries.createPriceLine({price:sig.tp2,color:`rgba(34,197,94,${alpha*0.7})`,lineWidth:1,lineStyle:0,title:`${sig.type} TP2 ${sig.tp2}`});
+        }catch(e){}
+      }
+    });
     backtestChart.timeScale().fitContent();
-    // Equity chart
+    // Equity chart - shows all old trades PnL
     if(equityContainer){
       equityChart=LightweightCharts.createChart(equityContainer,{
-        layout:{background:{color:isLight?'#1a1a1e':'#1a1a1e'},textColor:'#888'},
+        layout:{background:{color:isLight?'#ffffff':'#1a1a1e'},textColor:'#888'},
         grid:{vertLines:{color:'#222226'},horzLines:{color:'#222226'}},
         width:equityContainer.clientWidth,
-        height:120,
+        height:140,
         timeScale:{visible:false},
         rightPriceScale:{borderColor:'#222226'}
       });
-      equitySeries=equityChart.addLineSeries({color:'#22c55e',lineWidth:2});
+      equitySeries=equityChart.addLineSeries({color:'#f5c518',lineWidth:2});
       let cumPnl=0;
       const equityData=[];
-      backtestData.signals.forEach((sig,idx)=>{
+      allSignals.forEach((sig,idx)=>{
         cumPnl+=sig.outcome.pnl||0;
-        equityData.push({time:idx+1,value:cumPnl});
+        equityData.push({time:idx+1,value:parseFloat(cumPnl.toFixed(2))});
       });
       equitySeries.setData(equityData);
       equityChart.timeScale().fitContent();
     }
     const info=document.getElementById('backtest-chart-info');
-    if(info)info.textContent=`${backtestData.total_signals} trades • ${backtestData.winrate}% WR • PnL ${backtestData.total_pnl} • Real XAUUSD M15 replay`;
-    // Setup replay
+    if(info)info.textContent=`XAUUSD Actual • ${replayCandles.length} M15 candles • ${allSignals.length} old LONG/SHORT signals • ${backtestData.winrate}% WR • Real Gold`;
+    // Setup replay from start
     replayIndex=0;
     updateReplayInfo();
     const ro=new ResizeObserver(()=>{
@@ -684,7 +687,7 @@ async function fetchHistoricalForReplay(backtestData){
     });
     ro.observe(container);
     if(equityContainer)ro.observe(equityContainer);
-    console.log('real trading replay chart drawn');
+    console.log('real XAUUSD trading replay chart with old LONG/SHORT drawn',markers.length);
   }catch(e){console.log('fetchHistoricalForReplay err',e);}
 }
 
