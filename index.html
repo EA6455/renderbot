@@ -130,10 +130,6 @@ body.light-mode .lock-card{background:#ffffff}
   <div class="topbar" style="background:#ffffff;border-bottom:2px solid #000000">
     <div style="display:flex;align-items:center;gap:12px">
       <div class="mobile-logo" style="display:flex;align-items:center;gap:10px"><img src="/logo.png" alt="ASTRA6 Best Logo" style="height:36px;width:auto;object-fit:contain"><div><div class="logo-text" style="font-size:16px;font-weight:900;color:#000">ASTRA6</div><div class="logo-sub" style="font-size:9px;color:#666">ELITE • 70%+</div></div></div>
-      <div class="price-block">
-        <div class="price-main" id="price" style="color:#000">$--.--</div>
-        <div class="bidask mono" id="bidask" style="background:#000;color:#fff;border-color:#000">BID -- / ASK --</div>
-      </div>
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:relative">
       <button class="btn" id="theme-btn" title="Light/Dark Mode" style="font-size:16px">🌙</button>
@@ -173,13 +169,6 @@ body.light-mode .lock-card{background:#ffffff}
           <div><div class="label">Winrate</div><div class="mono" id="sig-winrate" style="font-size:16px;font-weight:800;color:#000">--%</div></div>
         </div>
         <div class="sltp-row" id="sig-sltp"></div>
-        <div style="margin-top:14px;font-size:12px;color:var(--muted);max-width:500px;margin-left:auto;margin-right:auto" id="sig-reasons">Sign in to view easy signals</div>
-        <div class="mono" style="font-size:9px;color:var(--muted);margin-top:10px" id="sig-time">--</div>
-        <!-- Terminal Link Web - easy access -->
-        <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-          <button class="btn" onclick="showView('signals')" style="background:#000;color:#fff;border-color:#000;font-size:12px;padding:10px 18px">📈 Open Terminal - Live Chart</button>
-          <a href="/api/signals/current" target="_blank" style="text-decoration:none"><button class="btn" style="font-size:12px;padding:10px 18px;background:#fff;color:#000;border:2px solid #000">🔗 Terminal API Link</button></a>
-        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
         <div class="card" style="text-align:center;padding:14px"><div class="label">Alerts</div><div class="mono" id="stat-total" style="font-size:20px;font-weight:900">0</div></div>
