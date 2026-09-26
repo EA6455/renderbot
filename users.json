@@ -1,0 +1,14 @@
+{
+  "livetest70@astra6.com": {
+    "email": "livetest70@astra6.com",
+    "salt": "27ea98a7c7367b1c8e07f56642e49c51",
+    "hash": "b2d4e333f0e67b6eb4af7eaf6ad8634e320a9c15708265c6797fb63e799aea3e",
+    "created": 1790452914.251367,
+    "created_str": "2026-09-26 20:01:54 UTC",
+    "last_login": 1790452914.251367,
+    "login_count": 1,
+    "is_active": true,
+    "plan": "elite_70",
+    "winrate_target": "70-76%"
+  }
+}
