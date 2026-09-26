@@ -626,15 +626,21 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
     has_level_sell = at_resistance
     has_pattern_buy = is_bullish_engulfing or is_hammer
     has_pattern_sell = is_bearish_engulfing or is_shooting_star
-    # V5.1 BALANCED RELAXED: Middle - more trades but not too loose, Asian allowed, OR logic
-    # score 4.0 filters 1.5, level OR pattern, market trend != down, all sessions allowed
-    if buy_score >= 4.0 and filters_buy >= 1.5 and (has_level_buy or has_pattern_buy) and market_trend != "down":
+    # V5.2 BIG FLOW + WINRATE: Follow big flow H1 + M15 trend alignment, relaxed entry OR logic
+    # BUY only when M15 up AND H1 up (big flow up), SELL when M15 down AND H1 down
+    # Score 4.0 filters 1.5, level OR pattern, all sessions allowed Asian 0-7 UTC Phnom Penh
+    is_big_up = market_trend == "up" and h1_trend == "up"
+    is_big_down = market_trend == "down" and h1_trend == "down"
+    # Also allow if one is up and other sideways (not opposite) - follow big flow loosely
+    is_flow_up = market_trend != "down" and h1_trend != "down" and (market_trend == "up" or h1_trend == "up")
+    is_flow_down = market_trend != "up" and h1_trend != "up" and (market_trend == "down" or h1_trend == "down")
+    if buy_score >= 4.0 and filters_buy >= 1.5 and (has_level_buy or has_pattern_buy) and is_flow_up:
         signal_type = "BUY"
         confluence = buy_score
         final_reasons = reasons_buy
         confidence = 72 + (confluence-4.0)*3
         confidence = max(72, min(94, confidence))
-    elif sell_score >= 4.0 and filters_sell >= 1.5 and (has_level_sell or has_pattern_sell) and market_trend != "up":
+    elif sell_score >= 4.0 and filters_sell >= 1.5 and (has_level_sell or has_pattern_sell) and is_flow_down:
         signal_type = "SELL"
         confluence = sell_score
         final_reasons = reasons_sell
