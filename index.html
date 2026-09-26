@@ -213,7 +213,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
 
     <!-- Account View -->
     <div class="view" id="view-account">
-      <div class="grid2">
+      <div style="max-width:480px">
         <div class="card">
           <div class="card-title">👤 Account</div>
           <div id="account-guest">
@@ -226,21 +226,6 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
             <div class="field"><div class="label">MEMBER SINCE</div><div class="mono" id="acc-created" style="font-size:12px"></div></div>
             <div class="field"><div class="label">TOKEN EXPIRES</div><div class="mono" id="acc-expires" style="font-size:12px"></div></div>
             <button class="btn" onclick="signOut()" style="margin-top:10px">Sign Out</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">📊 Access • All Devices</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.7">
-            • 📱 Mobile, 📱 Tablet, 💻 Desktop optimized<br>
-            • Live XAUUSD chart (M15) responsive<br>
-            • Real-time bid/ask<br>
-            • History back to 2005<br>
-            • Free account, 30-day token<br><br>
-            Responsive design adapts to your screen size automatically.
-          </div>
-          <div style="margin-top:14px;padding:12px;background:var(--card2);border-radius:10px;border:1px solid var(--border);font-size:11px" class="mono">
-            API: /api/xauusd/live • /api/xauusd/history<br>
-            Auth: Bearer token • Works everywhere
           </div>
         </div>
       </div>
