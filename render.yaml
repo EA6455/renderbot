@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: astra6bot
+    name: astra6
     env: python
     region: singapore
     plan: free
