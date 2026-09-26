@@ -539,6 +539,41 @@ async function fetchChart(tf){
 }
 
 let lastPrice=0;
+let priceUpdateCount=0;
+async function fetchFastPrice(){
+  if(!getToken())return;
+  try{
+    const r=await fetch('/api/xauusd/price',{headers:authHeaders()});
+    if(r.status===401){checkAuth();return;}
+    const d=await r.json();
+    if(d.status==='ok'){
+      const priceEl=document.getElementById('price');
+      const newPrice=d.price;
+      if(priceEl){
+        if(lastPrice!==0 && Math.abs(newPrice-lastPrice)>0.01){
+          if(newPrice>lastPrice){
+            priceEl.className='price-main up flash';
+            setTimeout(()=>{if(priceEl)priceEl.className='price-main';},400);
+          } else if(newPrice<lastPrice){
+            priceEl.className='price-main down flash';
+            setTimeout(()=>{if(priceEl)priceEl.className='price-main';},400);
+          }
+        }
+        priceEl.textContent='$'+newPrice.toFixed(2);
+      }
+      lastPrice=newPrice;
+      priceUpdateCount++;
+      if(d.live_price){
+        const ba=document.getElementById('bidask');
+        if(ba){
+          const spread=(d.live_price.ask - d.live_price.bid).toFixed(2);
+          const cached=d.cached?' • ⚡':' • 🔴 Live';
+          ba.textContent=`BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)} • Spread ${spread}${cached} • #${priceUpdateCount}`;
+        }
+      }
+    }
+  }catch(e){console.log('fast price err',e);}
+}
 async function fetchLive(){
   if(!getToken())return;
   try{
@@ -546,29 +581,12 @@ async function fetchLive(){
     if(r.status===401){checkAuth();return;}
     const d=await r.json();
     if(d.status==='ok'){
-      const priceEl=document.getElementById('price');
-      const newPrice=d.price;
-      if(priceEl){
-        if(lastPrice!==0){
-          if(newPrice>lastPrice){
-            priceEl.className='price-main up flash';
-            setTimeout(()=>{if(priceEl)priceEl.className='price-main';},600);
-          } else if(newPrice<lastPrice){
-            priceEl.className='price-main down flash';
-            setTimeout(()=>{if(priceEl)priceEl.className='price-main';},600);
-          }
-        }
-        priceEl.textContent='$'+newPrice.toFixed(2);
+      // Only update if fast price not running
+      if(priceUpdateCount===0){
+        const priceEl=document.getElementById('price');
+        if(priceEl)priceEl.textContent='$'+d.price.toFixed(2);
+        lastPrice=d.price;
       }
-      lastPrice=newPrice;
-      if(d.live_price){
-        const ba=document.getElementById('bidask');
-        if(ba){
-          const spread=(d.live_price.ask - d.live_price.bid).toFixed(2);
-          ba.textContent=`BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)} • Spread ${spread}`;
-        }
-      }
-      // Update time smoothly
       updateTimeSmooth();
     }
   }catch(e){console.log('fetchLive err',e);}
@@ -681,15 +699,19 @@ setTimeout(initClicks,1500);
 soundOn=localStorage.getItem('astra6_sound')!=='0';
 const sb=document.getElementById('sound-btn');if(sb)sb.textContent=soundOn?'🔔':'🔕';
 checkAuth();
-// Smooth time every second - all devices
-setInterval(updateTimeSmooth,1000);
+// Smooth time every 0.5 second - ultra smooth, no delay
+setInterval(updateTimeSmooth,500);
 updateTimeSmooth();
-// Smooth price every 2 seconds - fast and smooth
-setInterval(()=>{if(getToken())fetchLive();},2000);
-setInterval(()=>{if(getToken()&&currentView==='dashboard')fetchDashboard();},10000);
+// Ultra-fast price every 0.8 seconds - zero delay
+setInterval(()=>{if(getToken())fetchFastPrice();},800);
+// Full live data every 5 sec for candles
+setInterval(()=>{if(getToken())fetchLive();},5000);
+setInterval(()=>{if(getToken()&&currentView==='dashboard')fetchDashboard();},8000);
 setInterval(()=>{fetch('/health').catch(()=>{});},240000);
+// Initial fast price
+setTimeout(()=>{if(getToken())fetchFastPrice();},500);
 
-console.log('ASTRA6 JS loaded - all devices - price & time smooth');
+console.log('ASTRA6 JS loaded - all devices - price & time ultra smooth 0.8s');
 </script>
 </body>
 </html>

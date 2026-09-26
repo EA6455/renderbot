@@ -183,6 +183,10 @@ class ContactRequest(BaseModel):
     subject: str = ""
     message: str
 
+# Cache for smooth price - ultra fast
+_price_cache = {"data": None, "time": 0}
+_fast_price_cache = {"data": None, "time": 0}
+
 def get_oanda_client():
     if not OANDA_API_KEY: return None
     try:
@@ -191,20 +195,43 @@ def get_oanda_client():
     except:
         return None
 
-# Cache for smooth price
-_price_cache = {"data": None, "time": 0}
+def fetch_fast_price():
+    """Ultra-fast price only - 0.8 sec cache for no delay"""
+    global _fast_price_cache
+    now = time.time()
+    if _fast_price_cache["data"] and now - _fast_price_cache["time"] < 0.8:
+        return _fast_price_cache["data"]
+    client = get_oanda_client()
+    if not client:
+        return _fast_price_cache["data"] if _fast_price_cache["data"] else None
+    try:
+        import oandapyV20.endpoints.pricing as pricing
+        params_price = {"instruments": "XAU_USD"}
+        r_price = pricing.PricingInfo(accountID=OANDA_ACCOUNT_ID, params=params_price)
+        client.request(r_price)
+        p = r_price.response['prices'][0]
+        data = {
+            "bid": float(p['bids'][0]['price']),
+            "ask": float(p['asks'][0]['price']),
+            "mid": (float(p['bids'][0]['price']) + float(p['asks'][0]['price']))/2,
+            "time": p['time'],
+            "timestamp": now
+        }
+        _fast_price_cache = {"data": data, "time": now}
+        return data
+    except Exception as e:
+        print(f"Fast price error {e}")
+        return _fast_price_cache["data"] if _fast_price_cache["data"] else None
 
 def fetch_candles(granularity="M15", count=100):
     global _price_cache
-    # Use cache for M15 20 count (live price) - cache 3 sec for smoothness
     now = time.time()
-    if granularity == "M15" and count <= 20 and _price_cache["data"] and now - _price_cache["time"] < 3:
+    if granularity == "M15" and count <= 20 and _price_cache["data"] and now - _price_cache["time"] < 1.5:
         return _price_cache["data"]
     client = get_oanda_client()
     if not client: return None
     try:
         import oandapyV20.endpoints.instruments as instruments
-        import oandapyV20.endpoints.pricing as pricing
         params = {"granularity": granularity, "count": count}
         r = instruments.InstrumentsCandles(instrument="XAU_USD", params=params)
         client.request(r)
@@ -219,27 +246,13 @@ def fetch_candles(granularity="M15", count=100):
                 "volume": int(c['volume']),
                 "complete": c['complete']
             })
-        live_price = None
-        try:
-            params_price = {"instruments": "XAU_USD"}
-            r_price = pricing.PricingInfo(accountID=OANDA_ACCOUNT_ID, params=params_price)
-            client.request(r_price)
-            p = r_price.response['prices'][0]
-            live_price = {
-                "bid": float(p['bids'][0]['price']),
-                "ask": float(p['asks'][0]['price']),
-                "mid": (float(p['bids'][0]['price']) + float(p['asks'][0]['price']))/2,
-                "time": p['time']
-            }
-        except:
-            pass
+        live_price = fetch_fast_price()
         result = (rows, live_price)
         if granularity == "M15" and count <= 20:
             _price_cache = {"data": result, "time": now}
         return result
     except Exception as e:
         print(f"OANDA error {granularity}: {e}")
-        # Return cached if available for smoothness
         if _price_cache["data"]:
             return _price_cache["data"]
         return None, None
@@ -732,6 +745,28 @@ def live(email: str = Depends(require_auth)):
         "last_complete": complete[-1] if complete else None,
         "forming_candle": forming[-1] if forming else None,
         "last_10": candles[-10:],
+        "user": email
+    }
+
+@app.get("/api/xauusd/price")
+def fast_price(email: str = Depends(require_auth)):
+    """Ultra-fast price - no candles, only bid/ask - for smooth 1s updates"""
+    price = fetch_fast_price()
+    if not price:
+        # fallback to cache
+        if _price_cache["data"]:
+            _, lp = _price_cache["data"]
+            if lp:
+                return {"status":"ok","price":lp['mid'],"bid":lp['bid'],"ask":lp['ask'],"live_price":lp,"timestamp":time.time(),"cached":True,"user":email}
+        return {"status":"error","error":"No price"}
+    return {
+        "status":"ok",
+        "price": price['mid'],
+        "bid": price['bid'],
+        "ask": price['ask'],
+        "live_price": price,
+        "timestamp": price['timestamp'],
+        "cached": time.time() - _fast_price_cache["time"] < 1,
         "user": email
     }
 
