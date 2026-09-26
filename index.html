@@ -67,7 +67,6 @@ select,input{background:#0f0f10;border:1px solid var(--border);color:#fff;paddin
   </div>
   <div class="header-right">
     <div class="badge"><div class="dot"></div><span id="market-status">OANDA LIVE</span> • <span id="live-time" class="mono">--:--:--</span></div>
-    <button class="btn-gold" onclick="testAlert()">🧪 TEST ALERT</button>
   </div>
 </div>
 
@@ -106,7 +105,6 @@ select,input{background:#0f0f10;border:1px solid var(--border);color:#fff;paddin
       <div class="card-title">🚨 ASTRA6BOT Alerts <span class="badge-count" id="alerts-count">0</span> <span style="font-size:9px;color:var(--green)">● 60s</span></div>
       <div id="alerts"><div style="padding:16px;text-align:center;color:var(--muted);font-size:10px">No alerts yet<br>Monitoring LONG/SHORT</div></div>
       <button class="btn-gold" onclick="fetchAlerts()">↻ Refresh</button>
-      <button class="btn-ghost" onclick="testAlert()">🧪 Force LONG Alert</button>
     </div>
 
     <div class="card">
@@ -267,7 +265,6 @@ async function fetchOld(){
   }catch(e){}
 }
 function loadOld(g,c,f){ document.getElementById('gran').value=g; document.getElementById('cnt').value=c; document.getElementById('from').value=f||''; fetchOld(); }
-async function testAlert(){ await fetch('/api/alerts/test',{method:'POST'}); fetchAlerts(); }
 
 initChart();
 fetchLive();
