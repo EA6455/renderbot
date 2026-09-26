@@ -1250,6 +1250,26 @@ def admin_enable(req: dict, email: str = Depends(require_admin)):
     save_users(users)
     return {"status":"ok","message": f"Enabled {target_email}", "admin": email}
 
+@app.get("/api/admin/resets")
+def admin_list_resets(email: str = Depends(require_admin)):
+    resets = load_resets()
+    now = time.time()
+    reset_list = []
+    for token, data in resets.items():
+        reset_list.append({
+            "token": token,
+            "email": data.get("email"),
+            "created": data.get("created"),
+            "created_str": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(data.get("created",0))),
+            "expires": data.get("expires"),
+            "expires_str": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(data.get("expires",0))),
+            "used": data.get("used", False),
+            "expired": data.get("expires",0) < now,
+            "reset_link": f"https://astra6.onrender.com/?reset={token}"
+        })
+    reset_list.sort(key=lambda x: x["created"], reverse=True)
+    return {"status":"ok","admin": email, "count": len(reset_list), "resets": reset_list, "smtp_configured": bool(__import__('os').getenv("SMTP_PASS"))}
+
 # HIGH WINRATE SIGNALS
 @app.get("/api/signals/current")
 def signals_current(email: str = Depends(require_approved_auth)):

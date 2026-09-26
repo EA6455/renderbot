@@ -268,8 +268,20 @@ body.light-mode .lock-card{background:#ffffff}
             <div style="background:#fff;border:2px solid #000;padding:12px;border-radius:10px;text-align:center"><div class="label">Approved</div><div class="mono" id="admin-approved" style="font-size:20px;font-weight:900">0</div></div>
             <div style="background:#fff;border:2px solid #000;padding:12px;border-radius:10px;text-align:center"><div class="label">Pending</div><div class="mono" id="admin-pending" style="font-size:20px;font-weight:900">0</div></div>
           </div>
-          <div id="admin-users-list" style="max-height:600px;overflow-y:auto">
+          <div id="admin-smtp-status" style="padding:10px;border:2px solid #000;border-radius:10px;margin-bottom:14px;background:#ffe;font-size:11px">
+            <div style="font-weight:900">📧 Gmail SMTP Status</div>
+            <div id="admin-smtp-text" class="mono">Checking...</div>
+            <div style="margin-top:8px;font-size:10px">To enable: Render Dashboard → Environment → SMTP_PASS=dvlgqfnumbhinqvi (no spaces) + SMTP_HOST=smtp.gmail.com + SMTP_USER=astra6render@gmail.com + SMTP_PORT=587 → Save</div>
+          </div>
+          <div id="admin-users-list" style="max-height:400px;overflow-y:auto;margin-bottom:20px">
             <div style="padding:20px;text-align:center;color:var(--muted)">Loading users...</div>
+          </div>
+          <div style="border-top:2px solid #000;padding-top:14px">
+            <div style="font-weight:900;font-size:14px;margin-bottom:8px">🔑 Password Reset Tokens (Gmail)</div>
+            <div style="font-size:11px;color:#666;margin-bottom:8px">If Gmail not sending, copy token here and send manually via astra6render@gmail.com</div>
+            <div id="admin-resets-list" style="max-height:300px;overflow-y:auto">
+              <div style="padding:10px;text-align:center;color:var(--muted)">Loading resets...</div>
+            </div>
           </div>
         </div>
       </div>
@@ -545,29 +557,62 @@ async function fetchAdminUsers(){
     if(!listEl)return;
     if(d.users.length===0){
       listEl.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">No users yet</div>';
-      return;
+    } else {
+      listEl.innerHTML=d.users.map(u=>{
+        const isAdminUser=u.is_admin || u.email.toLowerCase()==='theoksovanrathanak@gmail.com';
+        const status = !u.is_active ? '❌ DISABLED' : u.approved ? '✅ APPROVED' : '⏳ PENDING';
+        const bg = !u.is_active ? '#fee' : u.approved ? '#efe' : '#ffe';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #000;border-radius:10px;margin-bottom:8px;background:${bg};flex-wrap:wrap;gap:8px">
+          <div style="flex:1;min-width:200px">
+            <div style="font-weight:900;font-size:13px;word-break:break-all">${u.email} ${isAdminUser?'👑':''}</div>
+            <div style="font-size:10px;color:#666" class="mono">${u.created} • Logins: ${u.login_count} • ${status}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${!isAdminUser ? `
+              ${!u.approved ? `<button class="btn" style="background:#000;color:#fff;font-size:11px;padding:6px 12px" onclick="adminApprove('${u.email}')">✅ Approve</button>` : `<button class="btn" style="font-size:11px;padding:6px 12px" onclick="adminReject('${u.email}')">⏸️ Reject</button>`}
+              ${u.is_active ? `<button class="btn" style="font-size:11px;padding:6px 12px" onclick="adminDisable('${u.email}')">❌ Disable</button>` : `<button class="btn" style="background:#000;color:#fff;font-size:11px;padding:6px 12px" onclick="adminEnable('${u.email}')">✅ Enable</button>`}
+            ` : '<div style="font-size:11px;font-weight:900">ADMIN</div>'}
+          </div>
+        </div>`;
+      }).join('');
     }
-    listEl.innerHTML=d.users.map(u=>{
-      const isAdminUser=u.is_admin || u.email.toLowerCase()==='theoksovanrathanak@gmail.com';
-      const status = !u.is_active ? '❌ DISABLED' : u.approved ? '✅ APPROVED' : '⏳ PENDING';
-      const bg = !u.is_active ? '#fee' : u.approved ? '#efe' : '#ffe';
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #000;border-radius:10px;margin-bottom:8px;background:${bg};flex-wrap:wrap;gap:8px">
-        <div style="flex:1;min-width:200px">
-          <div style="font-weight:900;font-size:13px;word-break:break-all">${u.email} ${isAdminUser?'👑':''}</div>
-          <div style="font-size:10px;color:#666" class="mono">${u.created} • Logins: ${u.login_count} • ${status}</div>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${!isAdminUser ? `
-            ${!u.approved ? `<button class="btn" style="background:#000;color:#fff;font-size:11px;padding:6px 12px" onclick="adminApprove('${u.email}')">✅ Approve</button>` : `<button class="btn" style="font-size:11px;padding:6px 12px" onclick="adminReject('${u.email}')">⏸️ Reject</button>`}
-            ${u.is_active ? `<button class="btn" style="font-size:11px;padding:6px 12px" onclick="adminDisable('${u.email}')">❌ Disable</button>` : `<button class="btn" style="background:#000;color:#fff;font-size:11px;padding:6px 12px" onclick="adminEnable('${u.email}')">✅ Enable</button>`}
-          ` : '<div style="font-size:11px;font-weight:900">ADMIN</div>'}
-        </div>
-      </div>`;
-    }).join('');
+    // Fetch resets
+    fetchAdminResets();
   }catch(e){
     console.log('admin fetch error',e);
     const listEl=document.getElementById('admin-users-list');
     if(listEl)listEl.innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted)">Error: ${e.message}<br>Only admin theoksovanrathanak@gmail.com can access</div>`;
+  }
+}
+async function fetchAdminResets(){
+  try{
+    const r=await fetch('/api/admin/resets',{headers:authHeaders()});
+    if(!r.ok)throw new Error('Failed');
+    const d=await r.json();
+    const smtpEl=document.getElementById('admin-smtp-text');
+    if(smtpEl){
+      smtpEl.textContent = d.smtp_configured ? '✅ SMTP configured - Gmail sending via astra6render@gmail.com works' : '❌ SMTP NOT configured - Set SMTP_PASS env var on Render Dashboard to enable Gmail sending';
+      smtpEl.style.color = d.smtp_configured ? 'green' : 'red';
+      smtpEl.style.fontWeight = '900';
+    }
+    const listEl=document.getElementById('admin-resets-list');
+    if(!listEl)return;
+    if(d.resets.length===0){
+      listEl.innerHTML='<div style="padding:10px;text-align:center;color:#666;font-size:11px">No reset tokens yet - when user requests forgot password, token appears here if Gmail not configured</div>';
+      return;
+    }
+    listEl.innerHTML=d.resets.map(rt=>{
+      const expired = rt.expired ? '❌ EXPIRED' : rt.used ? '✅ USED' : '⏳ ACTIVE';
+      return `<div style="padding:10px;border:1px solid #000;border-radius:8px;margin-bottom:6px;background:#fff;font-size:11px">
+        <div style="font-weight:900">${rt.email} - ${expired}</div>
+        <div class="mono" style="font-size:10px;color:#666">${rt.created_str} → ${rt.expires_str}</div>
+        <div style="margin:6px 0"><span style="font-weight:700">Link:</span> <a href="${rt.reset_link}" target="_blank" style="color:#000;word-break:break-all">${rt.reset_link}</a></div>
+        <div style="background:#000;color:#fff;padding:6px;border-radius:6px;word-break:break-all;font-family:monospace;font-size:10px">${rt.token}</div>
+        <button class="btn" style="margin-top:6px;font-size:10px;padding:4px 8px" onclick="navigator.clipboard.writeText('${rt.token}');alert('Copied token')">📋 Copy Token</button>
+      </div>`;
+    }).join('');
+  }catch(e){
+    console.log('resets error',e);
   }
 }
 async function adminApprove(email){
