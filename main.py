@@ -1,11 +1,13 @@
 """
-ASTRA6
+ASTRA6 - Auth + OANDA Live
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-import os
+from pydantic import BaseModel
+import os, json, hashlib, secrets, time
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
 
@@ -21,6 +23,98 @@ app.add_middleware(
 OANDA_API_KEY = os.getenv("OANDA_API_KEY")
 OANDA_ACCOUNT_ID = os.getenv("OANDA_ACCOUNT_ID")
 OANDA_ENVIRONMENT = os.getenv("OANDA_ENVIRONMENT", "practice")
+
+USERS_FILE = Path("users.json")
+TOKENS_FILE = Path("tokens.json")
+
+def load_users():
+    if not USERS_FILE.exists():
+        return {}
+    try:
+        return json.loads(USERS_FILE.read_text())
+    except:
+        return {}
+
+def save_users(users):
+    USERS_FILE.write_text(json.dumps(users, indent=2))
+
+def load_tokens():
+    if not TOKENS_FILE.exists():
+        return {}
+    try:
+        return json.loads(TOKENS_FILE.read_text())
+    except:
+        return {}
+
+def save_tokens(tokens):
+    TOKENS_FILE.write_text(json.dumps(tokens, indent=2))
+
+def hash_password(password, salt):
+    # pbkdf2_hmac sha256 100k iterations
+    return hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000).hex()
+
+def create_user(email, password):
+    users = load_users()
+    email = email.lower().strip()
+    if email in users:
+        return None, "Email already registered"
+    if len(password) < 6:
+        return None, "Password must be at least 6 characters"
+    salt = secrets.token_hex(16)
+    pwd_hash = hash_password(password, salt)
+    users[email] = {"email": email, "salt": salt, "hash": pwd_hash, "created": time.time()}
+    save_users(users)
+    return users[email], None
+
+def verify_user(email, password):
+    users = load_users()
+    email = email.lower().strip()
+    u = users.get(email)
+    if not u:
+        return None
+    if hash_password(password, u["salt"]) == u["hash"]:
+        return u
+    return None
+
+def create_token(email):
+    tokens = load_tokens()
+    token = secrets.token_urlsafe(32)
+    tokens[token] = {"email": email, "created": time.time(), "expires": time.time() + 30*24*3600}
+    save_tokens(tokens)
+    return token
+
+def verify_token(token):
+    if not token:
+        return None
+    tokens = load_tokens()
+    # support Bearer prefix stripping outside
+    data = tokens.get(token)
+    if not data:
+        return None
+    if data["expires"] < time.time():
+        # expired, remove
+        del tokens[token]
+        save_tokens(tokens)
+        return None
+    return data["email"]
+
+def get_current_user(authorization: str = Header(None)):
+    if not authorization:
+        return None
+    # Expected "Bearer <token>"
+    token = authorization.replace("Bearer ", "").strip()
+    email = verify_token(token)
+    return email
+
+def require_auth(authorization: str = Header(None)):
+    email = get_current_user(authorization)
+    if not email:
+        raise HTTPException(status_code=401, detail="Sign in required to access signals")
+    return email
+
+class AuthRequest(BaseModel):
+    email: str
+    password: str
 
 def get_oanda_client():
     if not OANDA_API_KEY:
@@ -52,7 +146,6 @@ def fetch_candles(granularity="M15", count=100):
                 "volume": int(c['volume']),
                 "complete": c['complete']
             })
-        # live price
         live_price = None
         try:
             params_price = {"instruments": "XAU_USD"}
@@ -85,15 +178,53 @@ def widget():
 
 @app.get("/api/status")
 def status():
+    users = load_users()
     return {
         "name": "ASTRA6",
         "oanda": {"has_key": bool(OANDA_API_KEY), "account_id": OANDA_ACCOUNT_ID, "env": OANDA_ENVIRONMENT},
         "mode": "ASTRA6",
-        "endpoints": ["/api/xauusd/live","/api/xauusd/history"]
+        "users": len(users),
+        "endpoints": ["/api/xauusd/live","/api/xauusd/history","/api/auth/signup","/api/auth/signin","/api/auth/me"]
     }
 
+# AUTH
+@app.post("/api/auth/signup")
+def signup(req: AuthRequest):
+    user, err = create_user(req.email, req.password)
+    if err:
+        raise HTTPException(status_code=400, detail=err)
+    token = create_token(user["email"])
+    return {"status":"ok","email": user["email"], "token": token, "message":"Account created"}
+
+@app.post("/api/auth/signin")
+def signin(req: AuthRequest):
+    user = verify_user(req.email, req.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    token = create_token(user["email"])
+    return {"status":"ok","email": user["email"], "token": token, "message":"Signed in"}
+
+@app.get("/api/auth/me")
+def me(authorization: str = Header(None)):
+    email = get_current_user(authorization)
+    if not email:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return {"status":"ok","email": email}
+
+@app.post("/api/auth/signout")
+def signout(authorization: str = Header(None)):
+    if not authorization:
+        return {"status":"ok"}
+    token = authorization.replace("Bearer ", "").strip()
+    tokens = load_tokens()
+    if token in tokens:
+        del tokens[token]
+        save_tokens(tokens)
+    return {"status":"ok","message":"Signed out"}
+
+# PROTECTED DATA - require auth to access signals
 @app.get("/api/xauusd/live")
-def live():
+def live(email: str = Depends(require_auth)):
     result = fetch_candles("M15", 20)
     if not result:
         return {"status":"error","error":"OANDA key missing"}
@@ -111,11 +242,11 @@ def live():
         "last_complete": complete[-1] if complete else None,
         "forming_candle": forming[-1] if forming else None,
         "last_10": candles[-10:],
-        "source": "OANDA v20 Practice - Pure, "
+        "user": email
     }
 
 @app.get("/api/xauusd/history")
-def history(granularity: str = "M15", count: int = 100, from_time: str = None):
+def history(granularity: str = "M15", count: int = 100, email: str = Depends(require_auth)):
     result = fetch_candles(granularity, min(count,5000))
     if not result:
         return {"status":"error","error":"OANDA key missing"}
@@ -131,5 +262,5 @@ def history(granularity: str = "M15", count: int = 100, from_time: str = None):
         "to": candles[-1]['time'],
         "latest_price": closes[-1],
         "candles": candles,
-        "source": "OANDA v20 - History back to 2005 - Pure OANDA, "
+        "user": email
     }
