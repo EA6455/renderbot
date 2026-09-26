@@ -13,7 +13,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text)}
 .header{height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:10}
 .logo{display:flex;align-items:center;gap:10px}
 .logo-icon{width:36px;height:36px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:18px;box-shadow:0 0 20px rgba(245,197,24,0.3)}
-.logo-text{font-weight:900;font-size:18px;letter-spacing:-0.5px}.logo-text span{color:var(--gold)}
+.logo-text{font-weight:900;font-size:18px;letter-spacing:-0.5px}
 .logo-sub{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:1px}
 .badge{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;color:var(--green)}
 .dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
@@ -38,11 +38,11 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text)}
     <div class="logo-icon">A6</div>
     <div>
       <div class="logo-text">ASTRA6</div>
-      <div class="logo-sub">OANDA XAUUSD • LIVE • PURE OANDA</div>
+      <div class="logo-sub">LIVE</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:10px">
-    <div class="badge"><div class="dot"></div><span id="market-status">OANDA LIVE</span> • <span id="live-time" class="mono">--:--:--</span></div>
+    <div class="badge"><div class="dot"></div><span id="market-status">LIVE</span> • <span id="live-time" class="mono">--:--:--</span></div>
   </div>
 </div>
 
@@ -50,20 +50,20 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text)}
   <div class="terminal">
     <div class="terminal-top">
       <div>
-        <div class="pair-name">XAUUSD <span style="color:var(--muted);font-weight:400">/ GOLD • OANDA Practice • Pure OANDA</span></div>
-        <div class="pair-desc mono" id="candle-info">Loading OANDA v20 real candles • api-fxpractice.oanda.com •  • History back to 2005</div>
+        <div class="pair-name">XAUUSD <span style="color:var(--muted);font-weight:400">/ GOLD</span></div>
+        <div class="pair-desc mono" id="candle-info">Live • XAUUSD</div>
       </div>
       <div style="display:flex;align-items:center;gap:14px">
         <div class="price-block">
           <div class="price-main" id="price">$--.--</div>
-          <div class="bidask mono" id="bidask">BID -- / ASK -- • OANDA LIVE</div>
+          <div class="bidask mono" id="bidask">BID -- / ASK --</div>
         </div>
       </div>
     </div>
     <div id="oanda_chart"></div>
     <div class="info-bar">
-      <span>📡 OANDA v20 • Account 101-001-40547390-001 • $100k demo • Pure OANDA, , No TradingView, No EMA/RSI</span>
-      <span id="forming" class="mono">Updates every 5s • Market closed weekend = last Fri candle</span>
+      <span>ASTRA6 • XAUUSD</span>
+      <span id="forming" class="mono">Updates every 5s</span>
     </div>
   </div>
 </div>
@@ -81,11 +81,11 @@ async function fetchLive(){
     const r=await fetch('/api/xauusd/live');const d=await r.json();
     if(d.status==='ok'){
       document.getElementById('price').textContent='$'+d.price.toFixed(2);
-      if(d.live_price){document.getElementById('bidask').textContent=`BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)} • OANDA LIVE`;}
+      if(d.live_price){document.getElementById('bidask').textContent=`BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)}`;}
       document.getElementById('live-time').textContent=new Date().toLocaleTimeString();
-      document.getElementById('market-status').textContent=d.market_closed && d.market_closed.includes('closed')?'CLOSED Weekend':'LIVE';
-      document.getElementById('candle-info').textContent=d.forming_candle?`Forming LIVE ${d.forming_candle.time.substring(11,16)} UTC • Vol ${d.forming_candle.volume}`:`Last complete ${d.last_complete.time.substring(11,16)} UTC • ${d.market_closed||''}`;
-      document.getElementById('forming').textContent=d.forming_candle?`Forming LIVE: O${d.forming_candle.open.toFixed(1)} H${d.forming_candle.high.toFixed(1)} L${d.forming_candle.low.toFixed(1)} C${d.forming_candle.close.toFixed(1)} • Pure OANDA `:`Market closed weekend - last Fri ${d.last_complete.time.substring(0,10)} • Pure OANDA`;
+      document.getElementById('market-status').textContent=d.market_closed && d.market_closed.includes('closed')?'CLOSED':'LIVE';
+      document.getElementById('candle-info').textContent=d.forming_candle?`${d.forming_candle.time.substring(11,16)} UTC • Vol ${d.forming_candle.volume}`:`${d.last_complete.time.substring(11,16)} UTC`;
+      document.getElementById('forming').textContent=d.forming_candle?`O${d.forming_candle.open.toFixed(1)} H${d.forming_candle.high.toFixed(1)} L${d.forming_candle.low.toFixed(1)} C${d.forming_candle.close.toFixed(1)}`:`${d.last_complete.time.substring(0,10)}`;
       if(d.last_10 && candleSeries && lastCandles.length===0){
         const r2=await fetch('/api/xauusd/history?granularity=M15&count=100');const d2=await r2.json();
         if(d2.status==='ok'){const data=d2.candles.map(c=>({time:Math.floor(new Date(c.time).getTime()/1000),open:c.open,high:c.high,low:c.low,close:c.close}));candleSeries.setData(data);lastCandles=data;}
