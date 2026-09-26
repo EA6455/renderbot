@@ -11,7 +11,6 @@
 html{scroll-behavior:smooth}
 body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden}
 .mono{font-family:JetBrains Mono,monospace}
-/* Sidebar Ladder - Desktop */
 .sidebar{width:240px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:30;flex-shrink:0}
 .side-top{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .logo-icon{width:38px;height:38px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:18px;box-shadow:0 0 20px rgba(245,197,24,0.25);flex-shrink:0}
@@ -33,7 +32,6 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
 .btn:hover{opacity:0.9;transform:translateY(-1px)}
 .btn:active{transform:translateY(0)}
 .btn-full{width:100%}
-/* Main */
 .main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;min-height:100vh}
 .topbar{min-height:54px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:10px 18px;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
 .topbar-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -47,19 +45,19 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
 .terminal{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:relative;box-shadow:0 4px 20px rgba(0,0,0,0.2)}
 .terminal-top{padding:14px 18px;background:linear-gradient(90deg,#1a1a1e,#111113);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
 .pair-name{font-weight:900;font-size:16px}
-#oanda_chart{height:72vh;min-height:520px;width:100%;background:var(--card);display:block}
+#oanda_chart{height:60vh;min-height:420px;width:100%;background:var(--card);display:block}
 .info-bar{padding:10px 16px;background:#0f0f10;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:JetBrains Mono,monospace;flex-wrap:wrap;gap:8px}
 .lock-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(7,7,9,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;z-index:5;flex-direction:column;gap:16px;text-align:center;padding:20px}
 .lock-card{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
 .lock-icon{width:56px;height:56px;background:rgba(245,197,24,0.15);border:1px solid rgba(245,197,24,0.3);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.15)}
-.card-title{font-weight:900;font-size:16px;margin-bottom:12px}
+.card-title{font-weight:900;font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .field{margin-bottom:14px}
 .label{font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase}
-.input,.textarea{width:100%;padding:13px 14px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:14px;outline:none;transition:0.2s;-webkit-appearance:none}
-.input:focus,.textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,197,24,0.1)}
-.textarea{min-height:100px;resize:vertical}
+.input{width:100%;padding:13px 14px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:14px;outline:none;transition:0.2s;-webkit-appearance:none}
+.input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,197,24,0.1)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 .auth-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
 .auth-modal.active{display:flex}
 .auth-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.6);animation:modalIn 0.25s ease}
@@ -70,95 +68,66 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
 .error{color:var(--red);font-size:11px;margin-bottom:12px;display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);padding:8px 10px;border-radius:8px}
 .success{color:var(--green);font-size:11px;margin-bottom:12px;display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:8px 10px;border-radius:8px}
 .qr-img{width:300px;height:300px;max-width:80vw;max-height:80vw;border-radius:20px;background:#fff;padding:12px;border:2px solid var(--border);margin:16px auto;display:block;object-fit:contain}
-/* Mobile Header Logo - hidden desktop */
+/* Dashboard */
+.signal-card{border-radius:16px;padding:20px;border:1px solid var(--border);position:relative;overflow:hidden}
+.signal-card.buy{background:linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.05));border-color:rgba(34,197,94,0.3)}
+.signal-card.sell{background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));border-color:rgba(239,68,68,0.3)}
+.signal-card.hold{background:linear-gradient(135deg,rgba(119,119,119,0.15),rgba(119,119,119,0.05));border-color:var(--border)}
+.signal-type{font-size:32px;font-weight:900;letter-spacing:-1px}
+.signal-type.buy{color:var(--green)}
+.signal-type.sell{color:var(--red)}
+.signal-type.hold{color:var(--muted)}
+.alert-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--card2);margin-bottom:8px;transition:0.15s}
+.alert-item:hover{background:var(--active)}
+.alert-badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;min-width:54px;text-align:center}
+.alert-badge.buy{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
+.alert-badge.sell{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
+.alert-badge.hold{background:rgba(119,119,119,0.15);color:var(--muted);border:1px solid var(--border)}
 .mobile-logo{display:none;align-items:center;gap:8px}
 .mobile-logo .logo-icon{width:32px;height:32px;font-size:16px}
-/* Responsive - Tablet */
-@media(max-width:1024px){
-  .sidebar{width:200px}
-  .price-main{font-size:22px}
-  #oanda_chart{height:65vh;min-height:460px}
-}
-@media(max-width:900px){
-  .grid2{grid-template-columns:1fr}
-  .sidebar{width:72px}
-  .sidebar .hide-m{display:none !important}
-  .nav-item{justify-content:center;padding:12px 8px;flex-direction:column;gap:4px;font-size:9px}
-  .nav-item .ico{width:auto;font-size:18px}
-  .side-top{justify-content:center;padding:14px 8px}
-  .side-bottom{padding:8px}
-  .user-box{padding:8px}
-  .badge{justify-content:center;padding:6px}
-  .topbar{padding:10px 12px}
-  .price-main{font-size:20px}
-  .bidask{font-size:10px;padding:4px 8px}
-  .content{padding:10px}
-  .terminal-top{padding:12px 14px}
-}
-/* Mobile - Bottom Ladder */
+@media(max-width:1024px){.sidebar{width:200px}.price-main{font-size:22px}#oanda_chart{height:55vh;min-height:380px}.grid3{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}.sidebar{width:72px}.sidebar .hide-m{display:none !important}.nav-item{justify-content:center;padding:12px 8px;flex-direction:column;gap:4px;font-size:9px}.nav-item .ico{width:auto;font-size:18px}.side-top{justify-content:center;padding:14px 8px}.side-bottom{padding:8px}.badge{justify-content:center}.topbar{padding:10px 12px}.price-main{font-size:20px}.content{padding:10px}}
 @media(max-width:640px){
   body{flex-direction:column}
   .sidebar{position:fixed;bottom:0;top:auto;left:0;right:0;width:100%;height:64px;flex-direction:row;z-index:40;border-right:none;border-top:1px solid var(--border);background:rgba(17,17,19,0.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:0}
-  .side-top{display:none}
-  .side-bottom{display:none}
+  .side-top,.side-bottom{display:none}
   .ladder{flex-direction:row;justify-content:space-around;align-items:center;padding:4px 4px 6px;gap:2px;overflow-x:auto;overflow-y:hidden}
   .nav-item{flex:1;min-width:0;justify-content:center;padding:6px 4px;flex-direction:column;gap:3px;font-size:8px;border-radius:8px;border:none;background:transparent !important;box-shadow:none !important}
-  .nav-item .ico{font-size:18px;width:auto}
+  .nav-item .ico{font-size:18px}
   .nav-item.active{color:var(--gold);background:rgba(245,197,24,0.12) !important}
   .main-wrap{padding-bottom:70px;min-height:100vh}
   .topbar{position:sticky;top:0;min-height:52px;padding:8px 12px;gap:8px}
   .mobile-logo{display:flex}
-  .topbar-left{flex:1;justify-content:space-between}
-  .price-block{gap:8px}
   .price-main{font-size:18px}
   .bidask{font-size:9px;padding:3px 8px}
   #candle-info,.hide-mb{display:none !important}
-  #oanda_chart{height:52vh;min-height:320px;max-height:55vh}
+  #oanda_chart{height:45vh;min-height:280px;max-height:50vh}
   .terminal{border-radius:12px}
-  .terminal-top{padding:10px 12px}
-  .pair-name{font-size:14px}
-  .info-bar{padding:8px 12px;font-size:9px}
   .content{padding:8px}
   .card{padding:16px;border-radius:12px}
-  .lock-card{padding:20px;max-width:92vw;border-radius:14px}
-  .lock-card .btn{padding:10px}
-  .auth-box{max-width:92vw;padding:20px;margin:10px}
+  .lock-card{padding:20px;max-width:92vw}
+  .auth-box{max-width:92vw;padding:20px}
   .qr-img{width:72vw;height:72vw;max-width:300px;max-height:300px}
-  .btn{padding:10px 14px;font-size:12px}
+  .signal-type{font-size:26px}
 }
-@media(max-width:380px){
-  .price-main{font-size:16px}
-  .nav-item{font-size:7px;padding:4px 2px}
-  .nav-item .ico{font-size:16px}
-  .qr-img{width:80vw;height:80vw}
-}
-/* Landscape mobile */
-@media(max-height:500px) and (max-width:900px){
-  #oanda_chart{height:70vh;min-height:250px}
-  .sidebar{height:56px}
-  .main-wrap{padding-bottom:60px}
-}
-/* Touch improvements */
-@media(hover:none) and (pointer:coarse){
-  .nav-item:hover{background:transparent}
-  .btn:hover{transform:none}
-}
+@media(max-width:380px){.price-main{font-size:16px}.nav-item{font-size:7px}.qr-img{width:80vw;height:80vw}}
+@media(hover:none) and (pointer:coarse){.nav-item:hover{background:transparent}.btn:hover{transform:none}}
 </style>
 <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
-<!-- Sidebar Ladder -->
 <div class="sidebar">
   <div class="side-top">
     <div class="logo-icon">A6</div>
     <div class="hide-m"><div class="logo-text">ASTRA6</div><div class="logo-sub">LIVE TERMINAL</div></div>
   </div>
   <div class="ladder">
-    <div class="nav-item active" id="nav-signals" onclick="showView('signals')"><span class="ico">📊</span><span class="hide-m">Live Signals</span><span class="show-mb-only" style="display:none">Signals</span></div>
+    <div class="nav-item active" id="nav-dashboard" onclick="showView('dashboard')"><span class="ico">🚨</span><span class="hide-m">Dashboard</span></div>
+    <div class="nav-item" id="nav-signals" onclick="showView('signals')"><span class="ico">📊</span><span class="hide-m">Live Signals</span></div>
     <div class="nav-item" id="nav-signin" onclick="openAuth('signin')"><span class="ico">🔐</span><span class="hide-m">Sign In</span></div>
     <div class="nav-item" id="nav-signup" onclick="openAuth('signup')"><span class="ico">📝</span><span class="hide-m">Sign Up</span></div>
     <div class="nav-item" id="nav-account" onclick="showView('account')"><span class="ico">👤</span><span class="hide-m">Account</span></div>
-    <div class="nav-item" id="nav-contact" onclick="showView('contact')"><span class="ico">📞</span><span class="hide-m">Admin Contact</span><span class="show-mb-only" style="display:none">Contact</span></div>
+    <div class="nav-item" id="nav-contact" onclick="showView('contact')"><span class="ico">📞</span><span class="hide-m">Admin Contact</span></div>
   </div>
   <div class="side-bottom">
     <div class="badge"><div class="dot"></div><span id="market-status">LIVE</span> • <span id="live-time" class="mono hide-m">--:--:--</span></div>
@@ -175,10 +144,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
 <div class="main-wrap">
   <div class="topbar">
     <div class="topbar-left">
-      <div class="mobile-logo">
-        <div class="logo-icon">A6</div>
-        <div><div class="logo-text" style="font-size:14px">ASTRA6</div><div class="logo-sub" style="font-size:8px">LIVE</div></div>
-      </div>
+      <div class="mobile-logo"><div class="logo-icon">A6</div><div><div class="logo-text" style="font-size:14px">ASTRA6</div><div class="logo-sub" style="font-size:8px">LIVE</div></div></div>
       <div class="price-block">
         <div class="price-main" id="price">$--.--</div>
         <div class="bidask mono" id="bidask">BID -- / ASK --</div>
@@ -186,25 +152,94 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
       </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
-      <span class="mono" style="font-size:10px;color:var(--muted)" id="forming">Updates every 5s</span>
+      <span class="mono" style="font-size:10px;color:var(--muted)" id="forming">Dashboard • Alerts only</span>
     </div>
   </div>
 
   <div class="content">
+    <!-- Dashboard View - Signal Alerts -->
+    <div class="view active" id="view-dashboard">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div><div style="font-weight:900;font-size:18px">🚨 Signal Alert Dashboard</div><div class="mono" style="font-size:10px;color:var(--muted)">Only important alerts • Not every tick • Clean</div></div>
+        <div style="display:flex;gap:8px"><button class="btn" onclick="fetchDashboard()" id="refresh-btn">🔄 Refresh</button><button class="btn" id="sound-btn" onclick="toggleSound()">🔔 Sound On</button></div>
+      </div>
+
+      <div class="grid3" style="margin-bottom:14px">
+        <div class="signal-card" id="current-signal-card">
+          <div class="label">CURRENT SIGNAL</div>
+          <div class="signal-type hold" id="sig-type">--</div>
+          <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+            <div><div class="label">Price</div><div class="mono" id="sig-price" style="font-size:16px;font-weight:800">$--</div></div>
+            <div><div class="label">Confidence</div><div class="mono" id="sig-conf" style="font-size:14px">--%</div></div>
+            <div><div class="label">RSI</div><div class="mono" id="sig-rsi" style="font-size:13px">--</div></div>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--muted)" id="sig-reasons">Sign in to view signals</div>
+          <div class="mono" style="font-size:9px;color:var(--muted);margin-top:8px" id="sig-time">--</div>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 Stats</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><div class="label">Total Alerts</div><div class="mono" id="stat-total" style="font-size:20px;font-weight:800">0</div></div>
+            <div><div class="label">Buy / Sell</div><div class="mono" id="stat-bs" style="font-size:14px">0 / 0</div></div>
+            <div><div class="label">Last Alert</div><div class="mono" id="stat-last" style="font-size:11px">--</div></div>
+            <div><div class="label">Market</div><div class="mono" style="font-size:11px;color:var(--green)">● LIVE • M15</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚙️ Settings</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6">
+            • Only significant changes trigger alert<br>
+            • HOLD filtered out (no spam)<br>
+            • Same signal + <0.25% price = no alert<br>
+            • Auto refresh every 15s<br>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+            <span class="mono" style="font-size:9px;padding:4px 8px;border-radius:20px;background:var(--card2);border:1px solid var(--border)">SMA20/50</span>
+            <span class="mono" style="font-size:9px;padding:4px 8px;border-radius:20px;background:var(--card2);border:1px solid var(--border)">RSI 14</span>
+            <span class="mono" style="font-size:9px;padding:4px 8px;border-radius:20px;background:var(--card2);border:1px solid var(--border)">Vol filter</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">🚨 Recent Alerts (Important Only)</div>
+          <div id="alerts-list" style="max-height:400px;overflow-y:auto">
+            <div style="font-size:12px;color:var(--muted);padding:20px;text-align:center">Sign in to view alerts<br><button class="btn btn-gold" style="margin-top:10px" onclick="openAuth('signin')">Sign In</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📜 Signal History</div>
+          <div id="history-list" style="max-height:400px;overflow-y:auto">
+            <div style="font-size:12px;color:var(--muted);padding:20px;text-align:center">No history yet</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lock-overlay" id="dash-lock" style="border-radius:14px">
+        <div class="lock-card">
+          <div class="lock-icon">🔒</div>
+          <div style="font-weight:900;font-size:18px;margin-bottom:6px">Sign in for Dashboard</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Dashboard shows only important signal alerts, not every price tick. Free account required.</div>
+          <div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="openAuth('signin')">Sign In</button><button class="btn btn-gold" style="flex:1" onclick="openAuth('signup')">Sign Up</button></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Signals View -->
-    <div class="view active" id="view-signals">
+    <div class="view" id="view-signals">
       <div class="terminal" id="terminal">
         <div class="terminal-top">
           <div><div class="pair-name">XAUUSD <span style="color:var(--muted);font-weight:400">/ GOLD</span></div></div>
-          <div class="mono hide-mb" style="font-size:10px;color:var(--muted)">ASTRA6 • Real-time • Requires Sign In</div>
+          <div class="mono hide-mb" style="font-size:10px;color:var(--muted)">Chart • Requires Sign In</div>
         </div>
         <div id="oanda_chart"></div>
-        <div class="info-bar"><span>ASTRA6 • XAUUSD • Sign in to access</span><span class="mono">M15 • Live</span></div>
+        <div class="info-bar"><span>ASTRA6 • XAUUSD • Chart view</span><span class="mono">M15 • Live</span></div>
         <div class="lock-overlay" id="lock-overlay">
           <div class="lock-card">
             <div class="lock-icon">🔒</div>
-            <div style="font-weight:900;font-size:18px;margin-bottom:6px">Sign in to access signals</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Ladder menu → Sign In / Sign Up to unlock live XAUUSD chart. Free access on any device.</div>
+            <div style="font-weight:900;font-size:18px;margin-bottom:6px">Sign in to view chart</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Use ladder Dashboard for alerts, or view live chart here.</div>
             <div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="openAuth('signin')">Sign In</button><button class="btn btn-gold" style="flex:1" onclick="openAuth('signup')">Sign Up</button></div>
           </div>
         </div>
@@ -217,12 +252,12 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
         <div class="card">
           <div class="card-title">👤 Account</div>
           <div id="account-guest">
-            <div style="font-size:13px;color:var(--muted);margin-bottom:14px">You are not signed in. Sign in to view your account and access signals on any device.</div>
+            <div style="font-size:13px;color:var(--muted);margin-bottom:14px">You are not signed in.</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="openAuth('signin')">Sign In</button><button class="btn btn-gold" onclick="openAuth('signup')">Sign Up</button></div>
           </div>
           <div id="account-user" style="display:none">
             <div class="field"><div class="label">EMAIL</div><div class="mono" id="acc-email" style="font-size:13px;word-break:break-all"></div></div>
-            <div class="field"><div class="label">STATUS</div><div style="font-size:12px"><span style="color:var(--green)">● Active</span> • Free Plan • Access to live signals</div></div>
+            <div class="field"><div class="label">STATUS</div><div style="font-size:12px"><span style="color:var(--green)">● Active</span> • Free Plan</div></div>
             <div class="field"><div class="label">MEMBER SINCE</div><div class="mono" id="acc-created" style="font-size:12px"></div></div>
             <div class="field"><div class="label">TOKEN EXPIRES</div><div class="mono" id="acc-expires" style="font-size:12px"></div></div>
             <button class="btn" onclick="signOut()" style="margin-top:10px">Sign Out</button>
@@ -235,10 +270,10 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
     <div class="view" id="view-contact">
       <div style="display:flex;align-items:center;justify-content:center;min-height:65vh;padding:10px">
         <div class="card" style="text-align:center;max-width:420px;width:100%;padding:28px">
-          <div class="card-title" style="font-size:20px">📞 Admin Contact</div>
+          <div class="card-title" style="font-size:20px;justify-content:center">📞 Admin Contact</div>
           <img src="/telegram-qr.jpg" alt="@ASTRA6RENDER Telegram QR" class="qr-img">
           <a href="https://t.me/ASTRA6RENDER" target="_blank" style="display:block;color:var(--gold);font-weight:900;font-size:18px;text-decoration:none;margin-top:12px;word-break:break-all" class="mono">@ASTRA6RENDER</a>
-          <div style="font-size:12px;color:var(--muted);margin-top:8px">Scan QR code to contact admin on Telegram<br>Works on mobile, tablet, desktop</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px">Scan QR code to contact admin on Telegram</div>
           <a href="https://t.me/ASTRA6RENDER" target="_blank" class="btn btn-gold btn-full" style="display:block;text-align:center;margin-top:20px;text-decoration:none;padding:14px;font-size:14px">Open Telegram</a>
         </div>
       </div>
@@ -260,7 +295,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
 </div>
 
 <script>
-let chart, candleSeries, lastCandles=[], currentTab='signin', currentView='signals';
+let chart, candleSeries, lastCandles=[], currentTab='signin', currentView='dashboard', soundOn=true, lastAlertId=null;
 function getToken(){return localStorage.getItem('astra6_token');}
 function setToken(t,e){if(t){localStorage.setItem('astra6_token',t);if(e)localStorage.setItem('astra6_email',e);}else{localStorage.removeItem('astra6_token');localStorage.removeItem('astra6_email');}}
 function authHeaders(){const t=getToken();return t?{'Authorization':'Bearer '+t}:{};}
@@ -272,6 +307,8 @@ function showView(v){
   const nav=document.getElementById('nav-'+v);
   if(nav)nav.classList.add('active');
   if(v==='account')loadAccount();
+  if(v==='dashboard')fetchDashboard();
+  if(v==='signals' && getToken()){if(!chart)initChart();fetchLive();}
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function openAuth(tab){currentTab=tab||'signin';switchTab(currentTab);document.getElementById('auth-modal').classList.add('active');document.getElementById('auth-error').style.display='none';document.getElementById('auth-success').style.display='none';setTimeout(()=>document.getElementById('email').focus(),100);}
@@ -290,24 +327,35 @@ async function submitAuth(){
     const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||'Failed');
     setToken(d.token,d.email);ok.textContent=d.message||'Success';ok.style.display='block';
-    setTimeout(()=>{closeAuth();checkAuth();showView('signals');btn.textContent=orig;btn.disabled=false;},600);
+    setTimeout(()=>{closeAuth();checkAuth();showView('dashboard');btn.textContent=orig;btn.disabled=false;},600);
   }catch(e){err.textContent=e.message;err.style.display='block';btn.textContent=orig;btn.disabled=false;}
 }
 async function checkAuth(){
   const token=getToken();
   const lock=document.getElementById('lock-overlay');
+  const dashLock=document.getElementById('dash-lock');
   const userBox=document.getElementById('user-box'), guestBox=document.getElementById('guest-box');
-  if(!token){lock.style.display='flex';userBox.classList.remove('show');guestBox.style.display='block';document.getElementById('nav-signin').style.display='flex';document.getElementById('nav-signup').style.display='flex';return false;}
+  if(!token){
+    if(lock)lock.style.display='flex';
+    if(dashLock)dashLock.style.display='flex';
+    userBox.classList.remove('show');guestBox.style.display='block';
+    document.getElementById('nav-signin').style.display='flex';document.getElementById('nav-signup').style.display='flex';
+    return false;
+  }
   try{
     const r=await fetch('/api/auth/me',{headers:authHeaders()});if(!r.ok)throw new Error('invalid');const d=await r.json();
     document.getElementById('user-email').textContent=d.email;
     userBox.classList.add('show');guestBox.style.display='none';
-    lock.style.display='none';
+    if(lock)lock.style.display='none';
+    if(dashLock)dashLock.style.display='none';
     document.getElementById('nav-signin').style.display='none';document.getElementById('nav-signup').style.display='none';
-    if(!chart)initChart();fetchLive();return true;
-  }catch(e){setToken(null);lock.style.display='flex';userBox.classList.remove('show');guestBox.style.display='block';document.getElementById('nav-signin').style.display='flex';document.getElementById('nav-signup').style.display='flex';return false;}
+    if(!chart)initChart();
+    fetchLive();
+    fetchDashboard();
+    return true;
+  }catch(e){setToken(null);if(lock)lock.style.display='flex';if(dashLock)dashLock.style.display='flex';userBox.classList.remove('show');guestBox.style.display='block';document.getElementById('nav-signin').style.display='flex';document.getElementById('nav-signup').style.display='flex';return false;}
 }
-async function signOut(){try{await fetch('/api/auth/signout',{method:'POST',headers:authHeaders()});}catch(e){}setToken(null);checkAuth();showView('signals');}
+async function signOut(){try{await fetch('/api/auth/signout',{method:'POST',headers:authHeaders()});}catch(e){}setToken(null);checkAuth();showView('dashboard');}
 async function loadAccount(){
   const token=getToken();
   const guest=document.getElementById('account-guest'), user=document.getElementById('account-user');
@@ -320,15 +368,94 @@ async function loadAccount(){
     document.getElementById('acc-expires').textContent=d.expires?new Date(d.expires*1000).toLocaleString():'-';
   }catch(e){guest.style.display='block';user.style.display='none';}
 }
+function toggleSound(){soundOn=!soundOn;document.getElementById('sound-btn').textContent=soundOn?'🔔 Sound On':'🔕 Sound Off';localStorage.setItem('astra6_sound',soundOn?'1':'0');}
+function playAlertSound(type){
+  if(!soundOn)return;
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator();const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.frequency.value=type==='BUY'?880:type==='SELL'?440:660;
+    g.gain.value=0.1;
+    o.start();g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.5);setTimeout(()=>o.stop(),500);
+  }catch(e){}
+}
+async function fetchDashboard(){
+  if(!getToken())return;
+  const btn=document.getElementById('refresh-btn');if(btn)btn.textContent='⏳...';
+  try{
+    const [curR, alertsR, histR] = await Promise.all([
+      fetch('/api/signals/current',{headers:authHeaders()}),
+      fetch('/api/signals/alerts?limit=10',{headers:authHeaders()}),
+      fetch('/api/signals/history?limit=20',{headers:authHeaders()})
+    ]);
+    if(curR.status===401){checkAuth();return;}
+    const cur=await curR.json();const alerts=await alertsR.json();const hist=await histR.json();
+    if(cur.status==='ok')renderCurrent(cur.signal);
+    if(alerts.status==='ok')renderAlerts(alerts.alerts);
+    if(hist.status==='ok')renderHistory(hist.signals);
+  }catch(e){console.log(e);}
+  if(btn)btn.textContent='🔄 Refresh';
+}
+function renderCurrent(s){
+  if(!s)return;
+  const card=document.getElementById('current-signal-card');
+  const typeEl=document.getElementById('sig-type');
+  typeEl.textContent=s.type;
+  typeEl.className='signal-type '+s.type.toLowerCase();
+  card.className='signal-card '+s.type.toLowerCase();
+  document.getElementById('sig-price').textContent='$'+s.price.toFixed(2);
+  document.getElementById('sig-conf').textContent=s.confidence+'%';
+  document.getElementById('sig-rsi').textContent=s.rsi;
+  document.getElementById('sig-time').textContent=s.time_str;
+  document.getElementById('sig-reasons').innerHTML=s.reasons.map(r=>'• '+r).join('<br>');
+  document.getElementById('stat-last').textContent=s.type+' @ '+new Date(s.timestamp*1000).toLocaleTimeString();
+  // Alert sound if new
+  if(s.should_alert && s.id!==lastAlertId && s.type!=='HOLD'){
+    if(lastAlertId!==null){playAlertSound(s.type);}
+    lastAlertId=s.id;
+  } else if(lastAlertId===null){lastAlertId=s.id;}
+}
+function renderAlerts(alerts){
+  const el=document.getElementById('alerts-list');
+  const statTotal=document.getElementById('stat-total');
+  const statBS=document.getElementById('stat-bs');
+  if(!alerts||alerts.length===0){el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:20px;text-align:center">No alerts yet — only important BUY/SELL signals show here, not every tick</div>';return;}
+  const buys=alerts.filter(a=>a.type==='BUY').length;
+  const sells=alerts.filter(a=>a.type==='SELL').length;
+  statTotal.textContent=alerts.length;
+  statBS.textContent=buys+' / '+sells;
+  el.innerHTML=alerts.map(a=>`
+    <div class="alert-item">
+      <div class="alert-badge ${a.type.toLowerCase()}">${a.type}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="mono" style="font-weight:800">$${a.price.toFixed(2)}</span><span class="mono" style="font-size:10px;color:var(--muted)">${a.confidence}% • RSI ${a.rsi}</span></div>
+        <div class="mono" style="font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.time_str} • ${a.reasons[0]||''}</div>
+      </div>
+      <div class="mono" style="font-size:9px;color:var(--muted)">${new Date(a.timestamp*1000).toLocaleTimeString()}</div>
+    </div>
+  `).join('');
+}
+function renderHistory(signals){
+  const el=document.getElementById('history-list');
+  if(!signals||signals.length===0){el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:20px;text-align:center">No history</div>';return;}
+  el.innerHTML=signals.map(s=>`
+    <div class="alert-item" style="opacity:${s.type==='HOLD'?0.6:1}">
+      <div class="alert-badge ${s.type.toLowerCase()}">${s.type}</div>
+      <div style="flex:1;min-width:0"><div class="mono" style="font-size:11px">$${s.price.toFixed(2)} • ${s.confidence}%</div><div class="mono" style="font-size:9px;color:var(--muted)">${s.time_str}</div></div>
+      <div class="mono" style="font-size:9px">${s.change_pct>0?'+':''}${s.change_pct}%</div>
+    </div>
+  `).join('');
+}
 let chartInit=false;
 function initChart(){
   if(chartInit)return;chartInit=true;
   const c=document.getElementById('oanda_chart');
   const isMobile=window.innerWidth<640;
-  chart=LightweightCharts.createChart(c,{layout:{background:{color:'#111113'},textColor:'#888'},grid:{vertLines:{color:'#1a1a1e'},horzLines:{color:'#1a1a1e'}},width:c.clientWidth,height:isMobile?Math.min(400,window.innerHeight*0.5):520,timeScale:{timeVisible:true,borderColor:'#222226',rightOffset:2},rightPriceScale:{borderColor:'#222226'},crosshair:{mode:1},handleScroll:{mouseWheel:true,touch:true},handleScale:{mouseWheel:true,pinch:true}});
+  chart=LightweightCharts.createChart(c,{layout:{background:{color:'#111113'},textColor:'#888'},grid:{vertLines:{color:'#1a1a1e'},horzLines:{color:'#1a1a1e'}},width:c.clientWidth,height:isMobile?Math.min(400,window.innerHeight*0.5):420,timeScale:{timeVisible:true,borderColor:'#222226',rightOffset:2},rightPriceScale:{borderColor:'#222226'},crosshair:{mode:1},handleScroll:{mouseWheel:true,touch:true},handleScale:{mouseWheel:true,pinch:true}});
   candleSeries=chart.addCandlestickSeries({upColor:'#22c55e',downColor:'#ef4444',borderVisible:false,wickUpColor:'#22c55e',wickDownColor:'#ef4444'});
   const ro=new ResizeObserver(()=>{if(chart)chart.applyOptions({width:c.clientWidth})});ro.observe(c);
-  window.addEventListener('resize',()=>{if(chart){const m=window.innerWidth<640;chart.applyOptions({width:c.clientWidth,height:m?Math.min(400,window.innerHeight*0.5):520})}});
+  window.addEventListener('resize',()=>{if(chart){const m=window.innerWidth<640;chart.applyOptions({width:c.clientWidth,height:m?Math.min(400,window.innerHeight*0.5):420})}});
 }
 async function fetchLive(){
   if(!getToken())return;
@@ -351,10 +478,13 @@ async function fetchLive(){
     }
   }catch(e){}
 }
+// Init
+soundOn=localStorage.getItem('astra6_sound')!=='0';
+document.getElementById('sound-btn').textContent=soundOn?'🔔 Sound On':'🔕 Sound Off';
 checkAuth();
-// Auto resize on orientation change
 window.addEventListener('orientationchange',()=>{setTimeout(()=>{if(chart){const c=document.getElementById('oanda_chart');chart.applyOptions({width:c.clientWidth})}},300)});
-setInterval(()=>{if(getToken())fetchLive();},5000);
+setInterval(()=>{if(getToken()&&currentView==='signals')fetchLive();},5000);
+setInterval(()=>{if(getToken()&&currentView==='dashboard')fetchDashboard();},15000);
 </script>
 </body>
 </html>
