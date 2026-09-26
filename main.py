@@ -166,6 +166,7 @@ def create_user(email, password):
         return None, "Email too long"
     salt = secrets.token_hex(16)
     now = time.time()
+    is_admin_user = email.lower() == ADMIN_EMAIL.lower()
     users[email] = {
         "email": email,
         "salt": salt,
@@ -175,6 +176,8 @@ def create_user(email, password):
         "last_login": now,
         "login_count": 1,
         "is_active": True,
+        "approved": True if is_admin_user else False,
+        "is_admin": is_admin_user,
         "plan": "elite_70",
         "winrate_target": "70-76%"
     }
@@ -230,9 +233,40 @@ def get_current_user(authorization: str = Header(None)):
     d = get_token_data(authorization)
     return d["email"] if d else None
 
+ADMIN_EMAIL = "theoksovanrathanak@gmail.com"
+
+def is_admin(email):
+    return email and email.lower().strip() == ADMIN_EMAIL.lower()
+
 def require_auth(authorization: str = Header(None)):
     email = get_current_user(authorization)
     if not email: raise HTTPException(status_code=401, detail="Sign in required")
+    return email
+
+def require_admin(authorization: str = Header(None)):
+    email = get_current_user(authorization)
+    if not email: raise HTTPException(status_code=401, detail="Sign in required")
+    if not is_admin(email): raise HTTPException(status_code=403, detail="Admin only - theoksovanrathanak@gmail.com")
+    return email
+
+def require_approved_auth(authorization: str = Header(None)):
+    email = get_current_user(authorization)
+    if not email: raise HTTPException(status_code=401, detail="Sign in required")
+    # Admin always approved
+    if is_admin(email):
+        return email
+    users = load_users()
+    u = users.get(email.lower().strip())
+    if not u:
+        raise HTTPException(status_code=401, detail="User not found")
+    # If approved field missing, auto-approve existing users for backward compat
+    if "approved" not in u:
+        u["approved"] = True
+        save_users(users)
+    if not u.get("approved", False):
+        raise HTTPException(status_code=403, detail="Account pending admin approval - contact admin")
+    if not u.get("is_active", True):
+        raise HTTPException(status_code=403, detail="Account disabled")
     return email
 
 class AuthRequest(BaseModel):
@@ -964,7 +998,10 @@ def signup(req: AuthRequest):
     user, err = create_user(req.email, req.password)
     if err: raise HTTPException(status_code=400, detail=err)
     token, tdata = create_token(user["email"])
-    return {"status":"ok","email": user["email"], "token": token, "message":"Account created", "created": user["created"], "expires": tdata["expires"]}
+    approved = user.get("approved", False)
+    is_admin_user = is_admin(user["email"])
+    msg = "Account created - Admin access" if is_admin_user else ("Account created - Approved, access signals" if approved else "Account created - Pending admin approval, contact admin theoksovanrathanak@gmail.com")
+    return {"status":"ok","email": user["email"], "token": token, "message": msg, "created": user["created"], "expires": tdata["expires"], "approved": approved, "is_admin": is_admin_user}
 
 @app.post("/api/auth/signin")
 def signin(req: AuthRequest):
@@ -979,7 +1016,7 @@ def me(authorization: str = Header(None)):
     if not data: raise HTTPException(status_code=401, detail="Not authenticated")
     users = load_users()
     user = users.get(data["email"], {})
-    return {"status":"ok","email": data["email"], "created": user.get("created"), "expires": data.get("expires"), "token_created": data.get("created")}
+    return {"status":"ok","email": data["email"], "created": user.get("created"), "expires": data.get("expires"), "token_created": data.get("created"), "approved": user.get("approved", True), "is_admin": is_admin(data["email"]), "is_active": user.get("is_active", True)}
 
 @app.post("/api/auth/signout")
 def signout(authorization: str = Header(None)):
@@ -1008,9 +1045,84 @@ def list_contacts(authorization: str = Header(None)):
     contacts = load_contacts()
     return {"status":"ok","count": len(contacts), "contacts": contacts[-20:]}
 
+# ADMIN - only theoksovanrathanak@gmail.com
+@app.get("/api/admin/users")
+def admin_list_users(email: str = Depends(require_admin)):
+    users = load_users()
+    # Return all users with approval status
+    user_list = []
+    for u_email, u_data in users.items():
+        user_list.append({
+            "email": u_email,
+            "created": u_data.get("created_str", ""),
+            "created_ts": u_data.get("created", 0),
+            "last_login": u_data.get("last_login", 0),
+            "login_count": u_data.get("login_count", 0),
+            "is_active": u_data.get("is_active", True),
+            "approved": u_data.get("approved", True),
+            "is_admin": is_admin(u_email),
+            "plan": u_data.get("plan", "")
+        })
+    # Sort by created desc
+    user_list.sort(key=lambda x: x["created_ts"], reverse=True)
+    return {"status":"ok","admin": email, "count": len(user_list), "users": user_list}
+
+@app.post("/api/admin/approve")
+def admin_approve(req: dict, email: str = Depends(require_admin)):
+    target_email = req.get("email","").lower().strip()
+    if not target_email:
+        raise HTTPException(status_code=400, detail="Email required")
+    users = load_users()
+    if target_email not in users:
+        raise HTTPException(status_code=404, detail="User not found")
+    users[target_email]["approved"] = True
+    users[target_email]["is_active"] = True
+    save_users(users)
+    return {"status":"ok","message": f"Approved {target_email}", "admin": email}
+
+@app.post("/api/admin/reject")
+def admin_reject(req: dict, email: str = Depends(require_admin)):
+    target_email = req.get("email","").lower().strip()
+    if not target_email:
+        raise HTTPException(status_code=400, detail="Email required")
+    if is_admin(target_email):
+        raise HTTPException(status_code=400, detail="Cannot reject admin")
+    users = load_users()
+    if target_email not in users:
+        raise HTTPException(status_code=404, detail="User not found")
+    users[target_email]["approved"] = False
+    save_users(users)
+    return {"status":"ok","message": f"Rejected {target_email}", "admin": email}
+
+@app.post("/api/admin/disable")
+def admin_disable(req: dict, email: str = Depends(require_admin)):
+    target_email = req.get("email","").lower().strip()
+    if not target_email:
+        raise HTTPException(status_code=400, detail="Email required")
+    if is_admin(target_email):
+        raise HTTPException(status_code=400, detail="Cannot disable admin")
+    users = load_users()
+    if target_email not in users:
+        raise HTTPException(status_code=404, detail="User not found")
+    users[target_email]["is_active"] = False
+    save_users(users)
+    return {"status":"ok","message": f"Disabled {target_email}", "admin": email}
+
+@app.post("/api/admin/enable")
+def admin_enable(req: dict, email: str = Depends(require_admin)):
+    target_email = req.get("email","").lower().strip()
+    if not target_email:
+        raise HTTPException(status_code=400, detail="Email required")
+    users = load_users()
+    if target_email not in users:
+        raise HTTPException(status_code=404, detail="User not found")
+    users[target_email]["is_active"] = True
+    save_users(users)
+    return {"status":"ok","message": f"Enabled {target_email}", "admin": email}
+
 # HIGH WINRATE SIGNALS
 @app.get("/api/signals/current")
-def signals_current(email: str = Depends(require_auth)):
+def signals_current(email: str = Depends(require_approved_auth)):
     # V5.3 Scan EVERY timeframe not only M15 - M1 M5 M15 M30 H1
     m1 = fetch_candles("M1", 100)
     m5 = fetch_candles("M5", 100)
@@ -1070,12 +1182,12 @@ def signals_current(email: str = Depends(require_auth)):
     return {"status":"ok","signal": sig, "user": email}
 
 @app.get("/api/signals/history")
-def signals_history(limit: int = 20, email: str = Depends(require_auth)):
+def signals_history(limit: int = 20, email: str = Depends(require_approved_auth)):
     signals = load_signals()
     return {"status":"ok","count": len(signals), "signals": list(reversed(signals[-limit:])), "user": email}
 
 @app.get("/api/signals/alerts")
-def signals_alerts(limit: int = 10, email: str = Depends(require_auth)):
+def signals_alerts(limit: int = 10, email: str = Depends(require_approved_auth)):
     signals = load_signals()
     alerts = [s for s in signals if s.get('should_alert') and s['type'] != 'HOLD']
     if not alerts:
@@ -1083,7 +1195,7 @@ def signals_alerts(limit: int = 10, email: str = Depends(require_auth)):
     return {"status":"ok","count": len(alerts), "alerts": list(reversed(alerts[-limit:])), "user": email, "strategy": "High Winrate Elite 70%+"}
 
 @app.get("/api/signals/backtest")
-def signals_backtest(lookback: int = 500, forward_bars: int = 20, email: str = Depends(require_auth)):
+def signals_backtest(lookback: int = 500, forward_bars: int = 20, email: str = Depends(require_approved_auth)):
     """Real backtest to prove winrate - uses historical candles"""
     m15_result = fetch_candles("M15", min(lookback+100, 1000))
     h1_result = fetch_candles("H1", 300)
@@ -1097,7 +1209,7 @@ def signals_backtest(lookback: int = 500, forward_bars: int = 20, email: str = D
     return {"status":"ok", **result}
 
 @app.get("/api/signals/winrate")
-def signals_winrate(email: str = Depends(require_auth)):
+def signals_winrate(email: str = Depends(require_approved_auth)):
     """Real winrate from stored signals with outcome evaluation"""
     signals = load_signals()
     if len(signals) < 2:

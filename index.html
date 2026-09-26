@@ -120,6 +120,7 @@ body.light-mode .lock-card{background:#ffffff}
     <div class="nav-item active" data-view="dashboard" id="nav-dashboard"><span class="ico">🎯</span><span class="hide-m">Dashboard</span></div>
     <div class="nav-item" data-view="signals" id="nav-signals"><span class="ico">📈</span><span class="hide-m">Chart</span></div>
     <div class="nav-item" data-view="account" id="nav-account"><span class="ico">👤</span><span class="hide-m">Account</span></div>
+    <div class="nav-item" data-view="admin" id="nav-admin" style="display:none"><span class="ico">👑</span><span class="hide-m">Admin</span></div>
     <div class="nav-item" data-view="signin" id="nav-signin"><span class="ico">🔐</span><span class="hide-m">Sign In</span></div>
     <div class="nav-item" data-view="signup" id="nav-signup"><span class="ico">📝</span><span class="hide-m">Sign Up</span></div>
     <div class="nav-item" data-view="contact" id="nav-contact"><span class="ico">📞</span><span class="hide-m">Contact</span></div>
@@ -146,6 +147,7 @@ body.light-mode .lock-card{background:#ffffff}
         <button class="btn active" data-switch="dashboard" id="sw-dashboard" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Dashboard</button>
         <button class="btn" data-switch="signals" id="sw-signals" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Chart</button>
         <button class="btn" data-switch="account" id="sw-account" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Account</button>
+        <button class="btn" data-switch="admin" id="sw-admin" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px;background:#000;color:#fff;display:none">👑 Admin - Users</button>
         <button class="btn" data-switch="signin" id="sw-signin" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Sign In</button>
         <button class="btn" data-switch="signup" id="sw-signup" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Sign Up</button>
         <button class="btn" data-switch="contact" id="sw-contact" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Contact</button>
@@ -249,6 +251,26 @@ body.light-mode .lock-card{background:#ffffff}
           <a href="https://t.me/ASTRA6RENDER" target="_blank" style="display:block;color:var(--gold);font-weight:900;font-size:16px;text-decoration:none;margin-top:10px" class="mono">@ASTRA6RENDER</a>
           <div style="font-size:11px;color:var(--muted);margin-top:6px">Scan QR • Telegram only • All devices</div>
           <a href="https://t.me/ASTRA6RENDER" target="_blank" class="btn btn-gold btn-full" style="margin-top:16px;text-decoration:none;padding:12px">Open Telegram</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="view-admin">
+      <div style="max-width:800px">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+            <div style="font-weight:900;font-size:16px">👑 Admin - User Control • theoksovanrathanak@gmail.com</div>
+            <button class="btn" id="btn-admin-refresh">🔄 Refresh Users</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Only you can see all users. Approve new signups to let them access signals.</div>
+          <div id="admin-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+            <div style="background:#000;color:#fff;padding:12px;border-radius:10px;text-align:center"><div class="label" style="color:#fff">Total Users</div><div class="mono" id="admin-total" style="font-size:20px;font-weight:900">0</div></div>
+            <div style="background:#fff;border:2px solid #000;padding:12px;border-radius:10px;text-align:center"><div class="label">Approved</div><div class="mono" id="admin-approved" style="font-size:20px;font-weight:900">0</div></div>
+            <div style="background:#fff;border:2px solid #000;padding:12px;border-radius:10px;text-align:center"><div class="label">Pending</div><div class="mono" id="admin-pending" style="font-size:20px;font-weight:900">0</div></div>
+          </div>
+          <div id="admin-users-list" style="max-height:600px;overflow-y:auto">
+            <div style="padding:20px;text-align:center;color:var(--muted)">Loading users...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -373,17 +395,37 @@ async function checkAuth(){
     if(!r.ok)throw new Error('network');
     const d=await r.json();
     const ue=document.getElementById('user-email');if(ue)ue.textContent=d.email;
+    // Admin check - theoksovanrathanak@gmail.com
+    const isAdmin = d.is_admin || d.email.toLowerCase() === 'theoksovanrathanak@gmail.com';
+    const isApproved = d.approved !== false;
+    // Show admin button only for admin
+    const adminBtn=document.getElementById('sw-admin');
+    const adminNav=document.getElementById('nav-admin');
+    if(adminBtn)adminBtn.style.display=isAdmin?'flex':'none';
+    if(adminNav)adminNav.style.display=isAdmin?'flex':'none';
+    // If not approved, show pending message
+    if(!isApproved && !isAdmin){
+      if(lock){
+        lock.style.display='flex';
+        lock.innerHTML=`<div class="lock-card"><div style="font-size:32px;margin-bottom:10px">⏳</div><div style="font-weight:900;font-size:16px;margin-bottom:6px">Pending Approval</div><div style="font-size:12px;color:var(--muted);margin-bottom:12px">Your account is pending admin approval.<br>Contact admin: theoksovanrathanak@gmail.com</div><button class="btn" onclick="signOut()">Sign Out</button></div>`;
+      }
+      return false;
+    }
     if(userBox)userBox.classList.add('show');
     if(guestBox)guestBox.style.display='none';
     if(lock)lock.style.display='none';
     if(dashLock)dashLock.style.display='none';
     const si=document.getElementById('nav-signin');if(si)si.style.display='none';
     const su=document.getElementById('nav-signup');if(su)su.style.display='none';
+    // Store admin status
+    localStorage.setItem('astra6_is_admin', isAdmin ? '1' : '0');
+    localStorage.setItem('astra6_approved', isApproved ? '1' : '0');
     initChart();
     fetchLive();
     fetchFastPrice();
     fetchDashboard();
     fetchChart(currentTF);
+    if(isAdmin)fetchAdminUsers();
     return true;
   }catch(e){
     // Network error - DO NOT logout, keep session, retry later
@@ -407,10 +449,96 @@ async function loadAccount(){
   try{
     const r=await fetch('/api/auth/me',{headers:authHeaders()});if(!r.ok)throw new Error();const d=await r.json();
     if(guest)guest.style.display='none';if(user)user.style.display='block';
-    const ae=document.getElementById('acc-email');if(ae)ae.textContent=d.email;
+    const ae=document.getElementById('acc-email');if(ae)ae.textContent=d.email + (d.is_admin?' 👑 ADMIN':'') + (d.approved===false?' ⏳ PENDING':' ✅ APPROVED');
     const ac=document.getElementById('acc-created');if(ac)ac.textContent=d.created?new Date(d.created*1000).toLocaleString():'-';
     const aex=document.getElementById('acc-expires');if(aex)aex.textContent=d.expires?new Date(d.expires*1000).toLocaleString():'-';
   }catch(e){if(guest)guest.style.display='block';if(user)user.style.display='none';}
+}
+
+// ADMIN - only theoksovanrathanak@gmail.com can see all users
+async function fetchAdminUsers(){
+  try{
+    const r=await fetch('/api/admin/users',{headers:authHeaders()});
+    if(!r.ok){
+      if(r.status===403)throw new Error('Not admin');
+      throw new Error('Failed to fetch users');
+    }
+    const d=await r.json();
+    const totalEl=document.getElementById('admin-total');
+    const approvedEl=document.getElementById('admin-approved');
+    const pendingEl=document.getElementById('admin-pending');
+    const listEl=document.getElementById('admin-users-list');
+    if(totalEl)totalEl.textContent=d.count;
+    const approved=d.users.filter(u=>u.approved).length;
+    const pending=d.users.filter(u=>!u.approved).length;
+    if(approvedEl)approvedEl.textContent=approved;
+    if(pendingEl)pendingEl.textContent=pending;
+    if(!listEl)return;
+    if(d.users.length===0){
+      listEl.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">No users yet</div>';
+      return;
+    }
+    listEl.innerHTML=d.users.map(u=>{
+      const isAdminUser=u.is_admin || u.email.toLowerCase()==='theoksovanrathanak@gmail.com';
+      const status = !u.is_active ? '❌ DISABLED' : u.approved ? '✅ APPROVED' : '⏳ PENDING';
+      const bg = !u.is_active ? '#fee' : u.approved ? '#efe' : '#ffe';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #000;border-radius:10px;margin-bottom:8px;background:${bg};flex-wrap:wrap;gap:8px">
+        <div style="flex:1;min-width:200px">
+          <div style="font-weight:900;font-size:13px;word-break:break-all">${u.email} ${isAdminUser?'👑':''}</div>
+          <div style="font-size:10px;color:#666" class="mono">${u.created} • Logins: ${u.login_count} • ${status}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${!isAdminUser ? `
+            ${!u.approved ? `<button class="btn" style="background:#000;color:#fff;font-size:11px;padding:6px 12px" onclick="adminApprove('${u.email}')">✅ Approve</button>` : `<button class="btn" style="font-size:11px;padding:6px 12px" onclick="adminReject('${u.email}')">⏸️ Reject</button>`}
+            ${u.is_active ? `<button class="btn" style="font-size:11px;padding:6px 12px" onclick="adminDisable('${u.email}')">❌ Disable</button>` : `<button class="btn" style="background:#000;color:#fff;font-size:11px;padding:6px 12px" onclick="adminEnable('${u.email}')">✅ Enable</button>`}
+          ` : '<div style="font-size:11px;font-weight:900">ADMIN</div>'}
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    console.log('admin fetch error',e);
+    const listEl=document.getElementById('admin-users-list');
+    if(listEl)listEl.innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted)">Error: ${e.message}<br>Only admin theoksovanrathanak@gmail.com can access</div>`;
+  }
+}
+async function adminApprove(email){
+  if(!confirm(`Approve ${email} to access signals?`))return;
+  try{
+    const r=await fetch('/api/admin/approve',{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||'Failed');
+    alert(d.message);
+    fetchAdminUsers();
+  }catch(e){alert('Error: '+e.message);}
+}
+async function adminReject(email){
+  if(!confirm(`Reject ${email} - will block signals?`))return;
+  try{
+    const r=await fetch('/api/admin/reject',{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||'Failed');
+    alert(d.message);
+    fetchAdminUsers();
+  }catch(e){alert('Error: '+e.message);}
+}
+async function adminDisable(email){
+  if(!confirm(`Disable ${email}?`))return;
+  try{
+    const r=await fetch('/api/admin/disable',{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||'Failed');
+    alert(d.message);
+    fetchAdminUsers();
+  }catch(e){alert('Error: '+e.message);}
+}
+async function adminEnable(email){
+  try{
+    const r=await fetch('/api/admin/enable',{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||'Failed');
+    alert(d.message);
+    fetchAdminUsers();
+  }catch(e){alert('Error: '+e.message);}
 }
 
 function toggleSound(){soundOn=!soundOn;const b=document.getElementById('sound-btn');if(b)b.textContent=soundOn?'🔔':'🔕';localStorage.setItem('astra6_sound',soundOn?'1':'0');}
@@ -1003,9 +1131,11 @@ function initClicks(){
   bind('sw-dashboard',()=>showView('dashboard'));
   bind('sw-signals',()=>showView('signals'));
   bind('sw-account',()=>showView('account'));
+  bind('sw-admin',()=>{showView('admin');fetchAdminUsers();});
   bind('sw-contact',()=>showView('contact'));
   bind('sw-signin',()=>openAuth('signin'));
   bind('sw-signup',()=>openAuth('signup'));
+  bind('btn-admin-refresh',()=>fetchAdminUsers());
   bind('tab-signin',()=>switchTab('signin'));
   bind('tab-signup',()=>switchTab('signup'));
   bind('auth-submit',()=>submitAuth());
