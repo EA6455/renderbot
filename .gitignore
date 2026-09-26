@@ -3,8 +3,7 @@ __pycache__/
 .env
 .venv/
 venv/
-tokens.json
 signals.json
 contacts.json
-# users.json is kept for persistence but contains only hashed passwords
+# users.json and tokens.json are kept for persistence on free plan (hashed passwords, tokens)
 # For production, use Postgres disk

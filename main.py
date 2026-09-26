@@ -47,30 +47,30 @@ def save_json_file(p, data):
         tmp.write_text(json.dumps(data, indent=2))
         tmp.replace(p)
         print(f"Saved {p} {len(data) if isinstance(data, (dict,list)) else 'ok'}")
-        # Persist users.json to GitHub for free plan ephemeral FS fix
-        if p.name == "users.json":
+        # Persist users.json and tokens.json to GitHub for free plan ephemeral FS fix
+        if p.name in ("users.json", "tokens.json"):
             try:
                 import threading
-                def backup_users():
+                def backup_file():
                     try:
                         import subprocess, os
                         token = os.getenv("GITHUB_TOKEN")
                         if not token:
                             return
-                        if not Path("users.json").exists():
+                        if not Path(p.name).exists():
                             return
                         subprocess.run(["git","config","user.email","astra@render.bot"], capture_output=True, timeout=5)
                         subprocess.run(["git","config","user.name","ASTRA6 Bot"], capture_output=True, timeout=5)
-                        subprocess.run(["git","add","users.json"], capture_output=True, timeout=5)
+                        subprocess.run(["git","add",p.name], capture_output=True, timeout=5)
                         result = subprocess.run(["git","diff","--cached","--quiet"], capture_output=True, timeout=5)
                         if result.returncode != 0:
-                            subprocess.run(["git","commit","-m",f"Persist users {len(data)} accounts"], capture_output=True, timeout=5)
+                            subprocess.run(["git","commit","-m",f"Persist {p.name} {len(data)} entries"], capture_output=True, timeout=5)
                             remote_url = f"https://{token}@github.com/EA6455/renderbot.git"
                             subprocess.run(["git","push",remote_url,"HEAD:main"], capture_output=True, timeout=10)
-                            print(f"✅ Backed up users.json {len(data)} users")
+                            print(f"✅ Backed up {p.name} {len(data)} entries")
                     except Exception as e:
-                        print(f"Backup users error {e}")
-                threading.Thread(target=backup_users, daemon=True).start()
+                        print(f"Backup {p.name} error {e}")
+                threading.Thread(target=backup_file, daemon=True).start()
             except Exception as e:
                 print(f"Backup thread error {e}")
     except Exception as e:
