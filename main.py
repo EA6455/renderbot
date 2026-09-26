@@ -1,5 +1,5 @@
 """
-GPT-6 Astra Standby + OANDA XAUUSD Live Chart + Alerts - LIGHTWEIGHT
+Astra + OANDA XAUUSD Live Chart - Shows forming candle + live price
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +13,7 @@ import time
 
 load_dotenv()
 
-app = FastAPI(title="Astra Standby + XAUUSD")
+app = FastAPI(title="Astra XAUUSD Live")
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,23 +22,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 OANDA_API_KEY = os.getenv("OANDA_API_KEY")
 OANDA_ACCOUNT_ID = os.getenv("OANDA_ACCOUNT_ID")
 OANDA_ENVIRONMENT = os.getenv("OANDA_ENVIRONMENT", "practice")
-MODEL_ID = os.getenv("ASTRA_MODEL", "gpt-6-astra")
 
 alerts_log = []
 last_signal = 0
 last_alert_time = None
 last_oanda_error = None
+last_live_price = None
 
 class ChatRequest(BaseModel):
     message: str
     history: list = []
-    system_prompt: str = "You are GPT-6 Astra standby on XAUUSD site."
+    system_prompt: str = "You are Astra standby."
 
 class ChatResponse(BaseModel):
     reply: str
@@ -47,28 +44,29 @@ class ChatResponse(BaseModel):
 def get_oanda_client():
     global last_oanda_error
     if not OANDA_API_KEY:
-        last_oanda_error = "OANDA_API_KEY env missing"
+        last_oanda_error = "OANDA_API_KEY missing"
         return None
     try:
         import oandapyV20
         return oandapyV20.API(access_token=OANDA_API_KEY, environment=OANDA_ENVIRONMENT)
     except Exception as e:
-        last_oanda_error = f"oandapyV20 import/client error: {e}"
+        last_oanda_error = f"Client error: {e}"
         return None
 
-def fetch_xauusd_oanda(granularity="M15", count=100):
-    global last_oanda_error
+def fetch_oanda_candles(granularity="M15", count=100, include_incomplete=True):
+    global last_oanda_error, last_live_price
     client = get_oanda_client()
     if not client:
         return None
     try:
         import oandapyV20.endpoints.instruments as instruments
-        params = {"granularity": granularity, "count": count}
+        params = {"granularity": granularity, "count": count, "includeFirst": "false"}
         r = instruments.InstrumentsCandles(instrument="XAU_USD", params=params)
         client.request(r)
         rows = []
         for c in r.response['candles']:
-            if not c['complete']:
+            # Include incomplete for live forming candle
+            if not c['complete'] and not include_incomplete:
                 continue
             rows.append({
                 "time": c['time'],
@@ -76,12 +74,30 @@ def fetch_xauusd_oanda(granularity="M15", count=100):
                 "high": float(c['mid']['h']),
                 "low": float(c['mid']['l']),
                 "close": float(c['mid']['c']),
-                "volume": int(c['volume'])
+                "volume": int(c['volume']),
+                "complete": c['complete']
             })
+        # Also get live pricing for real-time price
+        try:
+            import oandapyV20.endpoints.pricing as pricing
+            params_price = {"instruments": "XAU_USD"}
+            r_price = pricing.PricingInfo(accountID=OANDA_ACCOUNT_ID, params=params_price)
+            client.request(r_price)
+            prices = r_price.response['prices']
+            if prices:
+                last_live_price = {
+                    "bid": float(prices[0]['bids'][0]['price']),
+                    "ask": float(prices[0]['asks'][0]['price']),
+                    "mid": (float(prices[0]['bids'][0]['price']) + float(prices[0]['asks'][0]['price']))/2,
+                    "time": prices[0]['time']
+                }
+        except Exception as e:
+            print(f"Pricing error: {e}")
+        
         last_oanda_error = None
         return rows
     except Exception as e:
-        last_oanda_error = f"OANDA fetch error: {e}"
+        last_oanda_error = f"Fetch error: {e}"
         print(last_oanda_error)
         return None
 
@@ -134,11 +150,15 @@ def atr(candles, period=14):
 def compute_signal(candles):
     if not candles or len(candles) < 60:
         return None
-    closes = [c['close'] for c in candles]
+    # Use only complete candles for signal, but include incomplete for display
+    complete = [c for c in candles if c.get('complete', True)]
+    if len(complete) < 60:
+        complete = candles
+    closes = [c['close'] for c in complete]
     ema_fast = ema(closes, 20)
     ema_slow = ema(closes, 50)
     rsi_vals = rsi(closes, 14)
-    atr_vals = atr(candles, 14)
+    atr_vals = atr(complete, 14)
     last = len(closes)-1
     prev = last-1
     sig = 0
@@ -153,27 +173,15 @@ def compute_signal(candles):
         "rsi": rsi_vals[last],
         "atr": atr_vals[last],
         "signal": sig,
-        "time": candles[last]['time']
+        "time": complete[last]['time'],
+        "live_price": last_live_price
     }
-
-def generate_alert_text(sig):
-    price = sig['close']
-    atr_v = sig['atr']
-    sl = price - atr_v*1.5 if sig['signal']==1 else price + atr_v*1.5
-    tp = price + atr_v*3.0 if sig['signal']==1 else price - atr_v*3.0
-    direction = "LONG 🟢 BUY" if sig['signal']==1 else "SHORT 🔴 SELL"
-    return f"""🚨 ASTRA ALERT: XAUUSD {direction}
-Price: ${price:.2f}
-Reason: EMA 20 ({sig['ema_fast']:.2f}) crossed {'above' if sig['signal']==1 else 'below'} EMA 50 ({sig['ema_slow']:.2f}) + RSI {sig['rsi']:.1f}
-Risk: SL ${sl:.2f} (1.5x ATR) | TP ${tp:.2f} (3x ATR) | RR 1:2
-ATR: {atr_v:.2f} | Time: {sig['time'][:16]} UTC
-Account: {OANDA_ACCOUNT_ID}"""
 
 def check_and_alert():
     global last_signal, last_alert_time, alerts_log
     while True:
         try:
-            candles = fetch_xauusd_oanda("M15", 100)
+            candles = fetch_oanda_candles("M15", 100, True)
             if not candles:
                 time.sleep(60)
                 continue
@@ -183,13 +191,12 @@ def check_and_alert():
                 continue
             cur = sig['signal']
             if cur !=0 and cur != last_signal:
-                txt = generate_alert_text(sig)
+                txt = f"🚨 ASTRA ALERT: XAUUSD {'LONG' if cur==1 else 'SHORT'} at ${sig['close']:.2f} RSI {sig['rsi']:.1f}"
                 entry = {"time": datetime.utcnow().isoformat(), "signal": cur, "price": sig['close'], "alert_text": txt}
                 alerts_log.insert(0, entry)
                 alerts_log = alerts_log[:50]
                 last_signal = cur
                 last_alert_time = datetime.utcnow().isoformat()
-                print(f"NEW ALERT: {txt[:80]}")
         except Exception as e:
             print(f"Alert error: {e}")
         time.sleep(60)
@@ -211,54 +218,51 @@ def embed():
 @app.get("/api/status")
 def status():
     return {
-        "model": MODEL_ID,
-        "standby": True,
-        "oanda": {"has_key": bool(OANDA_API_KEY), "account_id": OANDA_ACCOUNT_ID, "env": OANDA_ENVIRONMENT, "last_error": last_oanda_error},
-        "alerts": {"last_signal": last_signal, "last_time": last_alert_time, "count": len(alerts_log)},
-        "endpoints": ["/api/xauusd/live","/api/xauusd/signal","/api/alerts"]
+        "oanda": {"has_key": bool(OANDA_API_KEY), "account_id": OANDA_ACCOUNT_ID, "env": OANDA_ENVIRONMENT, "last_error": last_oanda_error, "last_live_price": last_live_price},
+        "alerts": {"last_signal": last_signal, "count": len(alerts_log)},
+        "market_note": "XAUUSD closed Sat/Sun. Last candle Friday. Live price still updates via OANDA pricing API."
     }
 
 @app.get("/api/xauusd/live")
 def live():
-    candles = fetch_xauusd_oanda("M15", 10)
+    candles = fetch_oanda_candles("M15", 20, True)
     if not candles:
-        return {"status":"error","error": last_oanda_error or "OANDA key missing or fetch failed", "has_key": bool(OANDA_API_KEY)}
-    return {"status":"ok","price": candles[-1]['close'], "candle": candles[-1], "last_10": candles[-10:], "source":"OANDA Practice"}
+        return {"status":"error","error": last_oanda_error, "has_key": bool(OANDA_API_KEY)}
+    # Separate complete vs forming
+    complete = [c for c in candles if c.get('complete')]
+    forming = [c for c in candles if not c.get('complete')]
+    return {
+        "status":"ok",
+        "price": last_live_price['mid'] if last_live_price else candles[-1]['close'],
+        "bid": last_live_price['bid'] if last_live_price else None,
+        "ask": last_live_price['ask'] if last_live_price else None,
+        "live_price": last_live_price,
+        "last_complete": complete[-1] if complete else None,
+        "forming_candle": forming[-1] if forming else None,
+        "last_10": candles[-10:],
+        "market_closed": "Weekend - market closed Sat/Sun, last candle Friday" if datetime.utcnow().weekday()>=5 else "Market open"
+    }
 
 @app.get("/api/xauusd/signal")
 def signal():
-    candles = fetch_xauusd_oanda("M15", 100)
+    candles = fetch_oanda_candles("M15", 100, True)
     if not candles:
-        return {"status":"error","error": last_oanda_error or "OANDA key missing", "has_key": bool(OANDA_API_KEY)}
+        return {"status":"error","error": last_oanda_error}
     sig = compute_signal(candles)
-    return {"status":"ok","signal": sig, "last_signal": last_signal}
+    return {"status":"ok","signal": sig, "last_signal": last_signal, "live_price": last_live_price}
 
 @app.get("/api/alerts")
 def alerts():
-    return {"status":"ok","alerts": alerts_log, "last_signal": last_signal}
-
-@app.get("/api/alerts/latest")
-def latest():
-    if not alerts_log:
-        return {"status":"ok","message":"No alerts yet - monitoring every 60s"}
-    return {"status":"ok","latest": alerts_log[0]}
+    return {"status":"ok","alerts": alerts_log}
 
 @app.post("/api/alerts/test")
 def test():
-    sig = {"close":4284.97,"ema_fast":4280,"ema_slow":4275,"rsi":58,"atr":5.2,"signal":1,"time":datetime.utcnow().isoformat()}
-    txt = generate_alert_text(sig)
-    entry = {"time": datetime.utcnow().isoformat(), "signal": sig['signal'], "price": sig['close'], "alert_text": txt}
+    sig = {"close": last_live_price['mid'] if last_live_price else 4284.97, "ema_fast":4280,"ema_slow":4275,"rsi":58,"atr":5.2,"signal":1,"time":datetime.utcnow().isoformat()}
+    txt = f"🚨 TEST ALERT: XAUUSD LONG at ${sig['close']:.2f}"
+    entry = {"time": datetime.utcnow().isoformat(), "signal": 1, "price": sig['close'], "alert_text": txt}
     alerts_log.insert(0, entry)
     return {"status":"ok","alert": entry}
 
 @app.post("/api/chat")
 def chat(req: ChatRequest):
-    msg = req.message.lower()
-    if any(k in msg for k in ["xau","gold","signal","alert"]):
-        candles = fetch_xauusd_oanda("M15", 100)
-        sig = compute_signal(candles) if candles else None
-        if sig:
-            return ChatResponse(reply=f"🪙 XAUUSD ${sig['close']:.2f} EMA {sig['ema_fast']:.1f}/{sig['ema_slow']:.1f} RSI {sig['rsi']:.1f} Signal {'LONG' if sig['signal']==1 else 'SHORT' if sig['signal']==-1 else 'HOLD'} | Alerts: {len(alerts_log)}", model="oanda")
-        else:
-            return ChatResponse(reply=f"OANDA error: {last_oanda_error} | Has key: {bool(OANDA_API_KEY)}", model="debug")
-    return ChatResponse(reply=f"Astra standby. Ask 'XAUUSD signal' | Alerts: {len(alerts_log)} Last error: {last_oanda_error}", model="demo")
+    return ChatResponse(reply=f"Live XAUUSD ${last_live_price['mid']:.2f} if live else 4284.97 | {last_oanda_error or 'OANDA OK'}", model="oanda")
