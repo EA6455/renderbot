@@ -10,5 +10,17 @@
     "is_active": true,
     "plan": "elite_70",
     "winrate_target": "70-76%"
+  },
+  "livetest70b@astra6.com": {
+    "email": "livetest70b@astra6.com",
+    "salt": "ab1ca83c8a83dd447b1d8dcd037be799",
+    "hash": "c3cd3a3a4ffa32c883067f4fc831cb4ac8af01b73e574dcd63c9dc121d3a3014",
+    "created": 1790452916.5869567,
+    "created_str": "2026-09-26 20:01:56 UTC",
+    "last_login": 1790452916.5869567,
+    "login_count": 1,
+    "is_active": true,
+    "plan": "elite_70",
+    "winrate_target": "70-76%"
   }
 }
