@@ -285,6 +285,21 @@ body.light-mode .lock-card{background:#ffffff}
     <div class="error" id="auth-error"></div><div class="success" id="auth-success"></div>
     <input class="input" id="email" type="email" placeholder="Email"><input class="input" id="password" type="password" placeholder="Password (min 6 chars)">
     <button class="btn btn-gold btn-full" id="auth-submit" style="padding:13px;margin-top:4px">Sign In</button>
+    <div style="text-align:center;margin-top:12px">
+      <a href="#" id="link-forgot" style="font-size:12px;color:#000;text-decoration:underline">Forgot password?</a>
+    </div>
+    <!-- Forgot Password Section -->
+    <div id="forgot-section" style="display:none;margin-top:16px;border-top:2px solid #000;padding-top:16px">
+      <div style="font-weight:900;font-size:14px;margin-bottom:8px">Reset Password via Email</div>
+      <div style="font-size:11px;color:#666;margin-bottom:8px">Owner: astra6render@gmail.com - reset link sent to your email</div>
+      <input class="input" id="forgot-email" type="email" placeholder="Enter your email">
+      <button class="btn btn-full" id="btn-forgot-send" style="background:#000;color:#fff;margin-bottom:10px">📧 Send Reset Link</button>
+      <div style="font-size:11px;color:#666;margin:8px 0">Already have token?</div>
+      <input class="input" id="reset-token" type="text" placeholder="Paste reset token">
+      <input class="input" id="reset-new-password" type="password" placeholder="New password (min 6 chars)">
+      <button class="btn btn-gold btn-full" id="btn-reset-password">🔑 Change Password</button>
+      <div style="text-align:center;margin-top:10px"><a href="#" id="link-back-signin" style="font-size:12px;color:#000;text-decoration:underline">Back to Sign In</a></div>
+    </div>
   </div>
 </div>
 
@@ -350,6 +365,60 @@ async function submitAuth(){
     setToken(d.token,d.email);ok.textContent=d.message||'Success';ok.style.display='block';
     setTimeout(()=>{closeAuth();checkAuth();showView('dashboard');btn.textContent=orig;btn.disabled=false;},600);
   }catch(e){err.textContent=e.message;err.style.display='block';btn.textContent=orig;btn.disabled=false;}
+}
+
+function showForgot(){
+  document.getElementById('forgot-section').style.display='block';
+  document.getElementById('email').style.display='none';
+  document.getElementById('password').style.display='none';
+  document.getElementById('auth-submit').style.display='none';
+  document.getElementById('link-forgot').style.display='none';
+  document.getElementById('auth-title').textContent='Forgot Password';
+  // prefill forgot email
+  const e=document.getElementById('email').value;
+  if(e)document.getElementById('forgot-email').value=e;
+}
+function hideForgot(){
+  document.getElementById('forgot-section').style.display='none';
+  document.getElementById('email').style.display='block';
+  document.getElementById('password').style.display='block';
+  document.getElementById('auth-submit').style.display='block';
+  document.getElementById('link-forgot').style.display='block';
+  document.getElementById('auth-title').textContent=currentTab==='signin'?'Sign In':'Sign Up';
+}
+async function sendForgot(){
+  const email=document.getElementById('forgot-email').value.trim();
+  const err=document.getElementById('auth-error'), ok=document.getElementById('auth-success');
+  err.style.display='none';ok.style.display='none';
+  if(!email){err.textContent='Enter your email';err.style.display='block';return;}
+  const btn=document.getElementById('btn-forgot-send');const orig=btn.textContent;btn.textContent='Sending...';btn.disabled=true;
+  try{
+    const r=await fetch('/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||'Failed');
+    ok.textContent=d.message + (d.reset_token ? ` Token: ${d.reset_token} (copy this, no SMTP)` : ' Check your email');
+    ok.style.display='block';
+    if(d.reset_token){
+      document.getElementById('reset-token').value=d.reset_token;
+    }
+  }catch(e){err.textContent=e.message;err.style.display='block';}
+  btn.textContent=orig;btn.disabled=false;
+}
+async function resetPassword(){
+  const token=document.getElementById('reset-token').value.trim();
+  const newPass=document.getElementById('reset-new-password').value;
+  const err=document.getElementById('auth-error'), ok=document.getElementById('auth-success');
+  err.style.display='none';ok.style.display='none';
+  if(!token||!newPass){err.textContent='Token and new password required';err.style.display='block';return;}
+  if(newPass.length<6){err.textContent='Password min 6 chars';err.style.display='block';return;}
+  const btn=document.getElementById('btn-reset-password');const orig=btn.textContent;btn.textContent='Changing...';btn.disabled=true;
+  try{
+    const r=await fetch('/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,new_password:newPass})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||'Failed');
+    ok.textContent=d.message + ' - You can now Sign In';
+    ok.style.display='block';
+    setTimeout(()=>{hideForgot();},1500);
+  }catch(e){err.textContent=e.message;err.style.display='block';}
+  btn.textContent=orig;btn.disabled=false;
 }
 
 async function checkAuth(){
@@ -1124,6 +1193,10 @@ function initClicks(){
   bind('btn-acc-signout',()=>signOut());
   bind('btn-signout',()=>signOut());
   bind('btn-close-auth',()=>closeAuth());
+  bind('link-forgot',(e)=>{e.preventDefault();showForgot();});
+  bind('link-back-signin',(e)=>{e.preventDefault();hideForgot();});
+  bind('btn-forgot-send',()=>sendForgot());
+  bind('btn-reset-password',()=>resetPassword());
   bind('refresh-btn',()=>fetchDashboard());
   bind('sound-btn',()=>toggleSound());
   bind('theme-btn',()=>toggleTheme());
@@ -1169,6 +1242,16 @@ function initClicks(){
   const modal=document.getElementById('auth-modal');
   if(modal){
     modal.onclick=(e)=>{if(e.target===modal)closeAuth();};
+  }
+  // Check for reset token in URL ?reset=token
+  const urlParams=new URLSearchParams(window.location.search);
+  const resetToken=urlParams.get('reset');
+  if(resetToken){
+    openAuth('signin');
+    setTimeout(()=>{
+      showForgot();
+      document.getElementById('reset-token').value=resetToken;
+    },300);
   }
   console.log('ASTRA6 all devices + light/dark ready - clicks bound');
 }

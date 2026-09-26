@@ -29,6 +29,8 @@ USERS_FILE = Path("users.json")
 TOKENS_FILE = Path("tokens.json")
 CONTACTS_FILE = Path("contacts.json")
 SIGNALS_FILE = Path("signals.json")
+RESET_FILE = Path("reset_tokens.json")
+OWNER_EMAIL = "astra6render@gmail.com"
 
 def load_json_file(p, default):
     if not p.exists():
@@ -144,6 +146,8 @@ def load_contacts(): return load_json_file(CONTACTS_FILE, [])
 def save_contacts(c): save_json_file(CONTACTS_FILE, c)
 def load_signals(): return load_json_file(SIGNALS_FILE, [])
 def save_signals(s): save_json_file(SIGNALS_FILE, s[-300:])
+def load_resets(): return load_json_file(RESET_FILE, {})
+def save_resets(r): save_json_file(RESET_FILE, r)
 
 def hash_password(pw, salt): return hashlib.pbkdf2_hmac('sha256', pw.encode(), salt.encode(), 100000).hex()
 
@@ -1008,7 +1012,84 @@ def signin(req: AuthRequest):
     user = verify_user(req.email, req.password)
     if not user: raise HTTPException(status_code=401, detail="Invalid email or password")
     token, tdata = create_token(user["email"])
-    return {"status":"ok","email": user["email"], "token": token, "message":"Signed in", "created": user["created"], "expires": tdata["expires"]}
+    return {"status":"ok","email": user["email"], "token": token, "message":"Signed in", "created": user["created"], "expires": tdata["expires"], "approved": user.get("approved", True), "is_admin": is_admin(user["email"])}
+
+@app.post("/api/auth/forgot-password")
+def forgot_password(req: dict):
+    email = req.get("email","").lower().strip()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email required")
+    users = load_users()
+    if email not in users:
+        # Don't reveal if user exists - but for UX return ok
+        return {"status":"ok","message": f"If {email} exists, reset link sent to email via {OWNER_EMAIL}"}
+    # Generate reset token
+    reset_token = secrets.token_urlsafe(32)
+    resets = load_resets()
+    # Clean expired
+    now = time.time()
+    expired = [k for k,v in resets.items() if v.get("expires",0) < now]
+    for k in expired:
+        del resets[k]
+    resets[reset_token] = {"email": email, "created": now, "expires": now + 3600, "used": False}
+    save_resets(resets)
+    # Try to send email via SMTP if configured, else log
+    try:
+        import os, smtplib
+        from email.mime.text import MIMEText
+        smtp_host = os.getenv("SMTP_HOST")
+        smtp_user = os.getenv("SMTP_USER")
+        smtp_pass = os.getenv("SMTP_PASS")
+        if smtp_host and smtp_user and smtp_pass:
+            msg = MIMEText(f"ASTRA6 Password Reset\n\nEmail: {email}\nReset Token: {reset_token}\nExpires in 1 hour\n\nReset link: https://astra6.onrender.com/?reset={reset_token}\n\nIf you didn't request, ignore.\n\nFrom {OWNER_EMAIL}")
+            msg['Subject'] = 'ASTRA6 Password Reset'
+            msg['From'] = OWNER_EMAIL
+            msg['To'] = email
+            with smtplib.SMTP(smtp_host, 587) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_pass)
+                server.send_message(msg)
+            print(f"✅ Reset email sent to {email} via {OWNER_EMAIL}")
+        else:
+            print(f"📧 RESET TOKEN for {email}: {reset_token} - No SMTP configured, owner {OWNER_EMAIL}")
+    except Exception as e:
+        print(f"Email send error {e}, token {reset_token} for {email}")
+    # For demo, return token if no SMTP (so user can test), in production would not
+    return {"status":"ok","message": f"Reset link sent to {email} via {OWNER_EMAIL} - check email (expires 1h)", "reset_token": reset_token if not os.getenv("SMTP_HOST") else None, "email": email}
+
+@app.post("/api/auth/reset-password")
+def reset_password(req: dict):
+    token = req.get("token","").strip()
+    new_password = req.get("new_password","") or req.get("password","")
+    if not token or not new_password:
+        raise HTTPException(status_code=400, detail="Token and new password required")
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password min 6 chars")
+    resets = load_resets()
+    data = resets.get(token)
+    if not data:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+    if data.get("used"):
+        raise HTTPException(status_code=400, detail="Token already used")
+    if data["expires"] < time.time():
+        del resets[token]
+        save_resets(resets)
+        raise HTTPException(status_code=400, detail="Token expired")
+    email = data["email"]
+    users = load_users()
+    if email not in users:
+        raise HTTPException(status_code=404, detail="User not found")
+    # Update password
+    salt = secrets.token_hex(16)
+    users[email]["salt"] = salt
+    users[email]["hash"] = hash_password(new_password, salt)
+    users[email]["last_password_change"] = time.time()
+    save_users(users)
+    # Mark token used
+    resets[token]["used"] = True
+    save_resets(resets)
+    print(f"✅ Password reset for {email}")
+    return {"status":"ok","message": f"Password changed for {email} - you can now sign in"}
 
 @app.get("/api/auth/me")
 def me(authorization: str = Header(None)):
