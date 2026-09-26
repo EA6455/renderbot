@@ -993,14 +993,57 @@ def list_contacts(authorization: str = Header(None)):
 # HIGH WINRATE SIGNALS
 @app.get("/api/signals/current")
 def signals_current(email: str = Depends(require_auth)):
+    # V5.3 Scan EVERY timeframe not only M15 - M1 M5 M15 M30 H1
+    m1 = fetch_candles("M1", 100)
+    m5 = fetch_candles("M5", 100)
     m15 = fetch_candles("M15", 100)
+    m30 = fetch_candles("M30", 100)
     h1 = fetch_candles("H1", 100)
     if not m15: raise HTTPException(status_code=500, detail="OANDA M15 error")
     m15_candles, live_price = m15
+    m1_candles = m1[0] if m1 else []
+    m5_candles = m5[0] if m5 else []
+    m30_candles = m30[0] if m30 else []
     h1_candles = h1[0] if h1 else []
+    
+    # Scan every timeframe for signals
+    signals_found = []
+    timeframes = [
+        ("M1", m1_candles, m5_candles or m15_candles),
+        ("M5", m5_candles, h1_candles),
+        ("M15", m15_candles, h1_candles),
+        ("M30", m30_candles, h1_candles),
+        ("H1", h1_candles, h1_candles),
+    ]
+    for tf_name, tf_candles, htf_candles in timeframes:
+        if not tf_candles or len(tf_candles) < 30:
+            continue
+        try:
+            sig = elite_gold_sniper(tf_candles, htf_candles, live_price)
+            if sig and sig['type'] != 'HOLD':
+                sig['scanned_tf'] = tf_name
+                sig['timeframe'] = tf_name
+                signals_found.append(sig)
+        except Exception as e:
+            print(f"Scan {tf_name} error {e}")
+            continue
+    
+    # Pick best signal: highest confidence, prefer higher timeframe for big flow
+    if signals_found:
+        # Sort by confidence * timeframe weight (M15 and M30 higher weight for big flow)
+        tf_weight = {"M1": 0.8, "M5": 1.0, "M15": 1.3, "M30": 1.2, "H1": 1.1}
+        def score(s):
+            w = tf_weight.get(s.get('scanned_tf','M15'), 1.0)
+            return s.get('confidence',0) * w + s.get('confluence',0)*2
+        best = max(signals_found, key=score)
+        # If multiple same type, keep best
+        return {"status":"ok","signal": best, "all_signals": signals_found, "scanned": [tf for tf,_,_ in timeframes], "user": email}
+    
+    # No signal from any timeframe - return HOLD from M15
     sig = elite_gold_sniper(m15_candles, h1_candles, live_price)
     if not sig: raise HTTPException(status_code=500, detail="Signal failed")
-    return {"status":"ok","signal": sig, "user": email}
+    sig['scanned_tf'] = 'M15'
+    return {"status":"ok","signal": sig, "all_signals": [], "scanned": [tf for tf,_,_ in timeframes], "user": email}
 
 @app.get("/api/signals/history")
 def signals_history(limit: int = 20, email: str = Depends(require_auth)):
