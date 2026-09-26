@@ -31,7 +31,67 @@ CONTACTS_FILE = Path("contacts.json")
 SIGNALS_FILE = Path("signals.json")
 
 def load_json_file(p, default):
-    if not p.exists(): return default
+    if not p.exists():
+        try:
+            import subprocess, os
+            token = os.getenv("GITHUB_TOKEN")
+            if token:
+                subprocess.run(["git","fetch","origin","main"], capture_output=True, timeout=10)
+                subprocess.run(["git","checkout","origin/main","--",p.name], capture_output=True, timeout=5)
+                if p.exists():
+                    print(f"Restored {p} from GitHub")
+        except Exception as e:
+            print(f"Restore {p} error {e}")
+        if not p.exists():
+            return default
+    try: 
+        data = json.loads(p.read_text())
+        print(f"Loaded {p} {len(data) if isinstance(data, (dict,list)) else 'ok'}")
+        return data
+    except Exception as e:
+        print(f"Load {p} error {e}")
+        return default
+
+    try: 
+        data = json.loads(p.read_text())
+        print(f"Loaded {p} {len(data) if isinstance(data, (dict,list)) else 'ok'}")
+        return data
+    except Exception as e:
+        print(f"Load {p} error {e}")
+        return default
+
+    try: 
+        data = json.loads(p.read_text())
+        print(f"Loaded {p} {len(data) if isinstance(data, (dict,list)) else 'ok'}")
+        return data
+    except Exception as e:
+        print(f"Load {p} error {e}")
+        return default
+
+    try: 
+        data = json.loads(p.read_text())
+        print(f"Loaded {p} {len(data) if isinstance(data, (dict,list)) else 'ok'}")
+        return data
+    except Exception as e:
+        print(f"Load {p} error {e}")
+        return default
+
+    try: 
+        data = json.loads(p.read_text())
+        print(f"Loaded {p} {len(data) if isinstance(data, (dict,list)) else 'ok'}")
+        return data
+    except Exception as e:
+        print(f"Load {p} error {e}")
+        return default
+
+    try: 
+        data = json.loads(p.read_text())
+        print(f"Loaded {p} {len(data) if isinstance(data, (dict,list)) else 'ok'}")
+        return data
+    except Exception as e:
+        print(f"Load {p} error {e}")
+        return default
+
     try: 
         data = json.loads(p.read_text())
         print(f"Loaded {p} {len(data) if isinstance(data, (dict,list)) else 'ok'}")
@@ -146,7 +206,7 @@ def create_token(email):
     for k in expired:
         del tokens[k]
     token = secrets.token_urlsafe(32)
-    tokens[token] = {"email": email, "created": now, "expires": now + 30*24*3600, "created_str": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(now))}
+    tokens[token] = {"email": email, "created": now, "expires": now + 90*24*3600, "created_str": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(now))}
     save_tokens(tokens)
     print(f"✅ Token created for {email} total_tokens={len(tokens)}")
     return token, tokens[token]
@@ -547,37 +607,13 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
             else:
                 reasons_sell.append(f"Volume {vol_ratio:.1f}x - human confirmation")
                 filters_sell += 0.5
-    # 7. Session - human with Asian range trading
+    # 7. Session - human trades London/NY
     if session == "overlap":
-        buy_score += 0.8
-        sell_score += 0.8
-        reasons_buy.append(f"Overlap 13-17 UTC - best trend time")
-        reasons_sell.append(f"Overlap 13-17 UTC - best trend time")
-        filters_buy += 1
-        filters_sell += 1
-    elif session == "london":
-        buy_score += 0.6
-        sell_score += 0.6
-        reasons_buy.append(f"London 8-12 UTC - good vol")
-        reasons_sell.append(f"London 8-12 UTC - good vol")
-    elif session == "ny":
-        buy_score += 0.4
-        sell_score += 0.4
-    elif session == "asian":
-        # Asian time = range trading - mean reversion like people trade Asia
-        # In Asian, don't need trend, just support/resistance bounce + small TP
-        # Boost score if at support/resistance - perfect for range
-        if at_support:
-            buy_score += 1.5
-            reasons_buy.append(f"Asian range 0-7 UTC - buy support bounce like people")
-            filters_buy += 1
-        if at_resistance:
-            sell_score += 1.5
-            reasons_sell.append(f"Asian range 0-7 UTC - sell resistance bounce like people")
-            filters_sell += 1
-        # Asian: no trend penalty, range is king
-        # Keep scores as is, no 0.5x penalty anymore
-    else:  # quiet 23 UTC
+        buy_score += 0.5
+        sell_score += 0.5
+        reasons_buy.append(f"London-NY overlap - human best time")
+        reasons_sell.append(f"London-NY overlap - human best time")
+    elif session == "quiet":
         buy_score *= 0.5
         sell_score *= 0.5
     # --- HUMAN DECISION - perfect entries only, like people ---
@@ -590,15 +626,13 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
     has_level_sell = at_resistance
     has_pattern_buy = is_bullish_engulfing or is_hammer
     has_pattern_sell = is_bearish_engulfing or is_shooting_star
-    # Asian allows range trading even if trend is down, but need level+pattern
-    is_asian = session == "asian"
-    if buy_score >= 4.5 and filters_buy >= 2 and has_level_buy and has_pattern_buy and (market_trend != "down" or is_asian):
+    if buy_score >= 4.5 and filters_buy >= 2 and has_level_buy and has_pattern_buy and market_trend != "down":
         signal_type = "BUY"
         confluence = buy_score
         final_reasons = reasons_buy
         confidence = 78 + (confluence-5.5)*3
         confidence = max(80, min(96, confidence))
-    elif sell_score >= 4.5 and filters_sell >= 2 and has_level_sell and has_pattern_sell and (market_trend != "up" or is_asian):
+    elif sell_score >= 4.5 and filters_sell >= 2 and has_level_sell and has_pattern_sell and market_trend != "up":
         signal_type = "SELL"
         confluence = sell_score
         final_reasons = reasons_sell
@@ -610,26 +644,19 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
         confidence = 50 + confluence*2
         confidence = max(45, min(65, confidence))
         final_reasons = [f"No human setup - need trend+level+pattern (Buy {buy_score:.1f}/{filters_buy} sup:{at_support} pat:{has_pattern_buy} trend:{market_trend} Sell {sell_score:.1f}/{filters_sell} res:{at_resistance} pat:{has_pattern_sell})"]
-    # SL/TP human style: SL below support / above resistance
-    # Asian time smaller TP (range), other sessions normal
+    # SL/TP human style: SL below support / above resistance, TP 1:1.5
+    # Use swing levels for SL, not ATR (pure price action)
     if signal_type == "BUY":
         sl = swing_low * 0.998 if swing_low else price * 0.998  # below support
+        # TP = 1.5x risk
         risk = price - sl
-        if session == "asian":
-            tp1 = price + risk*0.4  # Asian range small TP
-            tp2 = price + risk*0.8
-        else:
-            tp1 = price + risk*0.5
-            tp2 = price + risk*1.0
+        tp1 = price + risk*0.5
+        tp2 = price + risk*1.0
     elif signal_type == "SELL":
         sl = swing_high * 1.002 if swing_high else price * 1.002  # above resistance
         risk = sl - price
-        if session == "asian":
-            tp1 = price - risk*0.4
-            tp2 = price - risk*0.8
-        else:
-            tp1 = price - risk*0.5
-            tp2 = price - risk*1.0
+        tp1 = price - risk*0.5
+        tp2 = price - risk*1.0
     else:
         sl = tp1 = tp2 = None
     if confluence >= 7.5:
