@@ -41,8 +41,13 @@ body.light-mode .lock-card{background:#ffffff}
 .btn-full{width:100%}
 .main-wrap{flex:1;margin-left:220px;display:flex;flex-direction:column;min-height:100vh}
 .topbar{min-height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:10px 16px;gap:12px;position:sticky;top:0;z-index:10}
-.price-main{font-size:22px;font-weight:900}
-.bidask{font-size:11px;background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.2);padding:5px 12px;border-radius:20px;color:var(--gold);font-family:monospace}
+.price-main{font-size:22px;font-weight:900;transition:all 0.3s ease;min-width:90px}
+.price-main.up{color:var(--green);transform:scale(1.05)}
+.price-main.down{color:var(--red);transform:scale(0.95)}
+.price-main.flash{animation:priceFlash 0.6s ease}
+@keyframes priceFlash{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+.bidask{font-size:11px;background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.2);padding:5px 12px;border-radius:20px;color:var(--gold);font-family:monospace;transition:all 0.3s}
+.time-smooth{font-variant-numeric:tabular-nums;letter-spacing:0.5px}
 .content{flex:1;padding:16px;max-width:1200px;width:100%;margin:0 auto}
 .view{display:none}
 .view.active{display:block}
@@ -497,10 +502,11 @@ function createChart(){
     if(chart)return;
     c.innerHTML='';
     const isMobile=window.innerWidth<640;
-    chart=LightweightCharts.createChart(c,{layout:{background:{color:'#111113'},textColor:'#888'},grid:{vertLines:{color:'#1a1a1e'},horzLines:{color:'#1a1a1e'}},width:c.clientWidth,height:isMobile?360:400,timeScale:{timeVisible:true,borderColor:'#222226'},rightPriceScale:{borderColor:'#222226'}});
+    const isLight=document.body.classList.contains('light-mode');
+    chart=LightweightCharts.createChart(c,{layout:{background:{color:isLight?'#ffffff':'#111113'},textColor:'#888'},grid:{vertLines:{color:isLight?'#e0e0e6':'#1a1a1e'},horzLines:{color:isLight?'#e0e0e6':'#1a1a1e'}},width:c.clientWidth,height:isMobile?360:400,timeScale:{timeVisible:true,borderColor:'#222226'},rightPriceScale:{borderColor:'#222226'}});
     candleSeries=chart.addCandlestickSeries({upColor:'#22c55e',downColor:'#ef4444',borderVisible:false,wickUpColor:'#22c55e',wickDownColor:'#ef4444'});
     const ro=new ResizeObserver(()=>{if(chart)chart.applyOptions({width:c.clientWidth})});ro.observe(c);
-    console.log('chart created');
+    console.log('chart created smooth');
   }catch(e){console.log('createChart err',e);}
 }
 
@@ -527,11 +533,12 @@ async function fetchChart(tf){
         lastCandles=data;
       }
       const cc=document.getElementById('chart-candle-count');
-      if(cc)cc.textContent=`${d.candles.length} candles • ${tf} • ${d.from.substring(0,10)} → ${d.to.substring(0,10)} • All devices`;
+      if(cc)cc.textContent=`${d.candles.length} candles • ${tf} • ${d.from.substring(0,10)} → ${d.to.substring(0,10)} • Smooth • All devices`;
     }
   }catch(e){console.log('chart fetch err',e);}
 }
 
+let lastPrice=0;
 async function fetchLive(){
   if(!getToken())return;
   try{
@@ -539,11 +546,57 @@ async function fetchLive(){
     if(r.status===401){checkAuth();return;}
     const d=await r.json();
     if(d.status==='ok'){
-      const pr=document.getElementById('price');if(pr)pr.textContent='$'+d.price.toFixed(2);
-      if(d.live_price){const ba=document.getElementById('bidask');if(ba)ba.textContent=`BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)}`;}
-      const lt=document.getElementById('live-time');if(lt)lt.textContent=new Date().toLocaleTimeString();
+      const priceEl=document.getElementById('price');
+      const newPrice=d.price;
+      if(priceEl){
+        if(lastPrice!==0){
+          if(newPrice>lastPrice){
+            priceEl.className='price-main up flash';
+            setTimeout(()=>{if(priceEl)priceEl.className='price-main';},600);
+          } else if(newPrice<lastPrice){
+            priceEl.className='price-main down flash';
+            setTimeout(()=>{if(priceEl)priceEl.className='price-main';},600);
+          }
+        }
+        priceEl.textContent='$'+newPrice.toFixed(2);
+      }
+      lastPrice=newPrice;
+      if(d.live_price){
+        const ba=document.getElementById('bidask');
+        if(ba){
+          const spread=(d.live_price.ask - d.live_price.bid).toFixed(2);
+          ba.textContent=`BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)} • Spread ${spread}`;
+        }
+      }
+      // Update time smoothly
+      updateTimeSmooth();
     }
-  }catch(e){}
+  }catch(e){console.log('fetchLive err',e);}
+}
+
+function updateTimeSmooth(){
+  const lt=document.getElementById('live-time');
+  if(lt){
+    const now=new Date();
+    const timeStr=now.toLocaleTimeString('en-US',{hour12:false});
+    const dateStr=now.toLocaleDateString();
+    lt.textContent=timeStr+' • '+dateStr;
+    lt.className='mono hide-m time-smooth';
+  }
+  const ms=document.getElementById('market-status');
+  if(ms){
+    const now=new Date();
+    const day=now.getUTCDay();
+    const utcHour=now.getUTCHours();
+    const isWeekend = (day===6 && utcHour>=22) || (day===0 && utcHour<22) || day===0;
+    if(isWeekend){
+      ms.textContent='CLOSED';
+      ms.style.color='var(--red)';
+    } else {
+      ms.textContent='LIVE';
+      ms.style.color='var(--green)';
+    }
+  }
 }
 
 // INIT CLICKS - GUARANTEED TO WORK ON ALL DEVICES + LIGHT/DARK + VIEW SWITCH
@@ -628,11 +681,15 @@ setTimeout(initClicks,1500);
 soundOn=localStorage.getItem('astra6_sound')!=='0';
 const sb=document.getElementById('sound-btn');if(sb)sb.textContent=soundOn?'🔔':'🔕';
 checkAuth();
-setInterval(()=>{if(getToken()&&currentView==='signals')fetchLive();},5000);
-setInterval(()=>{if(getToken()&&currentView==='dashboard')fetchDashboard();},15000);
+// Smooth time every second - all devices
+setInterval(updateTimeSmooth,1000);
+updateTimeSmooth();
+// Smooth price every 2 seconds - fast and smooth
+setInterval(()=>{if(getToken())fetchLive();},2000);
+setInterval(()=>{if(getToken()&&currentView==='dashboard')fetchDashboard();},10000);
 setInterval(()=>{fetch('/health').catch(()=>{});},240000);
 
-console.log('ASTRA6 JS loaded - all devices');
+console.log('ASTRA6 JS loaded - all devices - price & time smooth');
 </script>
 </body>
 </html>

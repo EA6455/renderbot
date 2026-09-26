@@ -191,7 +191,15 @@ def get_oanda_client():
     except:
         return None
 
+# Cache for smooth price
+_price_cache = {"data": None, "time": 0}
+
 def fetch_candles(granularity="M15", count=100):
+    global _price_cache
+    # Use cache for M15 20 count (live price) - cache 3 sec for smoothness
+    now = time.time()
+    if granularity == "M15" and count <= 20 and _price_cache["data"] and now - _price_cache["time"] < 3:
+        return _price_cache["data"]
     client = get_oanda_client()
     if not client: return None
     try:
@@ -225,9 +233,15 @@ def fetch_candles(granularity="M15", count=100):
             }
         except:
             pass
-        return rows, live_price
+        result = (rows, live_price)
+        if granularity == "M15" and count <= 20:
+            _price_cache = {"data": result, "time": now}
+        return result
     except Exception as e:
         print(f"OANDA error {granularity}: {e}")
+        # Return cached if available for smoothness
+        if _price_cache["data"]:
+            return _price_cache["data"]
         return None, None
 
 # === HIGH WINRATE ELITE STRATEGY ===
