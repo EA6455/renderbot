@@ -10,5 +10,19 @@
     "is_active": true,
     "plan": "elite_70",
     "winrate_target": "70-76%"
+  },
+  "astra6render@gmail.com": {
+    "email": "astra6render@gmail.com",
+    "salt": "39b31c2b3fe3eae412b0165d61630b14",
+    "hash": "ddfd9e1244b81bb112fba56fafd20e6a5141062dba2463146550323d5e6e2cf1",
+    "created": 1790463703.0328605,
+    "created_str": "2026-09-26 23:01:43 UTC",
+    "last_login": 1790463703.0328605,
+    "login_count": 1,
+    "is_active": true,
+    "approved": false,
+    "is_admin": false,
+    "plan": "elite_70",
+    "winrate_target": "70-76%"
   }
 }
