@@ -178,8 +178,11 @@ body.light-mode .lock-card{background:#ffffff}
       <!-- Real Winrate Proof -->
       <div class="card" style="margin-bottom:14px;border-color:rgba(245,197,24,0.3);background:linear-gradient(135deg,rgba(245,197,24,0.08),rgba(245,197,24,0.02))">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-          <div style="font-weight:900;font-size:14px">📊 Real Winrate Proof</div>
-          <button class="btn btn-gold" id="btn-backtest" style="font-size:11px;padding:6px 12px">Run Backtest</button>
+          <div style="font-weight:900;font-size:14px">📊 Real Winrate Proof • Backtest Chart</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn" id="btn-backtest" style="font-size:11px;padding:6px 12px">Run Backtest</button>
+            <button class="btn" id="btn-backtest-chart" style="font-size:11px;padding:6px 12px">📈 Show Chart</button>
+          </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
           <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
@@ -193,7 +196,20 @@ body.light-mode .lock-card{background:#ffffff}
             <div class="mono" id="high-stats" style="font-size:10px;color:var(--muted)">70%+ target</div>
           </div>
         </div>
-        <div class="mono" id="backtest-result" style="font-size:11px;color:var(--muted);background:var(--card2);padding:10px;border-radius:8px;border:1px solid var(--border)">Click Run Backtest to prove real winrate on historical XAUUSD M15 data. Evaluates if TP1/TP2 hit before SL in next 20 candles (5 hours).</div>
+        <div class="mono" id="backtest-result" style="font-size:11px;color:var(--muted);background:var(--card2);padding:10px;border-radius:8px;border:1px solid var(--border)">Click Run Backtest to prove real winrate on historical XAUUSD M15 data. Evaluates if TP1/TP2 hit before SL in next 20 candles (5 hours). Then click Show Chart.</div>
+        <!-- Backtest Chart -->
+        <div id="backtest-chart-wrap" style="margin-top:12px;display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div class="label">Backtest Equity Curve • Win/Loss Chart</div>
+            <div class="mono" style="font-size:10px;color:var(--muted)" id="backtest-chart-info">--</div>
+          </div>
+          <div id="backtest_chart" style="height:280px;width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px"></div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:12px;height:3px;background:var(--green)"></div> Equity (PnL)</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:8px;height:8px;background:var(--green);border-radius:50%"></div> Win</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:8px;height:8px;background:var(--red);border-radius:50%"></div> Loss</div>
+          </div>
+        </div>
         <div id="backtest-details" style="margin-top:10px;max-height:300px;overflow-y:auto;display:none"></div>
       </div>
       <div class="card">
@@ -489,6 +505,7 @@ async function runBacktest(){
   const btn=document.getElementById('btn-backtest');
   const resultEl=document.getElementById('backtest-result');
   const detailsEl=document.getElementById('backtest-details');
+  const chartWrap=document.getElementById('backtest-chart-wrap');
   if(btn)btn.textContent='⏳ Testing...';
   if(resultEl)resultEl.textContent='Running backtest on last 500 M15 candles... This proves real winrate by checking if TP hit before SL in next 20 candles (5 hours). Takes 10-20 seconds...';
   try{
@@ -500,14 +517,18 @@ async function runBacktest(){
       const rs=document.getElementById('real-stats');if(rs)rs.textContent=`${d.wins}W / ${d.losses}L • ${d.total_signals} signals • PnL ${d.total_pnl}`;
       const hw=document.getElementById('high-winrate');if(hw)hw.textContent=d.high_confluence_winrate+'%';
       const hs=document.getElementById('high-stats');if(hs)hs.textContent=`${d.high_confluence_signals} signals ≥4.8 conf • ${d.high_confluence_wins}W/${d.high_confluence_losses}L`;
-      if(resultEl)resultEl.textContent=d.message + ` • TP1 wins: ${d.tp1_wins}, TP2 wins: ${d.tp2_wins}, Total PnL: ${d.total_pnl}`;
+      if(resultEl)resultEl.textContent=d.message + ` • TP1 wins: ${d.tp1_wins}, TP2 wins: ${d.tp2_wins}, Total PnL: ${d.total_pnl} • Click Show Chart to visualize`;
+      // Store for chart
+      window.lastBacktest=d;
+      if(chartWrap)chartWrap.style.display='block';
+      drawBacktestChart(d);
       if(detailsEl){
         detailsEl.style.display='block';
         detailsEl.innerHTML=d.signals.map(s=>`
           <div style="display:flex;gap:8px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--card2);font-size:11px">
             <span class="alert-badge ${s.type.toLowerCase()}">${s.type}</span>
             <div style="flex:1">
-              <div class="mono">$${s.price.toFixed(2)} conf ${s.confluence} → <span style="color:${s.outcome.result==='WIN'?'var(--green)':'var(--red)'};font-weight:800">${s.outcome.result} ${s.outcome.hit}</span> in ${s.outcome.bars} bars</div>
+              <div class="mono">$${s.price.toFixed(2)} conf ${s.confluence} → <span style="color:${s.outcome.result==='WIN'?'var(--green)':'var(--red)'};font-weight:800">${s.outcome.result} ${s.outcome.hit}</span> in ${s.outcome.bars} bars • PnL ${s.outcome.pnl?.toFixed(2)}</div>
               <div class="mono" style="font-size:9px;color:var(--muted)">${s.reasons[0]||''}</div>
             </div>
           </div>
@@ -520,6 +541,72 @@ async function runBacktest(){
     if(resultEl)resultEl.textContent='Backtest error: '+e.message;
   }
   if(btn)btn.textContent='Run Backtest';
+}
+
+let backtestChart=null, backtestSeries=null;
+function drawBacktestChart(data){
+  try{
+    const container=document.getElementById('backtest_chart');
+    if(!container)return;
+    container.innerHTML='';
+    const isLight=document.body.classList.contains('light-mode');
+    // Create chart
+    if(typeof LightweightCharts==='undefined'){
+      container.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">Chart lib loading...<br>Equity curve will show here</div>';
+      const s=document.createElement('script');
+      s.src='https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js';
+      s.onload=()=>drawBacktestChart(data);
+      document.head.appendChild(s);
+      return;
+    }
+    backtestChart=LightweightCharts.createChart(container,{
+      layout:{background:{color:isLight?'#ffffff':'#1a1a1e'},textColor:'#888'},
+      grid:{vertLines:{color:isLight?'#e0e0e6':'#222226'},horzLines:{color:isLight?'#e0e0e6':'#222226'}},
+      width:container.clientWidth,
+      height:280,
+      timeScale:{timeVisible:false,borderColor:'#222226'},
+      rightPriceScale:{borderColor:'#222226'}
+    });
+    // Equity curve
+    backtestSeries=backtestChart.addLineSeries({color:'#22c55e',lineWidth:2});
+    let cumPnl=0;
+    const equityData=[];
+    const markers=[];
+    data.signals.forEach((sig,idx)=>{
+      cumPnl+=sig.outcome.pnl||0;
+      equityData.push({time:idx+1,value:cumPnl});
+      markers.push({
+        time:idx+1,
+        position:sig.outcome.result==='WIN'?'belowBar':'aboveBar',
+        color:sig.outcome.result==='WIN'?'#22c55e':'#ef4444',
+        shape:sig.outcome.result==='WIN'?'arrowUp':'arrowDown',
+        text:sig.outcome.hit
+      });
+    });
+    backtestSeries.setData(equityData);
+    if(markers.length>0)backtestSeries.setMarkers(markers);
+    backtestChart.timeScale().fitContent();
+    const info=document.getElementById('backtest-chart-info');
+    if(info)info.textContent=`${data.total_signals} trades • ${data.winrate}% WR • PnL ${data.total_pnl} • Green up = Win, Red down = Loss`;
+    // Resize observer
+    const ro=new ResizeObserver(()=>{if(backtestChart)backtestChart.applyOptions({width:container.clientWidth})});
+    ro.observe(container);
+    console.log('backtest chart drawn',equityData.length);
+  }catch(e){console.log('drawBacktestChart err',e);}
+}
+
+function showBacktestChart(){
+  const wrap=document.getElementById('backtest-chart-wrap');
+  if(!window.lastBacktest){
+    runBacktest();
+    return;
+  }
+  if(wrap){
+    wrap.style.display=wrap.style.display==='none'?'block':'none';
+    if(wrap.style.display==='block' && window.lastBacktest){
+      setTimeout(()=>drawBacktestChart(window.lastBacktest),100);
+    }
+  }
 }
 
 function renderCurrent(s){
@@ -765,6 +852,7 @@ function initClicks(){
   bind('tab-signup',()=>switchTab('signup'));
   bind('auth-submit',()=>submitAuth());
   bind('btn-backtest',()=>runBacktest());
+  bind('btn-backtest-chart',()=>showBacktestChart());
   // timeframe
   document.querySelectorAll('.tf-btn').forEach(b=>{
     b.onclick=()=>setTimeframe(b.dataset.tf);
