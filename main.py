@@ -3,7 +3,7 @@ ASTRA6 - Ladder: Sign In / Sign Up / Account / Admin Contact + OANDA
 """
 from fastapi import FastAPI, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 import os, json, hashlib, secrets, time
 from dotenv import load_dotenv
@@ -186,6 +186,20 @@ def fetch_candles(granularity="M15", count=100):
 @app.get("/", response_class=HTMLResponse)
 def home():
     return open("index.html").read()
+
+@app.get("/telegram-qr.jpg")
+def telegram_qr():
+    p = Path("telegram-qr.jpg")
+    if p.exists():
+        return FileResponse(p, media_type="image/jpeg")
+    raise HTTPException(status_code=404, detail="QR not found")
+
+@app.get("/t_me-astra6render.jpg")
+def telegram_qr_alias():
+    p = Path("telegram-qr.jpg")
+    if p.exists():
+        return FileResponse(p, media_type="image/jpeg")
+    raise HTTPException(status_code=404, detail="QR not found")
 
 @app.get("/widget.js")
 def widget():
