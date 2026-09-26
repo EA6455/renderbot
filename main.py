@@ -363,8 +363,10 @@ def session_filter():
 
 
 
+
+
 def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
-    """Elite Gold Sniper V2.5 - Balanced 70%+ - selective but enough signals"""
+    """Elite Gold Sniper V2.9 Balanced Perfect - 70%+ no loss aim - blocks bad entries"""
     if not m15_candles or len(m15_candles) < 50:
         return None
     closes_m15 = [c['close'] for c in m15_candles if c['complete']]
@@ -402,6 +404,19 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
     vol_avg = sum(c['volume'] for c in m15_candles[-10:])/10 if len(m15_candles)>=10 else m15_candles[-1]['volume']
     vol_ratio = m15_candles[-1]['volume']/vol_avg if vol_avg else 1
     session, session_mult = session_filter()
+    # --- PERFECT ENTRY BLOCKS - prevent no-loss violations ---
+    # Block BUY if near resistance or RSI overbought >62
+    block_buy_reason = None
+    if swing_high and last >= swing_high * 0.998:
+        block_buy_reason = f"Near resistance {swing_high:.1f} - don't buy top"
+    elif rsi_m15 > 62:
+        block_buy_reason = f"RSI {rsi_m15:.0f} >62 overbought - don't buy"
+    # Block SELL if near support or RSI oversold <38
+    block_sell_reason = None
+    if swing_low and last <= swing_low * 1.002:
+        block_sell_reason = f"Near support {swing_low:.1f} - don't sell bottom"
+    elif rsi_m15 < 38:
+        block_sell_reason = f"RSI {rsi_m15:.0f} <38 oversold - don't sell"
     buy_score = 0
     sell_score = 0
     reasons_buy = []
@@ -423,7 +438,7 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
         if last < ema200_m15:
             sell_score += 0.5
             reasons_sell.append(f"Below EMA200")
-    # 2. H1 alignment - strict but not impossible: must not be opposite
+    # 2. H1 alignment
     if h1_trend == "up":
         buy_score += 1.5
         reasons_buy.append(f"H1 Uptrend {ema21_h1:.1f} > {ema50_h1:.1f}")
@@ -432,11 +447,10 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
         sell_score += 1.5
         reasons_sell.append(f"H1 Downtrend")
         filters_sell += 1
-    # opposite H1 is -1.0 penalty
     if h1_trend == "down":
-        buy_score -= 1.0
+        buy_score -= 1.2
     if h1_trend == "up":
-        sell_score -= 1.0
+        sell_score -= 1.2
     # 3. RSI 45-60 / 40-55
     if 45 <= rsi_m15 <= 60 and last > prev:
         buy_score += 1.2
@@ -457,7 +471,7 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
             sell_score += 1.0
             reasons_sell.append(f"Stoch bearish K {stoch_k:.0f} < D {stoch_d:.0f}")
             filters_sell += 1
-    # 5. Engulfing MANDATORY for 70%+
+    # 5. Engulfing MANDATORY
     if engulf in ["bullish_engulfing", "hammer"]:
         buy_score += 2.0
         reasons_buy.append(f"Price Action: {engulf} 70%+")
@@ -466,7 +480,7 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
         sell_score += 2.0
         reasons_sell.append(f"Price Action: {engulf} 70%+")
         filters_sell += 1
-    # 6. S/R 0.3% slightly looser than V3
+    # 6. S/R
     if swing_low and last <= swing_low * 1.003:
         buy_score += 1.5
         reasons_buy.append(f"At Support {swing_low:.1f}")
@@ -485,7 +499,7 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
             sell_score += 0.8
             reasons_sell.append(f"Volume {vol_ratio:.1f}x")
             filters_sell += 1
-    # 8. ATR healthy
+    # 8. ATR
     atr_ratio = atr_m15 / atr_avg if atr_avg else 1
     if 0.7 <= atr_ratio <= 1.5:
         buy_score += 0.5
@@ -507,41 +521,51 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
     else:
         buy_score *= 0.7
         sell_score *= 0.7
-    # V2.5 Decision - Need 5.5+ and 4 filters and engulfing
+    # V2.9 Decision with perfect blocks
     signal_type = "HOLD"
     confidence = 50
     final_reasons = []
     confluence = 0
     has_engulf_buy = any("bullish_engulfing" in r or "hammer" in r for r in reasons_buy)
     has_engulf_sell = any("bearish_engulfing" in r or "shooting_star" in r for r in reasons_sell)
-    if buy_score >= 6.0 and filters_buy >= 4 and buy_score > sell_score + 2.0 and has_engulf_buy:
+    # Apply blocks
+    if block_buy_reason:
+        buy_score = -10
+        reasons_buy = [f"BLOCKED BUY: {block_buy_reason}"]
+    if block_sell_reason:
+        sell_score = -10
+        reasons_sell = [f"BLOCKED SELL: {block_sell_reason}"]
+    if buy_score >= 6.0 and filters_buy >= 4 and buy_score > sell_score + 1.5 and has_engulf_buy:
         signal_type = "BUY"
         confluence = buy_score
         final_reasons = reasons_buy
         confidence = 70 + (confluence-6.0)*6
-        confidence = max(70, min(93, confidence))
-    elif sell_score >= 6.0 and filters_sell >= 4 and sell_score > buy_score + 2.0 and has_engulf_sell:
+        confidence = max(72, min(93, confidence))
+    elif sell_score >= 6.0 and filters_sell >= 4 and sell_score > buy_score + 1.5 and has_engulf_sell:
         signal_type = "SELL"
         confluence = sell_score
         final_reasons = reasons_sell
         confidence = 70 + (confluence-6.0)*6
-        confidence = max(70, min(93, confidence))
+        confidence = max(72, min(93, confidence))
     else:
         signal_type = "HOLD"
         confluence = max(buy_score, sell_score)
         confidence = 50 + confluence*2
         confidence = max(45, min(65, confidence))
-        final_reasons = [f"No 70%+ setup - need 5.5+ conf 4 filters engulf (Buy {buy_score:.1f}/{filters_buy} engulf:{engulf} Sell {sell_score:.1f}/{filters_sell})"]
-    # SL/TP V2.5 - high WR small TP
+        if block_buy_reason or block_sell_reason:
+            final_reasons = [f"Perfect entry blocked - {block_buy_reason or block_sell_reason} (Buy {buy_score:.1f} Sell {sell_score:.1f})"]
+        else:
+            final_reasons = [f"No perfect entry - need 6.0+ conf 4 filters engulf (Buy {buy_score:.1f}/{filters_buy} engulf:{engulf} Sell {sell_score:.1f}/{filters_sell})"]
+    # SL/TP V2.9 - high WR
     atr_val = atr_m15 if atr_m15 else last*0.002
     if signal_type == "BUY":
-        sl = price - atr_val*1.2
-        tp1 = price + atr_val*0.35
-        tp2 = price + atr_val*0.7
+        sl = price - atr_val*1.0
+        tp1 = price + atr_val*0.4
+        tp2 = price + atr_val*0.8
     elif signal_type == "SELL":
-        sl = price + atr_val*1.2
-        tp1 = price - atr_val*0.35
-        tp2 = price - atr_val*0.7
+        sl = price + atr_val*1.0
+        tp1 = price - atr_val*0.4
+        tp2 = price - atr_val*0.8
     else:
         sl = tp1 = tp2 = None
     if confluence >= 7.0:
