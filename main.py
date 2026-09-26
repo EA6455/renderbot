@@ -1055,7 +1055,7 @@ def forgot_password(req: dict):
     except Exception as e:
         print(f"Email send error {e}, token {reset_token} for {email}")
     # For demo, return token if no SMTP (so user can test), in production would not
-    return {"status":"ok","message": f"Reset link sent to {email} via {OWNER_EMAIL} - check email (expires 1h)", "reset_token": reset_token if not os.getenv("SMTP_HOST") else None, "email": email}
+    return {"status":"ok","message": f"Reset link sent to {email} via {OWNER_EMAIL} - check email (expires 1h)",  "email": email}
 
 @app.post("/api/auth/reset-password")
 def reset_password(req: dict):
