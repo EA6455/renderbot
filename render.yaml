@@ -1,17 +1,15 @@
 services:
   - type: web
-    name: astra-standby
+    name: astra6bot
     env: python
-    region: singapore # closest to Phnom Penh
+    region: singapore
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: OPENAI_API_KEY
-        sync: false # set in dashboard, for gpt-6-astra if you have it
-      - key: GEMINI_API_KEY
-        sync: false # FREE - get at aistudio.google.com/app/apikey
-      - key: GROQ_API_KEY
-        sync: false # FREE - console.groq.com/keys
-      - key: ASTRA_MODEL
-        value: gpt-6-astra
+      - key: OANDA_API_KEY
+        sync: false
+      - key: OANDA_ACCOUNT_ID
+        sync: false
+      - key: OANDA_ENVIRONMENT
+        value: practice
