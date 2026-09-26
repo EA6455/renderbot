@@ -3,46 +3,49 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Astra • LIVE + OLD XAUUSD Data</title>
+<title>Astra • OANDA LIVE Candlestick</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:Inter,sans-serif;background:#0a0a0c;color:#e6e6e6}
-.nav{padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1f1f25;position:sticky;top:0;background:#0a0a0c;z-index:10}
-.logo{font-weight:900;font-size:16px}.logo span{color:#f5c518}
-.badge{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:5px 10px;border-radius:20px;font-size:10px;display:flex;align-items:center;gap:6px}
-.dot{width:7px;height:7px;background:#22c55e;border-radius:50%;animation:pulse 2s infinite}
+.nav{padding:10px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1f1f25;background:#0a0a0c;position:sticky;top:0;z-index:10}
+.logo{font-weight:900;font-size:15px}.logo span{color:#f5c518}
+.badge{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:4px 8px;border-radius:20px;font-size:10px;display:flex;align-items:center;gap:5px}
+.dot{width:6px;height:6px;background:#22c55e;border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,0.7)}70%{box-shadow:0 0 0 6px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
-.hero{padding:12px;max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 340px;gap:12px}
-.chart-wrap{background:#121216;border:1px solid #1f1f25;border-radius:14px;overflow:hidden}
-.chart-header{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;background:#1a1a1f;border-bottom:1px solid #1f1f25}
-.price{font-size:22px;font-weight:800}
-.signal{padding:4px 8px;border-radius:12px;font-size:10px;font-weight:700}
+.hero{padding:10px;max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 320px;gap:10px}
+.chart-wrap{background:#121216;border:1px solid #1f1f25;border-radius:12px;overflow:hidden}
+.chart-header{padding:8px 12px;display:flex;justify-content:space-between;align-items:center;background:#1a1a1f;border-bottom:1px solid #1f1f25}
+.price{font-size:20px;font-weight:800}
+.price.up{color:#22c55e}.price.down{color:#ef4444}
+.signal{padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700}
 .signal.long{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3)}
 .signal.short{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
 .signal.hold{background:rgba(100,100,100,0.15);color:#888;border:1px solid #2a2a30}
-#tradingview_chart{height:460px;width:100%}
-.side{display:flex;flex-direction:column;gap:10px}
-.card{background:#121216;border:1px solid #1f1f25;border-radius:12px;padding:12px}
-.card h3{font-size:12px;margin-bottom:8px;display:flex;justify-content:space-between}
-.stat{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1a1a1f;font-size:11px}
+#oanda_chart{height:400px;width:100%;background:#121216}
+#tradingview_chart{height:300px;width:100%;border-top:1px solid #1f1f25}
+.side{display:flex;flex-direction:column;gap:8px}
+.card{background:#121216;border:1px solid #1f1f25;border-radius:10px;padding:10px}
+.card h3{font-size:11px;margin-bottom:6px;display:flex;justify-content:space-between}
+.stat{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #1a1a1f;font-size:10px}
 .stat span:last-child{color:#f5c518;font-weight:700}
-.btn{background:#f5c518;color:#000;padding:7px 10px;border-radius:8px;font-weight:700;display:block;font-size:10px;text-align:center;width:100%;margin-top:5px;border:none;cursor:pointer;text-decoration:none}
-.btn2{background:#1e1e24;color:#fff;padding:7px 10px;border-radius:8px;border:1px solid #2a2a30;display:block;font-size:10px;text-align:center;width:100%;margin-top:5px;cursor:pointer;text-decoration:none}
-.row{display:grid;grid-template-columns:60px 1fr 1fr 50px;gap:4px;padding:3px 0;border-bottom:1px solid #1a1a1f;color:#888;font-size:10px}
+.btn{background:#f5c518;color:#000;padding:6px 8px;border-radius:6px;font-weight:700;display:block;font-size:10px;text-align:center;width:100%;margin-top:4px;border:none;cursor:pointer;text-decoration:none}
+.btn2{background:#1e1e24;color:#fff;padding:6px 8px;border-radius:6px;border:1px solid #2a2a30;display:block;font-size:10px;text-align:center;width:100%;margin-top:4px;cursor:pointer;text-decoration:none}
+.row{display:grid;grid-template-columns:50px 1fr 1fr 40px;gap:4px;padding:2px 0;border-bottom:1px solid #1a1a1f;color:#888;font-size:9px}
 .row.header{color:#fff;font-weight:700;position:sticky;top:0;background:#121216}
-.row.live{background:rgba(245,197,24,0.1);border-radius:6px;color:#f5c518}
-select, input{background:#0f0f12;border:1px solid #2a2a30;color:#fff;padding:6px 8px;border-radius:6px;font-size:11px;width:100%}
-.old-data-controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
-#old-candles{max-height:300px;overflow-y:auto}
-@media(max-width:900px){.hero{grid-template-columns:1fr} #tradingview_chart{height:340px}}
+.row.live{background:rgba(245,197,24,0.12);border-radius:4px;color:#f5c518}
+select,input{background:#0f0f12;border:1px solid #2a2a30;color:#fff;padding:5px 6px;border-radius:5px;font-size:10px;width:100%}
+.controls{display:grid;grid-template-columns:1fr 1fr 60px;gap:4px;margin-bottom:6px}
+#debug{font-size:9px;color:#666;background:#0f0f12;padding:6px;border-radius:6px;max-height:80px;overflow-y:auto}
 </style>
+<script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://s.tradingview.com/tv.js"></script>
 </head>
 <body>
 <div class="nav">
-  <div class="logo">ASTRA <span>• LIVE + OLD DATA</span></div>
+  <div class="logo">ASTRA <span>• OANDA LIVE CANDLESTICK</span></div>
   <div style="display:flex;gap:6px;align-items:center">
-    <div class="badge"><div class="dot"></div><span id="live-time">OANDA LIVE</span></div>
-    <button class="btn2" style="width:auto" onclick="testAlert()">🧪 Test</button>
+    <div class="badge"><div class="dot"></div><span id="live-time">OANDA</span> • <span id="market">LIVE</span></div>
+    <button class="btn2" style="width:auto" onclick="testAlert()">🧪</button>
   </div>
 </div>
 
@@ -50,75 +53,86 @@ select, input{background:#0f0f12;border:1px solid #2a2a30;color:#fff;padding:6px
   <div class="chart-wrap">
     <div class="chart-header">
       <div>
-        <div style="font-size:9px;color:#888">OANDA:XAUUSD • <span id="candle-info">Loading...</span></div>
+        <div style="font-size:9px;color:#888">OANDA:XAUUSD M15 • <span id="candle-info">Loading OANDA API...</span> • <span id="debug-status">connecting</span></div>
         <div style="display:flex;align-items:center;gap:8px">
           <div class="price" id="price">$--.--</div>
-          <div style="font-size:10px;color:#22c55e;background:rgba(34,197,94,0.1);padding:2px 6px;border-radius:6px" id="bidask">BID -- / ASK --</div>
+          <div style="font-size:10px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:2px 6px;border-radius:6px;color:#22c55e" id="bidask">BID -- / ASK -- • LIVE from api-fxpractice.oanda.com</div>
         </div>
       </div>
       <div style="text-align:right">
         <div id="signal" class="signal hold">LOADING</div>
-        <div style="font-size:9px;color:#666" id="signal-detail">EMA RSI</div>
+        <div style="font-size:9px;color:#666" id="sig-detail">EMA RSI ATR</div>
       </div>
     </div>
+    
+    <!-- REAL OANDA CANDLESTICK CHART -->
+    <div id="oanda_chart"></div>
+    
+    <!-- TradingView as backup -->
     <div id="tradingview_chart"></div>
-    <div style="padding:8px 12px;background:#0f0f12;border-top:1px solid #1f1f25;font-size:10px;color:#666;display:flex;justify-content:space-between">
-      <span>📡 OANDA v20 • History back to 2005 [1] • Live + Old Data</span>
-      <span id="market-note">Loading...</span>
+    
+    <div style="padding:6px 10px;background:#0f0f12;border-top:1px solid #1f1f25;font-size:9px;color:#666;display:flex;justify-content:space-between">
+      <span>📡 OANDA v20 Practice • 101-001-40547390-001 • $100k demo • History back to 2005</span>
+      <span id="forming">Forming: --</span>
     </div>
   </div>
 
   <div class="side">
     <div class="card">
-      <h3>📜 OLD DATA — History Back to 2005 <span style="font-size:9px;color:#f5c518">OANDA v20</span></h3>
-      <p style="font-size:10px;color:#888;margin-bottom:8px">OANDA gives historical pricing back to 2005 [1]. Fetch old candles:</p>
-      <div class="old-data-controls">
-        <select id="granularity">
-          <option value="M15">M15 (15min)</option>
-          <option value="M5">M5</option>
-          <option value="H1" selected>H1 (1 hour)</option>
-          <option value="H4">H4</option>
-          <option value="D">D (Daily)</option>
-          <option value="W">W (Weekly)</option>
-        </select>
-        <select id="count">
-          <option value="50">50 candles</option>
-          <option value="100" selected>100</option>
-          <option value="500">500 (~5 days M15)</option>
-          <option value="1000">1000</option>
-        </select>
-        <button class="btn" onclick="fetchOldData()">Load Old</button>
-      </div>
-      <input id="from-date" type="text" placeholder="From date ISO e.g. 2024-01-01T00:00:00Z (optional for OLD data)" style="margin-bottom:6px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
-        <button class="btn2" onclick="loadOld('D','365')">365 Days Daily</button>
-        <button class="btn2" onclick="loadOld('H1','500','2024-01-01T00:00:00Z')">Jan 2024 Old</button>
-      </div>
-      <div id="old-stats" style="font-size:10px;color:#888;margin-top:8px"></div>
-      <div id="old-candles"><div style="padding:12px;text-align:center;color:#666">Click Load Old to see historical candles</div></div>
+      <h3>📊 OANDA Candles LIVE <span style="color:#f5c518">● includes forming</span> <span id="candle-count" style="background:#f5c518;color:#000;padding:1px 5px;border-radius:8px;font-size:8px">0</span></h3>
+      <div id="candles"><div style="padding:10px;text-align:center;color:#666;font-size:10px">Loading OANDA API...<br>If no data, check /api/xauusd/live</div></div>
+      <div id="debug"></div>
     </div>
 
     <div class="card">
-      <h3>🪙 Live + Alerts</h3>
-      <div class="stat"><span>Live Mid</span><span id="stat-mid">--</span></div>
-      <div class="stat"><span>Bid/Ask</span><span id="stat-bidask">--</span></div>
-      <div class="stat"><span>EMA 20/50</span><span id="stat-ema">--</span></div>
+      <h3>📜 OLD DATA — Back to 2005</h3>
+      <div class="controls">
+        <select id="gran"><option value="M15">M15</option><option value="H1" selected>H1</option><option value="D">D</option></select>
+        <select id="cnt"><option value="100" selected>100</option><option value="500">500</option></select>
+        <button class="btn" onclick="fetchOld()">Load</button>
+      </div>
+      <input id="from" placeholder="From 2024-01-01T00:00:00Z (optional)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px">
+        <button class="btn2" onclick="loadOld('D','365')">365D Daily</button>
+        <button class="btn2" onclick="loadOld('H1','500','2024-01-01T00:00:00Z')">2024 Old</button>
+      </div>
+      <div id="old-stats" style="font-size:9px;color:#888;margin-top:6px"></div>
+      <div id="old-candles" style="max-height:180px;overflow-y:auto;margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <h3>🪙 Live Stats</h3>
+      <div class="stat"><span>Mid/Bid/Ask</span><span id="stat-mid">--</span></div>
+      <div class="stat"><span>EMA20/50</span><span id="stat-ema">--</span></div>
       <div class="stat"><span>RSI/ATR</span><span id="stat-rsi">--</span></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px">
-        <a class="btn2" href="/api/xauusd/live" target="_blank">Live JSON</a>
-        <a class="btn2" href="/api/xauusd/history?granularity=D&count=100" target="_blank">Old JSON</a>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>📊 Live Candles (20) <span style="color:#f5c518">● LIVE</span></h3>
-      <div id="candles"><div style="padding:12px;text-align:center;color:#666">Loading...</div></div>
+      <div class="stat"><span>Last Error</span><span id="stat-err" style="color:#ef4444;font-size:8px">--</span></div>
+      <a class="btn2" href="/api/xauusd/live" target="_blank">Raw Live JSON</a>
     </div>
   </div>
 </div>
 
-<script src="https://s.tradingview.com/tv.js"></script>
 <script>
+let chart, candleSeries;
+let lastCandles = [];
+
+// Create Lightweight Charts OANDA candlestick
+function initChart(){
+  const container = document.getElementById('oanda_chart');
+  chart = LightweightCharts.createChart(container, {
+    layout: { background: { color: '#121216' }, textColor: '#888' },
+    grid: { vertLines: { color: '#1f1f25' }, horzLines: { color: '#1f1f25' } },
+    width: container.clientWidth,
+    height: 400,
+    timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#2a2a30' },
+    rightPriceScale: { borderColor: '#2a2a30' }
+  });
+  candleSeries = chart.addCandlestickSeries({
+    upColor: '#22c55e', downColor: '#ef4444', borderVisible: false, wickUpColor: '#22c55e', wickDownColor: '#ef4444'
+  });
+  window.addEventListener('resize', ()=>{ chart.applyOptions({ width: container.clientWidth }); });
+}
+
+// TradingView backup
 new TradingView.widget({
   "autosize": true,
   "symbol": "OANDA:XAUUSD",
@@ -131,31 +145,82 @@ new TradingView.widget({
   "container_id": "tradingview_chart"
 });
 
+function logDebug(msg){
+  const el = document.getElementById('debug');
+  const time = new Date().toLocaleTimeString();
+  el.innerHTML = `[${time}] ${msg}<br>` + el.innerHTML;
+  document.getElementById('debug-status').textContent = msg;
+}
+
 async function fetchLive(){
+  logDebug('Fetching /api/xauusd/live...');
   try{
     const r = await fetch('/api/xauusd/live');
     const d = await r.json();
+    logDebug(`Live API: ${d.status} ${d.price ? '$'+d.price.toFixed(2) : d.error}`);
+    
     if(d.status==='ok'){
-      document.getElementById('price').textContent = '$' + d.price.toFixed(2);
-      document.getElementById('stat-mid').textContent = '$' + d.price.toFixed(2);
-      if(d.live_price){
-        document.getElementById('bidask').textContent = `BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)}`;
-        document.getElementById('stat-bidask').textContent = `${d.live_price.bid.toFixed(2)}/${d.live_price.ask.toFixed(2)}`;
-      }
-      document.getElementById('market-note').textContent = d.market_closed || '';
-      document.getElementById('candle-info').textContent = d.forming_candle ? `Forming LIVE ${d.forming_candle.time.substring(11,16)}` : `Last ${d.last_complete.time.substring(11,16)} UTC`;
+      const price = d.price;
+      document.getElementById('price').textContent = '$' + price.toFixed(2);
+      document.getElementById('price').className = 'price up';
       
+      if(d.live_price){
+        document.getElementById('bidask').textContent = `BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)} • LIVE from api-fxpractice.oanda.com`;
+        document.getElementById('stat-mid').textContent = `$${d.live_price.mid.toFixed(2)} B${d.live_price.bid.toFixed(1)}/A${d.live_price.ask.toFixed(1)}`;
+      }
+      
+      document.getElementById('market').textContent = d.market_closed && d.market_closed.includes('closed') ? 'CLOSED (Weekend)' : 'LIVE';
+      document.getElementById('candle-info').textContent = d.forming_candle ? `Forming LIVE ${d.forming_candle.time.substring(11,16)} UTC Vol ${d.forming_candle.volume}` : `Last complete ${d.last_complete.time.substring(11,16)} UTC`;
+      document.getElementById('forming').textContent = d.forming_candle ? `Forming: O${d.forming_candle.open.toFixed(1)} H${d.forming_candle.high.toFixed(1)} L${d.forming_candle.low.toFixed(1)} C${d.forming_candle.close.toFixed(1)}` : 'No forming (market closed weekend)';
+      
+      // Update candlestick chart with OANDA data
+      if(d.last_10 && candleSeries){
+        const chartData = d.last_10.map(c=>{
+          const t = Math.floor(new Date(c.time).getTime()/1000);
+          return { time: t, open: c.open, high: c.high, low: c.low, close: c.close };
+        });
+        // For old data, we need full history
+        if(lastCandles.length===0){
+          // Fetch 100 candles for chart
+          const r2 = await fetch('/api/xauusd/history?granularity=M15&count=100');
+          const d2 = await r2.json();
+          if(d2.status==='ok'){
+            const fullData = d2.candles.map(c=>({ time: Math.floor(new Date(c.time).getTime()/1000), open: c.open, high: c.high, low: c.low, close: c.close }));
+            candleSeries.setData(fullData);
+            lastCandles = fullData;
+            document.getElementById('candle-count').textContent = fullData.length;
+            logDebug(`Chart set with ${fullData.length} candles from ${d2.from?.substring(0,10)} to ${d2.to?.substring(0,10)}`);
+          }
+        } else {
+          // Update last candle live
+          if(chartData.length>0){
+            const last = chartData[chartData.length-1];
+            candleSeries.update(last);
+          }
+        }
+      }
+
+      // Table
       const container = document.getElementById('candles');
       let html = '<div class="row header"><span>Time</span><span>Open</span><span>Close</span><span>Vol</span></div>';
       (d.last_10||[]).slice().reverse().forEach(c=>{
         const isLive = !c.complete;
         const time = c.time.substring(11,16);
         const up = c.close >= c.open;
-        html += `<div class="row ${isLive?'live':''}"><span>${time} ${isLive?'●':''}</span><span>${c.open.toFixed(1)}</span><span style="color:${up?'#22c55e':'#ef4444'}">${c.close.toFixed(1)}</span><span>${c.volume}</span></div>`;
+        html += `<div class="row ${isLive?'live':''}"><span>${time} ${isLive?'●LIVE':''}</span><span>${c.open.toFixed(1)}</span><span style="color:${up?'#22c55e':'#ef4444'}">${c.close.toFixed(1)}</span><span>${c.volume}</span></div>`;
       });
       container.innerHTML = html;
+      document.getElementById('stat-err').textContent = 'OK - OANDA live';
+    } else {
+      document.getElementById('candles').innerHTML = `<div style="color:#ef4444;padding:10px">Error: ${d.error}<br>Has key: ${d.has_key}<br>Check Render Env vars OANDA_API_KEY</div>`;
+      document.getElementById('stat-err').textContent = d.error;
+      logDebug(`ERROR: ${d.error}`);
     }
-  }catch(e){}
+  }catch(e){
+    logDebug(`Fetch failed: ${e.message}`);
+    document.getElementById('candles').innerHTML = `<div style="color:#ef4444;padding:10px">Fetch failed: ${e.message}<br>Is https://renderbot-hw94.onrender.com up?</div>`;
+  }
+  
   try{
     const r2 = await fetch('/api/xauusd/signal');
     const d2 = await r2.json();
@@ -171,54 +236,43 @@ async function fetchLive(){
   }catch(e){}
 }
 
-async function fetchOldData(){
-  const gran = document.getElementById('granularity').value;
-  const count = document.getElementById('count').value;
-  const from = document.getElementById('from-date').value.trim();
-  let url = `/api/xauusd/history?granularity=${gran}&count=${count}`;
+async function fetchOld(){
+  const gran = document.getElementById('gran').value;
+  const cnt = document.getElementById('cnt').value;
+  const from = document.getElementById('from').value.trim();
+  let url = `/api/xauusd/history?granularity=${gran}&count=${cnt}`;
   if(from) url += `&from_time=${encodeURIComponent(from)}`;
-  
-  document.getElementById('old-candles').innerHTML = '<div style="padding:12px;text-align:center;color:#888">Loading old data...</div>';
+  document.getElementById('old-candles').innerHTML = 'Loading old data...';
   try{
     const r = await fetch(url);
     const d = await r.json();
     if(d.status==='ok'){
-      document.getElementById('old-stats').innerHTML = `
-        <div>From: ${d.from?.substring(0,10)} To: ${d.to?.substring(0,10)} • ${d.count} candles • ${gran}</div>
-        <div>Oldest: $${d.oldest_price?.toFixed(2)} Latest: $${d.latest_price?.toFixed(2)} High: $${d.high?.toFixed(2)} Low: $${d.low?.toFixed(2)}</div>
-        <div style="color:#666">Source: ${d.source}</div>
-      `;
-      let html = '<div class="row header"><span>Date</span><span>Open</span><span>Close</span><span>High/Low</span></div>';
-      d.candles.slice(-20).reverse().forEach(c=>{
+      document.getElementById('old-stats').textContent = `${d.from?.substring(0,10)} to ${d.to?.substring(0,10)} • ${d.count} candles • High $${d.high?.toFixed(1)} Low $${d.low?.toFixed(1)}`;
+      let html = '<div class="row header"><span>Date</span><span>Open</span><span>Close</span><span>H/L</span></div>';
+      d.candles.slice(-15).reverse().forEach(c=>{
         const date = c.time.substring(0,10);
         const up = c.close >= c.open;
         html += `<div class="row"><span>${date}</span><span>${c.open.toFixed(1)}</span><span style="color:${up?'#22c55e':'#ef4444'}">${c.close.toFixed(1)}</span><span>${c.high.toFixed(0)}/${c.low.toFixed(0)}</span></div>`;
       });
       document.getElementById('old-candles').innerHTML = html;
-    } else {
-      document.getElementById('old-candles').innerHTML = `<div style="color:#ef4444;padding:12px">Error: ${d.error}</div>`;
+      // Update main chart with old data
+      if(candleSeries && d.candles.length>0){
+        const chartData = d.candles.map(c=>({ time: Math.floor(new Date(c.time).getTime()/1000), open: c.open, high: c.high, low: c.low, close: c.close }));
+        candleSeries.setData(chartData);
+        logDebug(`Old data chart: ${chartData.length} candles ${gran} from ${d.from?.substring(0,10)}`);
+      }
     }
-  }catch(e){
-    document.getElementById('old-candles').innerHTML = `<div style="color:#ef4444;padding:12px">Error: ${e.message}</div>`;
-  }
+  }catch(e){ document.getElementById('old-candles').textContent = 'Error: '+e.message; }
 }
 
-function loadOld(gran,count,from){
-  document.getElementById('granularity').value = gran;
-  document.getElementById('count').value = count;
-  document.getElementById('from-date').value = from||'';
-  fetchOldData();
-}
+function loadOld(g,c,f){ document.getElementById('gran').value=g; document.getElementById('cnt').value=c; document.getElementById('from').value=f||''; fetchOld(); }
+async function testAlert(){ await fetch('/api/alerts/test',{method:'POST'}); alert('Test alert!'); }
 
-async function testAlert(){
-  await fetch('/api/alerts/test',{method:'POST'});
-  alert('Test alert sent!');
-}
-
+initChart();
 fetchLive();
 setInterval(fetchLive, 5000);
 </script>
 
-<script src="/widget.js" data-api="/api/chat" data-color="#f5c518" data-title="Astra • LIVE+OLD"></script>
+<script src="/widget.js" data-api="/api/chat" data-color="#f5c518"></script>
 </body>
 </html>
