@@ -1029,21 +1029,27 @@ def signals_current(email: str = Depends(require_auth)):
             continue
     
     # Pick best signal: highest confidence, prefer higher timeframe for big flow
+    # V5.4: Use best once and alert, dont mention timeframe - just BUY/SELL alert
     if signals_found:
-        # Sort by confidence * timeframe weight (M15 and M30 higher weight for big flow)
         tf_weight = {"M1": 0.8, "M5": 1.0, "M15": 1.3, "M30": 1.2, "H1": 1.1}
         def score(s):
             w = tf_weight.get(s.get('scanned_tf','M15'), 1.0)
             return s.get('confidence',0) * w + s.get('confluence',0)*2
         best = max(signals_found, key=score)
-        # If multiple same type, keep best
-        return {"status":"ok","signal": best, "all_signals": signals_found, "scanned": [tf for tf,_,_ in timeframes], "user": email}
+        # Strip timeframe info - just alert BUY/SELL without mentioning TF
+        best.pop('scanned_tf', None)
+        best.pop('timeframe', None)
+        # Clean reasons - remove any TF mention
+        best['strategy'] = "ASTRA6 Elite - Best Signal"
+        return {"status":"ok","signal": best, "user": email}
     
     # No signal from any timeframe - return HOLD from M15
     sig = elite_gold_sniper(m15_candles, h1_candles, live_price)
     if not sig: raise HTTPException(status_code=500, detail="Signal failed")
-    sig['scanned_tf'] = 'M15'
-    return {"status":"ok","signal": sig, "all_signals": [], "scanned": [tf for tf,_,_ in timeframes], "user": email}
+    sig.pop('scanned_tf', None)
+    sig.pop('timeframe', None)
+    sig['strategy'] = "ASTRA6 Elite - Best Signal"
+    return {"status":"ok","signal": sig, "user": email}
 
 @app.get("/api/signals/history")
 def signals_history(limit: int = 20, email: str = Depends(require_auth)):
