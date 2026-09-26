@@ -10,7 +10,9 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden}
 .mono{font-family:JetBrains Mono,monospace}
-.sidebar{width:220px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:30;flex-shrink:0}
+.sidebar{width:220px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:50;flex-shrink:0}
+.ladder{position:relative;z-index:51}
+.nav-item{position:relative;z-index:52;pointer-events:auto !important}
 .side-top{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .logo-icon{width:38px;height:38px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:18px;box-shadow:0 0 20px rgba(245,197,24,0.25)}
 .logo-text{font-weight:900;font-size:16px}
@@ -35,15 +37,16 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
 .price-main{font-size:24px;font-weight:900;letter-spacing:-0.5px}
 .bidask{font-size:11px;background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.2);padding:5px 12px;border-radius:20px;color:var(--gold);font-family:JetBrains Mono,monospace}
 .content{flex:1;padding:14px;max-width:1200px;width:100%;margin:0 auto}
-.view{display:none;animation:fadeIn 0.2s ease}
+.view{display:none;animation:fadeIn 0.2s ease;position:relative;min-height:60vh}
 .view.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 .terminal{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:relative}
 .terminal-top{padding:14px 18px;background:linear-gradient(90deg,#1a1a1e,#111113);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
 #oanda_chart{height:55vh;min-height:380px;width:100%;background:var(--card);display:block}
 .info-bar{padding:10px 16px;background:#0f0f10;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:JetBrains Mono,monospace;flex-wrap:wrap;gap:8px}
-.lock-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(7,7,9,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;z-index:5;text-align:center;padding:20px}
-.lock-card{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:360px;width:100%}
+.lock-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(7,7,9,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;z-index:5;text-align:center;padding:20px;pointer-events:auto}
+.lock-card{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:360px;width:100%;pointer-events:auto;position:relative;z-index:6}
+.lock-card .btn{pointer-events:auto !important;cursor:pointer !important}
 .lock-icon{width:56px;height:56px;background:rgba(245,197,24,0.15);border:1px solid rgba(245,197,24,0.3);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
 .card-title{font-weight:900;font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
@@ -263,9 +266,11 @@ function getToken(){return localStorage.getItem('astra6_token');}
 function setToken(t,e){if(t){localStorage.setItem('astra6_token',t);if(e)localStorage.setItem('astra6_email',e);}else{localStorage.removeItem('astra6_token');localStorage.removeItem('astra6_email');}}
 function authHeaders(){const t=getToken();return t?{'Authorization':'Bearer '+t}:{};}
 function showView(v){
+  console.log('showView',v);
   currentView=v;
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
-  document.getElementById('view-'+v).classList.add('active');
+  const target=document.getElementById('view-'+v);
+  if(target)target.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   const nav=document.getElementById('nav-'+v);
   if(nav)nav.classList.add('active');
@@ -472,14 +477,35 @@ fetchLive=async function(){
   try{
     await originalFetchLive();
     wakeUpRetries=0;
-    document.getElementById('market-status').textContent='LIVE';
+    const ms=document.getElementById('market-status'); if(ms)ms.textContent='LIVE';
   }catch(e){
     wakeUpRetries++;
-    document.getElementById('market-status').textContent=wakeUpRetries>1?'WAKING UP...':'RETRY';
+    const ms=document.getElementById('market-status'); if(ms)ms.textContent=wakeUpRetries>1?'WAKING UP...':'RETRY';
     if(wakeUpRetries<10)setTimeout(fetchLive, 5000);
   }
 }
-
+// Ensure global for onclick
+window.showView=showView;
+window.setTimeframe=setTimeframe;
+window.openAuth=openAuth;
+window.closeAuth=closeAuth;
+window.switchTab=switchTab;
+window.submitAuth=submitAuth;
+window.signOut=signOut;
+window.toggleSound=toggleSound;
+// Fix clicks blocked by overlay - ensure sidebar always clickable
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    el.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const id=el.id.replace('nav-','');
+      if(id==='signin')openAuth('signin');
+      else if(id==='signup')openAuth('signup');
+      else showView(id);
+    });
+  });
+  console.log('ASTRA6 ready - clicks fixed');
+});
 </script>
 </body>
 </html>
