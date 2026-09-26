@@ -495,6 +495,10 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
     return sig
 
 # Routes
+@app.get("/health")
+def health():
+    return {"status": "ok", "name": "ASTRA6", "uptime": "24/7", "timestamp": time.time(), "message": "Elite 70%+ alive"}
+
 @app.get("/", response_class=HTMLResponse)
 def home(): return open("index.html").read()
 

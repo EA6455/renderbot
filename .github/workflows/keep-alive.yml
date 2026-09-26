@@ -1,0 +1,27 @@
+name: Keep ASTRA6 Alive 24/7
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # every 10 minutes
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping ASTRA6 Health
+        run: |
+          echo "Pinging https://astra6.onrender.com/health"
+          curl -s -o /dev/null -w "%{http_code} %{time_total}s\n" https://astra6.onrender.com/health
+          curl -s https://astra6.onrender.com/health | head -c 200
+          echo ""
+          echo "Pinging status"
+          curl -s -o /dev/null -w "%{http_code}\n" https://astra6.onrender.com/api/status
+      - name: Ping with retry
+        run: |
+          for i in 1 2 3; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" https://astra6.onrender.com/health)
+            echo "Attempt $i: $CODE"
+            if [ "$CODE" = "200" ]; then exit 0; fi
+            sleep 10
+          done
