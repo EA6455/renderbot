@@ -19,27 +19,12 @@ body.light-mode #oanda_chart{background:#ffffff}
 body.light-mode .auth-box{background:#ffffff}
 body.light-mode .lock-card{background:#ffffff}
 .mono{font-family:monospace}
-.sidebar{width:220px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:9999}
-.side-top{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-.logo-icon{width:38px;height:38px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:18px}
-.logo-text{font-weight:900;font-size:16px}
-.logo-sub{font-size:9px;color:var(--muted)}
-.ladder{flex:1;padding:10px;display:flex;flex-direction:column;gap:6px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:14px 12px;border-radius:10px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;border:1px solid transparent;user-select:none;-webkit-tap-highlight-color:transparent}
-.nav-item:active{transform:scale(0.97)}
-.nav-item:hover{background:var(--card2);color:var(--text)}
-.nav-item.active{background:var(--active);color:var(--text);border-color:var(--border);color:var(--gold)}
-.nav-item .ico{width:22px;text-align:center;font-size:16px}
-.side-bottom{padding:12px;border-top:1px solid var(--border)}
-.badge{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:6px 10px;border-radius:20px;font-size:10px;font-weight:700;color:var(--green);margin-bottom:10px}
-.dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,0.6)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
-.user-box{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;display:none}
-.user-box.show{display:block}
-.btn{padding:12px 16px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--card2);color:var(--text);display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;user-select:none}
-.btn-gold{background:var(--gold);color:#000;border-color:var(--gold)}
-.btn-full{width:100%}
-.main-wrap{flex:1;margin-left:220px;display:flex;flex-direction:column;min-height:100vh}
+/* Clean hamburger menu - no sidebar staying on page, works all devices */
+.sidebar{display:none !important}
+.ladder{display:none !important}
+.side-top{display:none !important}
+.side-bottom{display:none !important}
+.main-wrap{flex:1;margin-left:0 !important;display:flex;flex-direction:column;min-height:100vh}
 .topbar{min-height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:10px 16px;gap:12px;position:sticky;top:0;z-index:10}
 .price-main{font-size:22px;font-weight:900;transition:all 0.3s ease;min-width:90px}
 .price-main.up{color:var(--green);transform:scale(1.05)}
@@ -86,20 +71,23 @@ body.light-mode .lock-card{background:#ffffff}
 .label{font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase}
 .error{color:var(--red);font-size:11px;margin-bottom:12px;display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);padding:8px;border-radius:8px}
 .success{color:var(--green);font-size:11px;margin-bottom:12px;display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:8px;border-radius:8px}
-.mobile-logo{display:none;align-items:center;gap:8px}
-@media(max-width:900px){.sidebar{width:72px}.sidebar .hide-m{display:none !important}.nav-item{justify-content:center;flex-direction:column;font-size:9px;padding:12px 6px}.main-wrap{margin-left:72px}.content{padding:12px}}
+.mobile-logo{display:flex;align-items:center;gap:8px}
+@media(max-width:900px){
+ .sidebar{display:none !important}
+ .main-wrap{margin-left:0 !important}
+ .content{padding:12px}
+ #ladder-dropdown{right:8px;min-width:220px}
+}
 @media(max-width:640px){
  body{flex-direction:column}
- .sidebar{position:fixed;bottom:0;top:auto;left:0;right:0;width:100%;height:72px;flex-direction:row;z-index:9999;border-right:none;border-top:1px solid var(--border);background:rgba(17,17,19,0.98);padding-bottom:env(safe-area-inset-bottom)}
- .side-top,.side-bottom{display:none}
- .ladder{flex-direction:row;justify-content:space-around;padding:4px;width:100%}
- .nav-item{flex:1;flex-direction:column;font-size:8px;padding:8px 2px;min-height:56px}
- .main-wrap{margin-left:0;padding-bottom:80px}
+ .sidebar{display:none !important}
+ .main-wrap{margin-left:0 !important;padding-bottom:0}
  .mobile-logo{display:flex}
  .topbar{padding:10px 12px}
  .price-main{font-size:18px}
  #oanda_chart{height:40vh;min-height:280px}
  .signal-type{font-size:32px}
+ #ladder-dropdown{position:fixed !important;top:60px !important;right:8px !important;left:8px !important;min-width:auto !important;width:auto !important;max-width:100% !important}
 }
 </style>
 </head>
@@ -143,15 +131,20 @@ body.light-mode .lock-card{background:#ffffff}
       <button class="btn" id="refresh-btn">🔄</button>
       <button class="btn" id="sound-btn">🔔</button>
       <!-- Hamburger line button top right - click to show ladder -->
-      <button class="btn" id="ladder-menu-btn" title="Menu" style="font-size:18px;padding:8px 12px">☰</button>
-      <!-- Ladder dropdown top right - dashboard chart account sign in sign up contact -->
-      <div id="ladder-dropdown" style="display:none;position:absolute;top:50px;right:0;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:8px;min-width:160px;z-index:10000;flex-direction:column;gap:6px;box-shadow:0 10px 30px rgba(0,0,0,0.5)">
-        <button class="btn active" data-switch="dashboard" id="sw-dashboard" style="width:100%;justify-content:flex-start;font-size:13px;padding:10px 14px;border-radius:8px">Dashboard</button>
-        <button class="btn" data-switch="signals" id="sw-signals" style="width:100%;justify-content:flex-start;font-size:13px;padding:10px 14px;border-radius:8px">Chart</button>
-        <button class="btn" data-switch="account" id="sw-account" style="width:100%;justify-content:flex-start;font-size:13px;padding:10px 14px;border-radius:8px">Account</button>
-        <button class="btn" data-switch="signin" id="sw-signin" style="width:100%;justify-content:flex-start;font-size:13px;padding:10px 14px;border-radius:8px">Sign In</button>
-        <button class="btn" data-switch="signup" id="sw-signup" style="width:100%;justify-content:flex-start;font-size:13px;padding:10px 14px;border-radius:8px">Sign Up</button>
-        <button class="btn" data-switch="contact" id="sw-contact" style="width:100%;justify-content:flex-start;font-size:13px;padding:10px 14px;border-radius:8px">Contact</button>
+      <button class="btn" id="ladder-menu-btn" title="Menu" style="font-size:20px;padding:8px 14px;min-width:44px">☰</button>
+      <!-- Ladder dropdown top right - dashboard chart account sign in sign up contact - clean, dont stay -->
+      <div id="ladder-dropdown" style="display:none;position:absolute;top:56px;right:10px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px;min-width:200px;z-index:10000;flex-direction:column;gap:8px;box-shadow:0 20px 40px rgba(0,0,0,0.6)">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px 8px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
+          <div style="font-weight:900;font-size:13px">Menu</div>
+          <button class="btn" id="ladder-close-btn" style="padding:4px 10px;font-size:12px">✕</button>
+        </div>
+        <button class="btn active" data-switch="dashboard" id="sw-dashboard" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Dashboard</button>
+        <button class="btn" data-switch="signals" id="sw-signals" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Chart</button>
+        <button class="btn" data-switch="account" id="sw-account" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Account</button>
+        <button class="btn" data-switch="signin" id="sw-signin" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Sign In</button>
+        <button class="btn" data-switch="signup" id="sw-signup" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Sign Up</button>
+        <button class="btn" data-switch="contact" id="sw-contact" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Contact</button>
+        <div style="padding:8px 4px 0 4px;border-top:1px solid var(--border);margin-top:4px;font-size:10px;color:var(--muted);text-align:center" class="mono">ASTRA6 • Clean • All devices</div>
       </div>
     </div>
   </div>
@@ -1079,13 +1072,18 @@ function initClicks(){
   bind('btn-replay-prev',()=>replayPrev());
   bind('btn-replay-next',()=>replayNext());
   bind('btn-replay-reset',()=>replayReset());
-  // Hamburger line button top right - ladder menu toggle
-  bind('ladder-menu-btn',()=>{
+  // Hamburger line button top right - ladder menu toggle - clean, dont stay, all devices
+  const toggleLadder=()=>{
     const dd=document.getElementById('ladder-dropdown');
     if(!dd)return;
     const isHidden=dd.style.display==='none' || dd.style.display==='';
     dd.style.display=isHidden?'flex':'none';
     if(isHidden) dd.style.flexDirection='column';
+  };
+  bind('ladder-menu-btn',toggleLadder);
+  bind('ladder-close-btn',()=>{
+    const dd=document.getElementById('ladder-dropdown');
+    if(dd)dd.style.display='none';
   });
   // timeframe
   document.querySelectorAll('.tf-btn').forEach(b=>{
