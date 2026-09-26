@@ -84,21 +84,67 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display
 .tab.active{background:var(--gold);color:#000;border-color:var(--gold)}
 .error{color:var(--red);font-size:11px;margin-bottom:12px;display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);padding:8px 10px;border-radius:8px}
 .success{color:var(--green);font-size:11px;margin-bottom:12px;display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:8px 10px;border-radius:8px}
-@media(max-width:900px){.sidebar{width:72px}.sidebar .hide-m{display:none !important}.nav-item{justify-content:center;padding:12px 8px;flex-direction:column;gap:4px;font-size:9px}.nav-item .ico{font-size:18px}.side-top{justify-content:center}.side-bottom{padding:8px}.content{padding:10px}.main-wrap{margin-left:72px}}
+/* All Devices Responsive - Desktop, Tablet, Mobile */
+@media(max-width:1200px){.content{max-width:100%;padding:12px}}
+@media(max-width:900px){
+  .sidebar{width:72px}
+  .sidebar .hide-m{display:none !important}
+  .nav-item{justify-content:center;padding:14px 8px;flex-direction:column;gap:4px;font-size:9px;min-height:56px;touch-action:manipulation}
+  .nav-item .ico{font-size:20px}
+  .side-top{justify-content:center;padding:12px 8px}
+  .side-bottom{padding:8px}
+  .content{padding:10px}
+  .main-wrap{margin-left:72px}
+  .signal-type{font-size:38px}
+  .terminal-top{flex-direction:column;align-items:flex-start}
+  #tf-buttons{width:100%;overflow-x:auto;flex-wrap:nowrap !important;padding-bottom:4px}
+  .tf-btn{flex-shrink:0;min-width:44px;min-height:36px}
+}
 @media(max-width:640px){
   body{flex-direction:column}
-  .sidebar{position:fixed;bottom:0;top:auto;left:0;right:0;width:100%;height:64px;flex-direction:row;z-index:9999;border-right:none;border-top:1px solid var(--border);background:rgba(17,17,19,0.98);padding:0}
+  .sidebar{position:fixed;bottom:0;top:auto;left:0;right:0;width:100%;height:72px;flex-direction:row;z-index:9999;border-right:none;border-top:1px solid var(--border);background:rgba(17,17,19,0.98);padding:0;padding-bottom:env(safe-area-inset-bottom)}
   .side-top,.side-bottom{display:none}
-  .ladder{flex-direction:row;justify-content:space-around;align-items:center;padding:4px;gap:2px;z-index:10000}
-  .nav-item{flex:1;padding:6px 4px;flex-direction:column;gap:3px;font-size:8px;border:none;background:transparent !important;z-index:10001;pointer-events:auto !important}
-  .nav-item.active{color:var(--gold);background:rgba(245,197,24,0.12) !important}
-  .main-wrap{padding-bottom:70px;margin-left:0 !important}
-  .topbar{padding:8px 12px;min-height:52px}
+  .ladder{flex-direction:row;justify-content:space-around;align-items:center;padding:4px 2px;gap:1px;z-index:10000;width:100%}
+  .nav-item{flex:1;padding:8px 2px;flex-direction:column;gap:3px;font-size:8px;border:none;background:transparent !important;z-index:10001;pointer-events:auto !important;min-height:56px;min-width:44px;touch-action:manipulation;-webkit-tap-highlight-color:rgba(245,197,24,0.2)}
+  .nav-item .ico{font-size:20px;pointer-events:none}
+  .nav-item.active{color:var(--gold);background:rgba(245,197,24,0.15) !important;border-radius:12px}
+  .main-wrap{padding-bottom:80px;margin-left:0 !important}
+  .topbar{padding:10px 12px;min-height:56px;position:sticky;top:0;z-index:20}
   .mobile-logo{display:flex}
+  .price-block{gap:8px}
   .price-main{font-size:18px}
-  #oanda_chart{height:45vh;min-height:280px}
-  .signal-type{font-size:36px}
-  .qr-img{width:72vw;height:72vw}
+  .bidask{font-size:10px;padding:4px 10px}
+  #oanda_chart{height:42vh;min-height:300px}
+  .signal-card{padding:18px 14px}
+  .signal-type{font-size:32px}
+  .sltp-row{gap:8px}
+  .sltp-box{min-width:70px;padding:8px 10px}
+  .qr-img{width:75vw;height:75vw;max-width:300px;max-height:300px}
+  .card{padding:14px}
+  .auth-box{margin:10px;max-width:95vw}
+  .terminal-top{padding:12px}
+  .pair-name{font-size:13px}
+  #tf-buttons{gap:3px}
+  .tf-btn{padding:6px 10px;font-size:11px;min-width:44px;min-height:40px}
+}
+@media(max-width:480px){
+  .content{padding:8px}
+  .signal-type{font-size:28px}
+  .price-main{font-size:16px}
+  .card-title{font-size:13px}
+  .alert-item{padding:10px}
+  .tf-btn{padding:5px 8px;min-width:40px;font-size:10px}
+}
+@media(max-width:360px){
+  .nav-item{font-size:7px;padding:6px 1px}
+  .nav-item .ico{font-size:18px}
+  .signal-type{font-size:24px}
+}
+/* Touch devices - bigger tap targets */
+@media(hover:none) and (pointer:coarse){
+  .btn{min-height:44px;touch-action:manipulation}
+  .nav-item{min-height:48px}
+  .tf-btn{min-height:44px;min-width:44px}
 }
 </style>
 <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
@@ -483,7 +529,7 @@ fetchLive=async function(){
     if(wakeUpRetries<10)setTimeout(fetchLive, 5000);
   }
 }
-// Ensure global for onclick
+// Ensure global for onclick - all devices
 window.showView=showView;
 window.setTimeframe=setTimeframe;
 window.openAuth=openAuth;
@@ -492,19 +538,37 @@ window.switchTab=switchTab;
 window.submitAuth=submitAuth;
 window.signOut=signOut;
 window.toggleSound=toggleSound;
-// Fix clicks blocked by overlay - ensure sidebar always clickable
-document.addEventListener('DOMContentLoaded',()=>{
+// Fix clicks for all devices - desktop, tablet, mobile, touch
+function initAllDeviceClicks(){
   document.querySelectorAll('.nav-item').forEach(el=>{
-    el.addEventListener('click',(e)=>{
+    const handler=(e)=>{
+      e.preventDefault();
       e.stopPropagation();
       const id=el.id.replace('nav-','');
+      console.log('nav click',id);
       if(id==='signin')openAuth('signin');
       else if(id==='signup')openAuth('signup');
       else showView(id);
-    });
+      // haptic feedback on mobile
+      if(navigator.vibrate)navigator.vibrate(10);
+    };
+    el.addEventListener('click',handler,{passive:false});
+    el.addEventListener('touchend',handler,{passive:false});
+    el.addEventListener('touchstart',(e)=>{e.currentTarget.style.transform='scale(0.95)';},{passive:true});
+    el.addEventListener('touchend',(e)=>{e.currentTarget.style.transform='';},{passive:true});
   });
-  console.log('ASTRA6 ready - clicks fixed');
-});
+  // Fix all buttons for touch
+  document.querySelectorAll('.btn, .tf-btn').forEach(b=>{
+    b.style.touchAction='manipulation';
+    b.style.userSelect='none';
+    b.addEventListener('touchstart',()=>{}, {passive:true});
+  });
+  console.log('ASTRA6 ready - all devices clicks fixed');
+}
+document.addEventListener('DOMContentLoaded',initAllDeviceClicks);
+if(document.readyState!=='loading')initAllDeviceClicks();
+// Also re-init after 1s for dynamic content
+setTimeout(initAllDeviceClicks,1000);
 </script>
 </body>
 </html>
