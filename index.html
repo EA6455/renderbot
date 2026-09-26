@@ -463,6 +463,23 @@ document.getElementById('sound-btn').textContent=soundOn?'🔔':'🔕';
 checkAuth();
 setInterval(()=>{if(getToken()&&currentView==='signals')fetchLive();},5000);
 setInterval(()=>{if(getToken()&&currentView==='dashboard')fetchDashboard();},15000);
+// Client-side keep-alive every 4 min to prevent sleep when user active
+setInterval(()=>{fetch('/health').catch(()=>{}); if(getToken())fetchLive();}, 240000);
+// Wake-up retry logic
+let wakeUpRetries=0;
+const originalFetchLive=fetchLive;
+fetchLive=async function(){
+  try{
+    await originalFetchLive();
+    wakeUpRetries=0;
+    document.getElementById('market-status').textContent='LIVE';
+  }catch(e){
+    wakeUpRetries++;
+    document.getElementById('market-status').textContent=wakeUpRetries>1?'WAKING UP...':'RETRY';
+    if(wakeUpRetries<10)setTimeout(fetchLive, 5000);
+  }
+}
+
 </script>
 </body>
 </html>
