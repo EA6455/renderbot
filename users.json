@@ -24,5 +24,19 @@
     "is_admin": false,
     "plan": "elite_70",
     "winrate_target": "70-76%"
+  },
+  "testreset@gmail.com": {
+    "email": "testreset@gmail.com",
+    "salt": "1cecc821809ce15ac5fa98b755b02df6",
+    "hash": "cfa8ceef04b4bb176809479e30516a2a3eae27228c866e91d94c07987465680e",
+    "created": 1790467187.8782592,
+    "created_str": "2026-09-26 23:59:47 UTC",
+    "last_login": 1790467187.8782592,
+    "login_count": 1,
+    "is_active": true,
+    "approved": false,
+    "is_admin": false,
+    "plan": "elite_70",
+    "winrate_target": "70-76%"
   }
 }
