@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+tokens.json
+signals.json
+contacts.json
+# users.json is kept for persistence but contains only hashed passwords
+# For production, use Postgres disk

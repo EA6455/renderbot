@@ -32,9 +32,31 @@ SIGNALS_FILE = Path("signals.json")
 
 def load_json_file(p, default):
     if not p.exists(): return default
-    try: return json.loads(p.read_text())
-    except: return default
-def save_json_file(p, data): p.write_text(json.dumps(data, indent=2))
+    try: 
+        data = json.loads(p.read_text())
+        print(f"Loaded {p} {len(data) if isinstance(data, (dict,list)) else 'ok'}")
+        return data
+    except Exception as e:
+        print(f"Load {p} error {e}")
+        return default
+
+def save_json_file(p, data):
+    try:
+        # atomic write
+        tmp = p.with_suffix('.tmp')
+        tmp.write_text(json.dumps(data, indent=2))
+        tmp.replace(p)
+        print(f"Saved {p} {len(data) if isinstance(data, (dict,list)) else 'ok'}")
+        # try backup to git if token available (for persistence on free plan)
+        try:
+            if os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN"):
+                # backup is handled via external cron, not here to avoid loop
+                pass
+        except:
+            pass
+    except Exception as e:
+        print(f"Save {p} error {e}")
+
 def load_users(): return load_json_file(USERS_FILE, {})
 def save_users(u): save_json_file(USERS_FILE, u)
 def load_tokens(): return load_json_file(TOKENS_FILE, {})
@@ -45,27 +67,71 @@ def load_signals(): return load_json_file(SIGNALS_FILE, [])
 def save_signals(s): save_json_file(SIGNALS_FILE, s[-300:])
 
 def hash_password(pw, salt): return hashlib.pbkdf2_hmac('sha256', pw.encode(), salt.encode(), 100000).hex()
+
+def validate_email(email):
+    import re
+    return re.match(r'^[^@]+@[^@]+\.[^@]+$', email) is not None
+
 def create_user(email, password):
     users = load_users()
     email = email.lower().strip()
-    if email in users: return None, "Email already registered"
-    if len(password) < 6: return None, "Password min 6 chars"
+    if not validate_email(email):
+        return None, "Invalid email format"
+    if email in users:
+        return None, "Email already registered - please Sign In"
+    if len(password) < 6:
+        return None, "Password min 6 chars"
+    if len(password) > 128:
+        return None, "Password too long"
+    if len(email) > 200:
+        return None, "Email too long"
     salt = secrets.token_hex(16)
-    users[email] = {"email": email, "salt": salt, "hash": hash_password(password, salt), "created": time.time()}
+    now = time.time()
+    users[email] = {
+        "email": email,
+        "salt": salt,
+        "hash": hash_password(password, salt),
+        "created": now,
+        "created_str": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(now)),
+        "last_login": now,
+        "login_count": 1,
+        "is_active": True,
+        "plan": "elite_70",
+        "winrate_target": "70-76%"
+    }
     save_users(users)
+    print(f"✅ New user created: {email} total={len(users)}")
     return users[email], None
+
 def verify_user(email, password):
     users = load_users()
     u = users.get(email.lower().strip())
-    if not u: return None
-    if hash_password(password, u["salt"]) == u["hash"]: return u
+    if not u:
+        return None
+    if not u.get("is_active", True):
+        return None
+    if hash_password(password, u["salt"]) == u["hash"]:
+        # update last login
+        u["last_login"] = time.time()
+        u["login_count"] = u.get("login_count",0)+1
+        save_users(users)
+        print(f"✅ User login: {email} count={u['login_count']}")
+        return u
     return None
+
 def create_token(email):
     tokens = load_tokens()
+    # clean expired tokens first
+    now = time.time()
+    expired = [k for k,v in tokens.items() if v.get("expires",0) < now]
+    for k in expired:
+        del tokens[k]
     token = secrets.token_urlsafe(32)
-    tokens[token] = {"email": email, "created": time.time(), "expires": time.time() + 30*24*3600}
+    tokens[token] = {"email": email, "created": now, "expires": now + 30*24*3600, "created_str": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(now))}
     save_tokens(tokens)
+    print(f"✅ Token created for {email} total_tokens={len(tokens)}")
     return token, tokens[token]
+
 def verify_token(token):
     if not token: return None
     tokens = load_tokens()
@@ -76,12 +142,15 @@ def verify_token(token):
         save_tokens(tokens)
         return None
     return data
+
 def get_token_data(authorization: str = Header(None)):
     if not authorization: return None
     return verify_token(authorization.replace("Bearer ", "").strip())
+
 def get_current_user(authorization: str = Header(None)):
     d = get_token_data(authorization)
     return d["email"] if d else None
+
 def require_auth(authorization: str = Header(None)):
     email = get_current_user(authorization)
     if not email: raise HTTPException(status_code=401, detail="Sign in required")
