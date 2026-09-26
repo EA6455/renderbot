@@ -1033,29 +1033,61 @@ def forgot_password(req: dict):
         del resets[k]
     resets[reset_token] = {"email": email, "created": now, "expires": now + 3600, "used": False}
     save_resets(resets)
-    # Try to send email via SMTP if configured, else log
+    # Send reset link via Gmail astra6render@gmail.com - NOT showing on website, only via Gmail
+    reset_link = f"https://astra6.onrender.com/?reset={reset_token}"
     try:
         import os, smtplib
         from email.mime.text import MIMEText
-        smtp_host = os.getenv("SMTP_HOST")
-        smtp_user = os.getenv("SMTP_USER")
+        from email.mime.multipart import MIMEMultipart
+        smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+        smtp_user = os.getenv("SMTP_USER", OWNER_EMAIL)
         smtp_pass = os.getenv("SMTP_PASS")
-        if smtp_host and smtp_user and smtp_pass:
-            msg = MIMEText(f"ASTRA6 Password Reset\n\nEmail: {email}\nReset Token: {reset_token}\nExpires in 1 hour\n\nReset link: https://astra6.onrender.com/?reset={reset_token}\n\nIf you didn't request, ignore.\n\nFrom {OWNER_EMAIL}")
-            msg['Subject'] = 'ASTRA6 Password Reset'
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        
+        if smtp_pass:
+            html_content = f"""
+            <html>
+            <body style="font-family:Arial,sans-serif;background:#fff;color:#000;padding:20px">
+              <div style="max-width:500px;margin:0 auto;border:2px solid #000;border-radius:14px;padding:24px">
+                <div style="text-align:center;margin-bottom:16px">
+                  <h2 style="margin:0;font-weight:900">ASTRA6</h2>
+                  <p style="margin:4px 0;color:#666;font-size:12px">Best Gold Trading Signals</p>
+                </div>
+                <h3>Password Reset</h3>
+                <p>Hi {email},</p>
+                <p>You requested password reset for ASTRA6.</p>
+                <p><strong>Reset Link (expires 1 hour):</strong></p>
+                <p style="background:#f5f5f5;padding:12px;border-radius:8px;word-break:break-all"><a href="{reset_link}" style="color:#000;font-weight:900">{reset_link}</a></p>
+                <p><strong>Or copy token and paste to website:</strong></p>
+                <p style="background:#000;color:#fff;padding:12px;border-radius:8px;word-break:break-all;font-family:monospace">{reset_token}</p>
+                <p>Go to <a href="https://astra6.onrender.com">https://astra6.onrender.com</a> → Sign In → Forgot password? → Paste token + new password</p>
+                <p style="font-size:11px;color:#666">If you didn't request, ignore this email.</p>
+                <p style="font-size:11px;color:#666">From: {OWNER_EMAIL} - ASTRA6 Owner</p>
+              </div>
+            </body>
+            </html>
+            """
+            text_content = f"ASTRA6 Password Reset\n\nEmail: {email}\n\nReset Link (expires 1h): {reset_link}\n\nToken: {reset_token}\n\nGo to https://astra6.onrender.com → Sign In → Forgot password? → Paste token + new password\n\nIf you didn't request, ignore.\nFrom {OWNER_EMAIL}"
+            
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = 'ASTRA6 - Password Reset Link'
             msg['From'] = OWNER_EMAIL
             msg['To'] = email
-            with smtplib.SMTP(smtp_host, 587) as server:
+            msg.attach(MIMEText(text_content, 'plain'))
+            msg.attach(MIMEText(html_content, 'html'))
+            
+            with smtplib.SMTP(smtp_host, smtp_port) as server:
                 server.starttls()
                 server.login(smtp_user, smtp_pass)
                 server.send_message(msg)
-            print(f"✅ Reset email sent to {email} via {OWNER_EMAIL}")
+            print(f"✅ Reset email sent to {email} via Gmail {OWNER_EMAIL}")
         else:
-            print(f"📧 RESET TOKEN for {email}: {reset_token} - No SMTP configured, owner {OWNER_EMAIL}")
+            print(f"⚠️ SMTP_PASS not set - Cannot send Gmail. Token for {email}: {reset_token} - Set SMTP_PASS env on Render")
+            print(f"📧 Would send to {email} from {OWNER_EMAIL} link {reset_link}")
     except Exception as e:
-        print(f"Email send error {e}, token {reset_token} for {email}")
-    # For demo, return token if no SMTP (so user can test), in production would not
-    return {"status":"ok","message": f"Reset link sent to {email} via {OWNER_EMAIL} - check email (expires 1h)",  "email": email}
+        print(f"❌ Email send error {e}, token {reset_token} for {email}")
+    # NEVER return token on website - only via Gmail inbox
+    return {"status":"ok","message": f"Reset link sent to {email} via Gmail {OWNER_EMAIL} - check your Gmail inbox (expires 1h). If not received, contact owner {OWNER_EMAIL}", "email": email}
 
 @app.post("/api/auth/reset-password")
 def reset_password(req: dict):
