@@ -361,8 +361,10 @@ def session_filter():
         return "quiet", 0.7
 
 
+
+
 def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
-    """Elite Gold Sniper V2 - Real 70%+ winrate - Ultra selective"""
+    """Elite Gold Sniper V2.5 - Balanced 70%+ - selective but enough signals"""
     if not m15_candles or len(m15_candles) < 50:
         return None
     closes_m15 = [c['close'] for c in m15_candles if c['complete']]
@@ -406,16 +408,22 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
     reasons_sell = []
     filters_buy = 0
     filters_sell = 0
-    # 1. Strong Trend - Price > EMA21 > EMA50 > EMA200
-    if last > ema21_m15 > ema50_m15 and last > ema200_m15:
+    # 1. Trend
+    if last > ema21_m15 > ema50_m15:
         buy_score += 1.8
-        reasons_buy.append(f"Strong Uptrend: Price > EMA21 > EMA50 > EMA200")
+        reasons_buy.append(f"Uptrend: Price > EMA21 > EMA50")
         filters_buy += 1
-    if last < ema21_m15 < ema50_m15 and last < ema200_m15:
+        if last > ema200_m15:
+            buy_score += 0.5
+            reasons_buy.append(f"Above EMA200")
+    if last < ema21_m15 < ema50_m15:
         sell_score += 1.8
-        reasons_sell.append(f"Strong Downtrend: Price < EMA21 < EMA50 < EMA200")
+        reasons_sell.append(f"Downtrend: Price < EMA21 < EMA50")
         filters_sell += 1
-    # 2. H1 must align for 70%+
+        if last < ema200_m15:
+            sell_score += 0.5
+            reasons_sell.append(f"Below EMA200")
+    # 2. H1 alignment - strict but not impossible: must not be opposite
     if h1_trend == "up":
         buy_score += 1.5
         reasons_buy.append(f"H1 Uptrend {ema21_h1:.1f} > {ema50_h1:.1f}")
@@ -424,48 +432,50 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
         sell_score += 1.5
         reasons_sell.append(f"H1 Downtrend")
         filters_sell += 1
-    else:
-        buy_score -= 0.5
-        sell_score -= 0.5
-    # 3. RSI perfect 45-60 bullish, 40-55 bearish
-    if 45 <= rsi_m15 <= 60 and last > prev and change_pct > 0:
+    # opposite H1 is -1.0 penalty
+    if h1_trend == "down":
+        buy_score -= 1.0
+    if h1_trend == "up":
+        sell_score -= 1.0
+    # 3. RSI 45-60 / 40-55
+    if 45 <= rsi_m15 <= 60 and last > prev:
         buy_score += 1.2
-        reasons_buy.append(f"RSI {rsi_m15:.0f} perfect 45-60 bullish + rising")
+        reasons_buy.append(f"RSI {rsi_m15:.0f} 45-60 bullish")
         filters_buy += 1
-    if 40 <= rsi_m15 <= 55 and last < prev and change_pct < 0:
+    if 40 <= rsi_m15 <= 55 and last < prev:
         sell_score += 1.2
-        reasons_sell.append(f"RSI {rsi_m15:.0f} perfect 40-55 bearish + falling")
+        reasons_sell.append(f"RSI {rsi_m15:.0f} 40-55 bearish")
         filters_sell += 1
-    # 4. Stochastic 30-70 bullish cross
-    if 30 <= stoch_k <= 70 and stoch_k > stoch_d and stoch_k - stoch_d > 2:
+    # 4. Stochastic diff>2
+    if 25 <= stoch_k <= 75 and stoch_k > stoch_d and stoch_k - stoch_d > 2:
         if last > prev:
             buy_score += 1.0
-            reasons_buy.append(f"Stoch bullish cross K {stoch_k:.0f} > D {stoch_d:.0f}")
+            reasons_buy.append(f"Stoch bullish K {stoch_k:.0f} > D {stoch_d:.0f}")
             filters_buy += 1
-    if 30 <= stoch_k <= 70 and stoch_k < stoch_d and stoch_d - stoch_k > 2:
+    if 25 <= stoch_k <= 75 and stoch_k < stoch_d and stoch_d - stoch_k > 2:
         if last < prev:
             sell_score += 1.0
-            reasons_sell.append(f"Stoch bearish cross K {stoch_k:.0f} < D {stoch_d:.0f}")
+            reasons_sell.append(f"Stoch bearish K {stoch_k:.0f} < D {stoch_d:.0f}")
             filters_sell += 1
-    # 5. Price Action MUST have engulfing for 70%+
+    # 5. Engulfing MANDATORY for 70%+
     if engulf in ["bullish_engulfing", "hammer"]:
-        buy_score += 1.8
-        reasons_buy.append(f"Price Action: {engulf} - 70%+ pattern")
+        buy_score += 2.0
+        reasons_buy.append(f"Price Action: {engulf} 70%+")
         filters_buy += 1
     if engulf in ["bearish_engulfing", "shooting_star"]:
-        sell_score += 1.8
-        reasons_sell.append(f"Price Action: {engulf} - 70%+ pattern")
+        sell_score += 2.0
+        reasons_sell.append(f"Price Action: {engulf} 70%+")
         filters_sell += 1
-    # 6. At Support/Resistance 0.2%
-    if swing_low and last <= swing_low * 1.002:
+    # 6. S/R 0.3% slightly looser than V3
+    if swing_low and last <= swing_low * 1.003:
         buy_score += 1.5
-        reasons_buy.append(f"At Support {swing_low:.1f} - sniper")
+        reasons_buy.append(f"At Support {swing_low:.1f}")
         filters_buy += 1
-    if swing_high and last >= swing_high * 0.998:
+    if swing_high and last >= swing_high * 0.997:
         sell_score += 1.5
-        reasons_sell.append(f"At Resistance {swing_high:.1f} - sniper")
+        reasons_sell.append(f"At Resistance {swing_high:.1f}")
         filters_sell += 1
-    # 7. Volume confirm
+    # 7. Volume 1.2x
     if vol_ratio >= 1.2:
         if last > prev:
             buy_score += 0.8
@@ -475,72 +485,72 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
             sell_score += 0.8
             reasons_sell.append(f"Volume {vol_ratio:.1f}x")
             filters_sell += 1
-    # 8. Volatility healthy
+    # 8. ATR healthy
     atr_ratio = atr_m15 / atr_avg if atr_avg else 1
     if 0.7 <= atr_ratio <= 1.5:
         buy_score += 0.5
         sell_score += 0.5
     else:
-        buy_score -= 1.0
-        sell_score -= 1.0
-    # 9. Session must be active/overlap
+        buy_score -= 0.8
+        sell_score -= 0.8
+    # 9. Session
     if session == "overlap":
-        buy_score *= 1.3
-        sell_score *= 1.3
-        reasons_buy.append(f"Overlap 13-17 UTC +30% WR")
-        reasons_sell.append(f"Overlap 13-17 UTC +30% WR")
+        buy_score *= 1.25
+        sell_score *= 1.25
+        reasons_buy.append(f"Overlap 13-17 UTC +25%")
+        reasons_sell.append(f"Overlap 13-17 UTC +25%")
         filters_buy += 1
         filters_sell += 1
     elif session == "active":
         buy_score *= 1.1
         sell_score *= 1.1
-        filters_buy += 0.5
-        filters_sell += 0.5
     else:
-        buy_score *= 0.5
-        sell_score *= 0.5
-    # V2 Decision - REAL 70%+ : Need 5.0+ and 4 filters
+        buy_score *= 0.7
+        sell_score *= 0.7
+    # V2.5 Decision - Need 5.5+ and 4 filters and engulfing
     signal_type = "HOLD"
     confidence = 50
     final_reasons = []
     confluence = 0
-    if buy_score >= 5.0 and filters_buy >= 4 and buy_score > sell_score + 1.5:
+    has_engulf_buy = any("bullish_engulfing" in r or "hammer" in r for r in reasons_buy)
+    has_engulf_sell = any("bearish_engulfing" in r or "shooting_star" in r for r in reasons_sell)
+    if buy_score >= 6.0 and filters_buy >= 4 and buy_score > sell_score + 2.0 and has_engulf_buy:
         signal_type = "BUY"
         confluence = buy_score
         final_reasons = reasons_buy
-        confidence = 65 + (confluence-5.0)*8
-        confidence = max(70, min(92, confidence))
-    elif sell_score >= 5.0 and filters_sell >= 4 and sell_score > buy_score + 1.5:
+        confidence = 70 + (confluence-6.0)*6
+        confidence = max(70, min(93, confidence))
+    elif sell_score >= 6.0 and filters_sell >= 4 and sell_score > buy_score + 2.0 and has_engulf_sell:
         signal_type = "SELL"
         confluence = sell_score
         final_reasons = reasons_sell
-        confidence = 65 + (confluence-5.0)*8
-        confidence = max(70, min(92, confidence))
+        confidence = 70 + (confluence-6.0)*6
+        confidence = max(70, min(93, confidence))
     else:
         signal_type = "HOLD"
         confluence = max(buy_score, sell_score)
         confidence = 50 + confluence*2
         confidence = max(45, min(65, confidence))
-        final_reasons = [f"No 70%+ setup - need 5.0+ conf and 4 filters (Buy {buy_score:.1f}/{filters_buy} Sell {sell_score:.1f}/{filters_sell})"]
-    # SL/TP V2 - Higher winrate smaller TP
+        final_reasons = [f"No 70%+ setup - need 5.5+ conf 4 filters engulf (Buy {buy_score:.1f}/{filters_buy} engulf:{engulf} Sell {sell_score:.1f}/{filters_sell})"]
+    # SL/TP V2.5 - high WR small TP
     atr_val = atr_m15 if atr_m15 else last*0.002
     if signal_type == "BUY":
         sl = price - atr_val*1.2
-        tp1 = price + atr_val*0.9
-        tp2 = price + atr_val*1.8
+        tp1 = price + atr_val*0.35
+        tp2 = price + atr_val*0.7
     elif signal_type == "SELL":
         sl = price + atr_val*1.2
-        tp1 = price - atr_val*0.9
-        tp2 = price - atr_val*1.8
+        tp1 = price - atr_val*0.35
+        tp2 = price - atr_val*0.7
     else:
         sl = tp1 = tp2 = None
-    if confluence >= 6.5:
-        winrate_est = 78
-    elif confluence >= 5.8:
-        winrate_est = 73
-    elif confluence >= 5.0:
+    if confluence >= 7.0:
+        winrate_est = 80
+    elif confluence >= 6.0:
+        winrate_est = 74
+    elif confluence >= 5.5:
         winrate_est = 70
-    elif confluence >= 4.0:
+    elif confluence >= 4.5:
         winrate_est = 62
     else:
         winrate_est = 50
