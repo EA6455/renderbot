@@ -3,79 +3,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASTRA6BOT • GPT-6 Astra XAUUSD Trading Terminal</title>
+<title>ASTRA6BOT • OANDA XAUUSD Live Terminal</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#070709;--card:#111113;--card2:#1a1a1e;--border:#222226;--gold:#f5c518;--green:#22c55e;--red:#ef4444;--text:#e6e6e6;--muted:#888}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text)}
 .mono{font-family:JetBrains Mono,monospace}
-
-/* Header */
 .header{height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:100}
 .logo{display:flex;align-items:center;gap:10px}
 .logo-icon{width:36px;height:36px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:18px;box-shadow:0 0 20px rgba(245,197,24,0.3)}
-.logo-text{font-weight:900;font-size:18px;letter-spacing:-0.5px}
-.logo-text span{color:var(--gold)}
+.logo-text{font-weight:900;font-size:18px;letter-spacing:-0.5px}.logo-text span{color:var(--gold)}
 .logo-sub{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:1px;margin-top:-2px}
 .header-right{display:flex;align-items:center;gap:10px}
 .badge{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700}
 .dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,0.6)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
-.btn-gold{background:var(--gold);color:#000;border:none;padding:8px 14px;border-radius:8px;font-weight:800;font-size:11px;cursor:pointer;letter-spacing:0.5px}
+.btn-gold{background:var(--gold);color:#000;border:none;padding:8px 14px;border-radius:8px;font-weight:800;font-size:11px;cursor:pointer}
 .btn-ghost{background:var(--card2);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:8px;font-size:11px;cursor:pointer}
-
-/* Layout */
 .layout{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:1fr 360px;gap:12px;padding:12px}
 @media(max-width:1100px){.layout{grid-template-columns:1fr}}
-
-/* Chart Terminal */
-.terminal{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.terminal{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
 .terminal-top{padding:12px 16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.pair{display:flex;align-items:center;gap:12px}
 .pair-name{font-weight:900;font-size:16px}
 .pair-desc{font-size:10px;color:var(--muted)}
 .price-block{display:flex;align-items:baseline;gap:10px}
 .price-main{font-size:26px;font-weight:900;letter-spacing:-1px}
 .price-main.up{color:var(--green)}.price-main.down{color:var(--red)}
 .bidask{font-size:10px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:3px 8px;border-radius:20px;color:var(--green);font-family:JetBrains Mono,monospace}
-.signal{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:0.5px}
+.signal{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:800}
 .signal.long{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
 .signal.short{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
 .signal.hold{background:rgba(120,120,120,0.1);color:var(--muted);border:1px solid var(--border)}
-
-/* Charts */
-.chart-tabs{display:flex;gap:0;background:var(--card2);border-bottom:1px solid var(--border)}
-.tab{padding:10px 16px;font-size:11px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted)}
-.tab.active{color:var(--gold);border-bottom-color:var(--gold);background:var(--card)}
-#oanda_chart{height:420px;width:100%;background:var(--card)}
-#tradingview_chart{height:320px;width:100%;display:none;border-top:1px solid var(--border)}
-#tradingview_chart.active{display:block}
-
-/* Info bar */
+#oanda_chart{height:500px;width:100%;background:var(--card)}
 .info-bar{padding:8px 14px;background:#0f0f10;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:JetBrains Mono,monospace}
-
-/* Sidebar */
 .sidebar{display:flex;flex-direction:column;gap:10px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px}
 .card-title{font-size:11px;font-weight:800;letter-spacing:0.5px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
-.card-title span.badge-count{background:var(--gold);color:#000;padding:2px 6px;border-radius:10px;font-size:9px}
+.badge-count{background:var(--gold);color:#000;padding:2px 6px;border-radius:10px;font-size:9px}
 .stat{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1a1a1e;font-size:11px}
-.stat:last-child{border:none}
 .stat-label{color:var(--muted)}.stat-value{color:var(--gold);font-weight:700;font-family:JetBrains Mono,monospace}
 .row{display:grid;grid-template-columns:48px 1fr 1fr 44px;gap:4px;padding:3px 0;border-bottom:1px solid #1a1a1e;font-size:10px;color:#888;font-family:JetBrains Mono,monospace}
 .row.header{color:#fff;font-weight:700;position:sticky;top:0;background:var(--card);font-family:Inter,sans-serif}
 .row.live{background:rgba(245,197,24,0.12);border:1px solid rgba(245,197,24,0.2);border-radius:6px;color:var(--gold)}
-select,input{background:#0f0f10;border:1px solid var(--border);color:#fff;padding:6px 8px;border-radius:6px;font-size:11px;width:100%;font-family:Inter,sans-serif}
+select,input{background:#0f0f10;border:1px solid var(--border);color:#fff;padding:6px 8px;border-radius:6px;font-size:11px;width:100%}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .alert-item{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:6px;font-size:10px;line-height:1.4}
 .alert-item.long{border-left:3px solid var(--green)}.alert-item.short{border-left:3px solid var(--red)}
-.alert-time{color:var(--muted);font-size:9px}
 .banner{display:none;background:linear-gradient(90deg,var(--gold),#ff8c00);color:#000;padding:10px 16px;font-weight:800;font-size:12px;justify-content:space-between;align-items:center}
 .banner.show{display:flex}
 </style>
 <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
-<script src="https://s.tradingview.com/tv.js"></script>
 </head>
 <body>
 
@@ -84,31 +62,26 @@ select,input{background:#0f0f10;border:1px solid var(--border);color:#fff;paddin
     <div class="logo-icon">A6</div>
     <div>
       <div class="logo-text">ASTRA6BOT</div>
-      <div class="logo-sub">GPT-6 ASTRA • XAUUSD TERMINAL</div>
+      <div class="logo-sub">OANDA XAUUSD • LIVE TERMINAL</div>
     </div>
   </div>
   <div class="header-right">
     <div class="badge"><div class="dot"></div><span id="market-status">OANDA LIVE</span> • <span id="live-time" class="mono">--:--:--</span></div>
-    <button class="btn-ghost" onclick="switchTab('oanda')">OANDA Chart</button>
-    <button class="btn-ghost" onclick="switchTab('tv')">TradingView</button>
     <button class="btn-gold" onclick="testAlert()">🧪 TEST ALERT</button>
   </div>
 </div>
 
 <div id="alert-banner" class="banner">
-  <span id="alert-banner-text">🚨 ASTRA6BOT ALERT: XAUUSD LONG at $4284.97</span>
+  <span id="alert-banner-text">🚨 ASTRA6BOT ALERT</span>
   <button onclick="this.parentElement.classList.remove('show')" style="background:#000;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:10px">DISMISS</button>
 </div>
 
 <div class="layout">
-  <!-- Main Terminal -->
   <div class="terminal">
     <div class="terminal-top">
-      <div class="pair">
-        <div>
-          <div class="pair-name">XAUUSD <span style="color:var(--muted);font-weight:400">/ GOLD</span> <span style="font-size:10px;background:var(--card2);border:1px solid var(--border);padding:2px 6px;border-radius:6px">OANDA Practice</span></div>
-          <div class="pair-desc mono" id="candle-info">Loading OANDA v20 API • api-fxpractice.oanda.com • Same as TradingView</div>
-        </div>
+      <div>
+        <div class="pair-name">XAUUSD <span style="color:var(--muted);font-weight:400">/ GOLD • OANDA Practice</span></div>
+        <div class="pair-desc mono" id="candle-info">Loading OANDA v20 • api-fxpractice.oanda.com • Real XAUUSD Spot</div>
       </div>
       <div style="display:flex;align-items:center;gap:12px">
         <div class="price-block">
@@ -121,63 +94,52 @@ select,input{background:#0f0f10;border:1px solid var(--border);color:#fff;paddin
         </div>
       </div>
     </div>
-
-    <div class="chart-tabs">
-      <div class="tab active" id="tab-oanda" onclick="switchTab('oanda')">📈 OANDA LIVE Candlestick (Real Price)</div>
-      <div class="tab" id="tab-tv" onclick="switchTab('tv')">📊 TradingView Chart (OANDA:XAUUSD)</div>
-    </div>
-
     <div id="oanda_chart"></div>
-    <div id="tradingview_chart"></div>
-
     <div class="info-bar">
-      <span>📡 OANDA v20 • Account 101-001-40547390-001 • $100k demo • History back to 2005 • 101-001-40547390-001</span>
+      <span>📡 OANDA v20 • 101-001-40547390-001 • $100k demo • History back to 2005 • No TradingView</span>
       <span id="forming" class="mono">Forming: -- • Updates every 5s</span>
     </div>
   </div>
 
-  <!-- Sidebar -->
   <div class="sidebar">
     <div class="card">
-      <div class="card-title">🚨 ASTRA6BOT Alerts <span class="badge-count" id="alerts-count">0</span> <span style="font-size:9px;color:var(--green)">● 60s check</span></div>
-      <div id="alerts"><div style="padding:16px;text-align:center;color:var(--muted);font-size:10px">No alerts yet<br>Monitoring LONG/SHORT<br>Market closed Sat/Sun</div></div>
-      <button class="btn-gold" onclick="fetchAlerts()">↻ Refresh Alerts</button>
-      <button class="btn-ghost" onclick="testAlert()">🧪 Force LONG Alert (Test)</button>
-      <div style="font-size:9px;color:var(--muted);margin-top:6px">Astra generates SL/TP 1.5x/3x ATR. Add TELEGRAM_BOT_TOKEN for Telegram.</div>
+      <div class="card-title">🚨 ASTRA6BOT Alerts <span class="badge-count" id="alerts-count">0</span> <span style="font-size:9px;color:var(--green)">● 60s</span></div>
+      <div id="alerts"><div style="padding:16px;text-align:center;color:var(--muted);font-size:10px">No alerts yet<br>Monitoring LONG/SHORT</div></div>
+      <button class="btn-gold" onclick="fetchAlerts()">↻ Refresh</button>
+      <button class="btn-ghost" onclick="testAlert()">🧪 Force LONG Alert</button>
     </div>
 
     <div class="card">
-      <div class="card-title">🪙 OANDA Live Stats</div>
-      <div class="stat"><span class="stat-label">Live Mid / Bid / Ask</span><span class="stat-value" id="stat-mid">--</span></div>
-      <div class="stat"><span class="stat-label">EMA Fast 20 / Slow 50</span><span class="stat-value" id="stat-ema">--</span></div>
-      <div class="stat"><span class="stat-label">RSI 14 / ATR 14</span><span class="stat-value" id="stat-rsi">--</span></div>
+      <div class="card-title">🪙 OANDA Live</div>
+      <div class="stat"><span class="stat-label">Mid / Bid / Ask</span><span class="stat-value" id="stat-mid">--</span></div>
+      <div class="stat"><span class="stat-label">EMA 20 / 50</span><span class="stat-value" id="stat-ema">--</span></div>
+      <div class="stat"><span class="stat-label">RSI / ATR</span><span class="stat-value" id="stat-rsi">--</span></div>
       <div class="stat"><span class="stat-label">Last Candle</span><span class="stat-value" id="stat-last" style="font-size:9px">--</span></div>
-      <div class="stat"><span class="stat-label">Status</span><span class="stat-value" id="stat-err" style="color:var(--green)">OK</span></div>
       <div class="grid2">
         <a class="btn-ghost" href="/api/xauusd/live" target="_blank">Live JSON</a>
-        <a class="btn-ghost" href="/api/xauusd/signal" target="_blank">Signal JSON</a>
+        <a class="btn-ghost" href="/api/xauusd/history?granularity=D&count=100" target="_blank">History JSON</a>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">📊 Live Candles M15 <span style="color:var(--gold)">● LIVE 5s</span> <span id="candle-count" style="background:var(--gold);color:#000;padding:1px 5px;border-radius:8px;font-size:8px">0</span></div>
+      <div class="card-title">📊 Live Candles M15 <span style="color:var(--gold)">● LIVE 5s</span> <span id="candle-count" class="badge-count">0</span></div>
       <div id="candles"><div style="padding:10px;text-align:center;color:var(--muted);font-size:10px">Loading OANDA...</div></div>
     </div>
 
     <div class="card">
-      <div class="card-title">📜 OLD DATA — History Back to 2005</div>
+      <div class="card-title">📜 OLD DATA — Back to 2005</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 60px;gap:4px;margin-bottom:6px">
-        <select id="gran"><option value="M15">M15</option><option value="M30">M30</option><option value="H1" selected>H1</option><option value="H4">H4</option><option value="D">D Daily</option><option value="W">W Weekly</option></select>
-        <select id="cnt"><option value="50">50</option><option value="100" selected>100</option><option value="500">500</option><option value="1000">1000</option></select>
+        <select id="gran"><option value="M15">M15</option><option value="H1" selected>H1</option><option value="D">D</option></select>
+        <select id="cnt"><option value="100" selected>100</option><option value="500">500</option></select>
         <button class="btn-gold" onclick="fetchOld()">Load</button>
       </div>
-      <input id="from" placeholder="From: 2024-01-01T00:00:00Z (optional for old data)">
+      <input id="from" placeholder="From: 2024-01-01T00:00:00Z (optional)">
       <div class="grid2" style="margin-top:4px">
-        <button class="btn-ghost" onclick="loadOld('D','365')">365D Daily</button>
-        <button class="btn-ghost" onclick="loadOld('H1','500','2024-01-01T00:00:00Z')">Jan 2024</button>
+        <button class="btn-ghost" onclick="loadOld('D','365')">365D</button>
+        <button class="btn-ghost" onclick="loadOld('H1','500','2024-01-01T00:00:00Z')">2024 Old</button>
       </div>
       <div id="old-stats" style="font-size:9px;color:var(--muted);margin-top:6px"></div>
-      <div id="old-candles" style="max-height:200px;overflow-y:auto;margin-top:6px"></div>
+      <div id="old-candles" style="max-height:180px;overflow-y:auto;margin-top:6px"></div>
     </div>
   </div>
 </div>
@@ -192,8 +154,8 @@ function initChart(){
     layout: { background: { color: '#111113' }, textColor: '#888' },
     grid: { vertLines: { color: '#1a1a1e' }, horzLines: { color: '#1a1a1e' } },
     width: container.clientWidth,
-    height: 420,
-    timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#222226' },
+    height: 500,
+    timeScale: { timeVisible: true, borderColor: '#222226' },
     rightPriceScale: { borderColor: '#222226' }
   });
   candleSeries = chart.addCandlestickSeries({
@@ -202,54 +164,21 @@ function initChart(){
   window.addEventListener('resize', ()=>{ chart.applyOptions({ width: container.clientWidth }); });
 }
 
-function switchTab(t){
-  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
-  if(t==='oanda'){
-    document.getElementById('tab-oanda').classList.add('active');
-    document.getElementById('oanda_chart').style.display='block';
-    document.getElementById('tradingview_chart').classList.remove('active');
-  } else {
-    document.getElementById('tab-tv').classList.add('active');
-    document.getElementById('oanda_chart').style.display='none';
-    document.getElementById('tradingview_chart').classList.add('active');
-    if(!window.tvLoaded){
-      new TradingView.widget({
-        "autosize": true,
-        "symbol": "OANDA:XAUUSD",
-        "interval": "15",
-        "timezone": "Etc/UTC",
-        "theme": "dark",
-        "style": "1",
-        "locale": "en",
-        "toolbar_bg": "#111113",
-        "container_id": "tradingview_chart"
-      });
-      window.tvLoaded=true;
-    }
-  }
-}
-
 async function fetchLive(){
   try{
     const r = await fetch('/api/xauusd/live');
     const d = await r.json();
     if(d.status==='ok'){
-      const price = d.price;
-      document.getElementById('price').textContent = '$' + price.toFixed(2);
+      document.getElementById('price').textContent = '$' + d.price.toFixed(2);
       document.getElementById('price').className = 'price-main up';
       if(d.live_price){
-        document.getElementById('bidask').textContent = `BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)} • LIVE OANDA`;
+        document.getElementById('bidask').textContent = `BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)} • OANDA LIVE`;
       }
       document.getElementById('live-time').textContent = new Date().toLocaleTimeString();
       document.getElementById('market-status').textContent = d.market_closed && d.market_closed.includes('closed') ? 'CLOSED Weekend' : 'LIVE';
+      document.getElementById('candle-info').textContent = d.forming_candle ? `Forming LIVE ${d.forming_candle.time.substring(11,16)} UTC` : `Last ${d.last_complete.time.substring(11,16)} UTC • Market closed weekend`;
+      document.getElementById('forming').textContent = d.forming_candle ? `Forming: O${d.forming_candle.open.toFixed(1)} H${d.forming_candle.high.toFixed(1)} L${d.forming_candle.low.toFixed(1)} C${d.forming_candle.close.toFixed(1)}` : 'Market closed - last Fri';
       
-      if(d.forming_candle){
-        document.getElementById('forming').textContent = `Forming LIVE: O${d.forming_candle.open.toFixed(1)} H${d.forming_candle.high.toFixed(1)} L${d.forming_candle.low.toFixed(1)} C${d.forming_candle.close.toFixed(1)} Vol ${d.forming_candle.volume}`;
-      } else {
-        document.getElementById('forming').textContent = `Last: ${d.last_complete.time.substring(11,16)} UTC • Market closed weekend - last Fri`;
-      }
-
-      // Chart
       if(d.last_10 && candleSeries && lastCandles.length===0){
         const r2 = await fetch('/api/xauusd/history?granularity=M15&count=100');
         const d2 = await r2.json();
@@ -263,7 +192,6 @@ async function fetchLive(){
         candleSeries.update({ time: Math.floor(new Date(last.time).getTime()/1000), open: last.open, high: last.high, low: last.low, close: last.close });
       }
 
-      // Table
       const container = document.getElementById('candles');
       let html = '<div class="row header"><span>Time</span><span>Open</span><span>Close</span><span>Vol</span></div>';
       (d.last_10||[]).slice().reverse().forEach(c=>{
@@ -273,13 +201,8 @@ async function fetchLive(){
         html += `<div class="row ${isLive?'live':''}"><span>${time} ${isLive?'●':''}</span><span>${c.open.toFixed(1)}</span><span style="color:${up?'#22c55e':'#ef4444'}">${c.close.toFixed(1)}</span><span>${c.volume}</span></div>`;
       });
       container.innerHTML = html;
-      document.getElementById('stat-err').textContent = 'OK';
-      document.getElementById('stat-err').style.color = '#22c55e';
-    } else {
-      document.getElementById('stat-err').textContent = d.error;
-      document.getElementById('stat-err').style.color = '#ef4444';
     }
-  }catch(e){ document.getElementById('stat-err').textContent = e.message; }
+  }catch(e){}
 
   try{
     const r2 = await fetch('/api/xauusd/signal');
@@ -292,7 +215,7 @@ async function fetchLive(){
       else { el.textContent='HOLD ⚪'; el.className='signal hold'; }
       document.getElementById('stat-ema').textContent = `${s.ema_fast.toFixed(1)}/${s.ema_slow.toFixed(1)}`;
       document.getElementById('stat-rsi').textContent = `${s.rsi.toFixed(1)}/${s.atr.toFixed(2)}`;
-      document.getElementById('candle-info').textContent = `EMA20 ${s.ema_fast.toFixed(1)} EMA50 ${s.ema_slow.toFixed(1)} RSI ${s.rsi.toFixed(1)} • ${s.time.substring(11,16)} UTC`;
+      document.getElementById('stat-last').textContent = s.time.substring(11,16) + ' UTC';
     }
   }catch(e){}
 }
@@ -308,12 +231,11 @@ async function fetchAlerts(){
       d.alerts.slice(0,4).forEach(a=>{
         const cls = a.signal===1?'long':'short';
         const t = new Date(a.time).toLocaleTimeString();
-        h += `<div class="alert-item ${cls}"><div class="alert-time">${t} • $${a.price?.toFixed(2)}</div><div style="margin-top:3px;white-space:pre-wrap">${a.alert_text.substring(0,160)}</div></div>`;
+        h += `<div class="alert-item ${cls}"><div style="color:#666;font-size:9px">${t} • $${a.price?.toFixed(2)}</div><div style="margin-top:3px;white-space:pre-wrap">${a.alert_text.substring(0,160)}</div></div>`;
       });
       c.innerHTML = h;
-      const b = document.getElementById('alert-banner');
+      document.getElementById('alert-banner').classList.add('show');
       document.getElementById('alert-banner-text').textContent = `🚨 ${d.alerts[0].alert_text.substring(0,120)}`;
-      b.classList.add('show');
     }
   }catch(e){}
 }
@@ -324,7 +246,7 @@ async function fetchOld(){
   const from = document.getElementById('from').value.trim();
   let url = `/api/xauusd/history?granularity=${gran}&count=${cnt}`;
   if(from) url += `&from_time=${encodeURIComponent(from)}`;
-  document.getElementById('old-candles').innerHTML = 'Loading old data...';
+  document.getElementById('old-candles').innerHTML = 'Loading...';
   try{
     const r = await fetch(url);
     const d = await r.json();
@@ -354,6 +276,6 @@ setInterval(fetchLive, 5000);
 setInterval(fetchAlerts, 15000);
 </script>
 
-<script src="/widget.js" data-api="/api/chat" data-color="#f5c518" data-title="ASTRA6BOT • LIVE"></script>
+<script src="/widget.js" data-api="/api/chat" data-color="#f5c518" data-title="ASTRA6BOT"></script>
 </body>
 </html>
