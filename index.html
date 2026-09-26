@@ -138,20 +138,22 @@ body.light-mode .lock-card{background:#ffffff}
         <div class="bidask mono" id="bidask">BID -- / ASK --</div>
       </div>
     </div>
-    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:relative">
       <button class="btn" id="theme-btn" title="Light/Dark Mode" style="font-size:16px">🌙</button>
       <button class="btn" id="refresh-btn">🔄</button>
       <button class="btn" id="sound-btn">🔔</button>
+      <!-- Hamburger line button top right - click to show ladder -->
+      <button class="btn" id="ladder-menu-btn" title="Menu" style="font-size:18px;padding:8px 12px">☰</button>
+      <!-- Ladder dropdown top right - dashboard chart account sign in sign up contact -->
+      <div id="ladder-dropdown" style="display:none;position:absolute;top:50px;right:0;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:8px;min-width:160px;z-index:10000;flex-direction:column;gap:6px;box-shadow:0 10px 30px rgba(0,0,0,0.5)">
+        <button class="btn active" data-switch="dashboard" id="sw-dashboard" style="width:100%;justify-content:flex-start;font-size:13px;padding:10px 14px;border-radius:8px">Dashboard</button>
+        <button class="btn" data-switch="signals" id="sw-signals" style="width:100%;justify-content:flex-start;font-size:13px;padding:10px 14px;border-radius:8px">Chart</button>
+        <button class="btn" data-switch="account" id="sw-account" style="width:100%;justify-content:flex-start;font-size:13px;padding:10px 14px;border-radius:8px">Account</button>
+        <button class="btn" data-switch="signin" id="sw-signin" style="width:100%;justify-content:flex-start;font-size:13px;padding:10px 14px;border-radius:8px">Sign In</button>
+        <button class="btn" data-switch="signup" id="sw-signup" style="width:100%;justify-content:flex-start;font-size:13px;padding:10px 14px;border-radius:8px">Sign Up</button>
+        <button class="btn" data-switch="contact" id="sw-contact" style="width:100%;justify-content:flex-start;font-size:13px;padding:10px 14px;border-radius:8px">Contact</button>
+      </div>
     </div>
-  </div>
-  <!-- Ladder Buttons - dashboard chart account sign in sign up contact -->
-  <div style="padding:12px 16px 0 16px;display:flex;gap:6px;flex-wrap:wrap;align-items:center" id="view-switch-bar">
-    <button class="btn active" data-switch="dashboard" id="sw-dashboard" style="font-size:11px;padding:8px 14px;border-radius:20px">Dashboard</button>
-    <button class="btn" data-switch="signals" id="sw-signals" style="font-size:11px;padding:8px 14px;border-radius:20px">Chart</button>
-    <button class="btn" data-switch="account" id="sw-account" style="font-size:11px;padding:8px 14px;border-radius:20px">Account</button>
-    <button class="btn" data-switch="signin" id="sw-signin" style="font-size:11px;padding:8px 14px;border-radius:20px">Sign In</button>
-    <button class="btn" data-switch="signup" id="sw-signup" style="font-size:11px;padding:8px 14px;border-radius:20px">Sign Up</button>
-    <button class="btn" data-switch="contact" id="sw-contact" style="font-size:11px;padding:8px 14px;border-radius:20px">Contact</button>
   </div>
 
   <div class="content">
@@ -347,8 +349,8 @@ function showView(v){
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   const nav=document.getElementById('nav-'+v);
   if(nav)nav.classList.add('active');
-  // update switch bar
-  document.querySelectorAll('#view-switch-bar .btn').forEach(b=>b.classList.remove('active','btn-gold'));
+  // update ladder dropdown top right
+  document.querySelectorAll('#ladder-dropdown .btn').forEach(b=>b.classList.remove('active','btn-gold'));
   const sw=document.getElementById('sw-'+v);
   if(sw){sw.classList.add('active'); sw.classList.add('btn-gold');}
   if(v==='account')loadAccount();
@@ -1014,21 +1016,34 @@ function initClicks(){
     el.onclick=handler;
     el.ontouchend=(e)=>{e.preventDefault(); handler(e);};
   });
-  // view switch bar buttons
-  document.querySelectorAll('#view-switch-bar .btn').forEach(el=>{
+  // view switch bar buttons - ladder dropdown top right
+  document.querySelectorAll('#ladder-dropdown .btn').forEach(el=>{
     const handler=(e)=>{
       if(e){e.preventDefault(); e.stopPropagation();}
       const v=el.dataset.switch;
       if(!v)return;
       if(v==='theme'){toggleTheme();return;}
-      console.log('switch bar',v);
+      console.log('ladder menu',v);
       if(v==='signin')openAuth('signin');
       else if(v==='signup')openAuth('signup');
       else showView(v);
+      // hide dropdown after click
+      const dd=document.getElementById('ladder-dropdown');
+      if(dd)dd.style.display='none';
       if(navigator.vibrate)navigator.vibrate(10);
     };
     el.onclick=handler;
     el.ontouchend=(e)=>{e.preventDefault(); handler(e);};
+  });
+  // close ladder dropdown when clicking outside
+  document.addEventListener('click',(e)=>{
+    const dd=document.getElementById('ladder-dropdown');
+    const btn=document.getElementById('ladder-menu-btn');
+    if(!dd||!btn)return;
+    if(dd.style.display==='none')return;
+    if(!dd.contains(e.target) && !btn.contains(e.target)){
+      dd.style.display='none';
+    }
   });
   // buttons
   const bind=(id,fn)=>{const e=document.getElementById(id); if(e){e.onclick=fn; e.ontouchend=(ev)=>{ev.preventDefault(); fn();};}};
@@ -1064,6 +1079,14 @@ function initClicks(){
   bind('btn-replay-prev',()=>replayPrev());
   bind('btn-replay-next',()=>replayNext());
   bind('btn-replay-reset',()=>replayReset());
+  // Hamburger line button top right - ladder menu toggle
+  bind('ladder-menu-btn',()=>{
+    const dd=document.getElementById('ladder-dropdown');
+    if(!dd)return;
+    const isHidden=dd.style.display==='none' || dd.style.display==='';
+    dd.style.display=isHidden?'flex':'none';
+    if(isHidden) dd.style.flexDirection='column';
+  });
   // timeframe
   document.querySelectorAll('.tf-btn').forEach(b=>{
     b.onclick=()=>setTimeframe(b.dataset.tf);
