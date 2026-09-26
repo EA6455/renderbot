@@ -199,16 +199,35 @@ body.light-mode .lock-card{background:#ffffff}
         <div class="mono" id="backtest-result" style="font-size:11px;color:var(--muted);background:var(--card2);padding:10px;border-radius:8px;border:1px solid var(--border)">Click Run Backtest to prove real winrate on historical XAUUSD M15 data. Evaluates if TP1/TP2 hit before SL in next 20 candles (5 hours). Then click Show Chart.</div>
         <!-- Backtest Chart -->
         <div id="backtest-chart-wrap" style="margin-top:12px;display:none">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <div class="label">Backtest Equity Curve • Win/Loss Chart</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+            <div class="label">📈 Real Trading Replay • Historical XAUUSD Chart with Trades</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn" id="btn-replay-play" style="font-size:11px;padding:6px 10px">▶️ Play</button>
+              <button class="btn" id="btn-replay-pause" style="font-size:11px;padding:6px 10px">⏸️ Pause</button>
+              <button class="btn" id="btn-replay-prev" style="font-size:11px;padding:6px 10px">⏮️ Prev</button>
+              <button class="btn" id="btn-replay-next" style="font-size:11px;padding:6px 10px">⏭️ Next</button>
+              <button class="btn" id="btn-replay-reset" style="font-size:11px;padding:6px 10px">🔄 Reset</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
             <div class="mono" style="font-size:10px;color:var(--muted)" id="backtest-chart-info">--</div>
+            <div class="mono" style="font-size:10px;color:var(--muted)" id="replay-info">Bar 0/0 • Price $-- • PnL --</div>
+            <select id="replay-speed" style="padding:4px 8px;border-radius:6px;background:var(--card2);color:var(--text);border:1px solid var(--border);font-size:11px">
+              <option value="500">0.5s / bar</option>
+              <option value="1000" selected>1s / bar</option>
+              <option value="2000">2s / bar</option>
+              <option value="300">Fast 0.3s</option>
+            </select>
           </div>
-          <div id="backtest_chart" style="height:280px;width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px"></div>
-          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-            <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:12px;height:3px;background:var(--green)"></div> Equity (PnL)</div>
-            <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:8px;height:8px;background:var(--green);border-radius:50%"></div> Win</div>
-            <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:8px;height:8px;background:var(--red);border-radius:50%"></div> Loss</div>
+          <div id="backtest_chart" style="height:380px;width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px"></div>
+          <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;font-size:10px" class="mono">
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:3px;background:#22c55e"></div> Equity</div>
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:8px;height:8px;background:#22c55e;border-radius:50%"></div> BUY Win</div>
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:8px;height:8px;background:#ef4444;border-radius:50%"></div> SELL Loss</div>
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:2px;background:#f5c518;border-style:dashed"></div> SL/TP</div>
           </div>
+          <!-- Equity mini -->
+          <div id="equity_chart" style="height:120px;width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-top:10px"></div>
         </div>
         <div id="backtest-details" style="margin-top:10px;max-height:300px;overflow-y:auto;display:none"></div>
       </div>
@@ -543,56 +562,189 @@ async function runBacktest(){
   if(btn)btn.textContent='Run Backtest';
 }
 
-let backtestChart=null, backtestSeries=null;
+let backtestChart=null, backtestSeries=null, equityChart=null, equitySeries=null;
+let replayCandles=[], replaySignals=[], replayIndex=0, replayTimer=null, replayPlaying=false;
+
 function drawBacktestChart(data){
   try{
+    window.lastBacktest=data;
+    replaySignals=data.signals||[];
+    // Need to fetch historical candles for replay - use last backtest's underlying candles
+    // For now, create equity chart + try to build real price replay from signals
     const container=document.getElementById('backtest_chart');
+    const equityContainer=document.getElementById('equity_chart');
     if(!container)return;
     container.innerHTML='';
+    if(equityContainer)equityContainer.innerHTML='';
     const isLight=document.body.classList.contains('light-mode');
-    // Create chart
     if(typeof LightweightCharts==='undefined'){
-      container.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">Chart lib loading...<br>Equity curve will show here</div>';
+      container.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">Chart lib loading...<br>Real trading replay will show historical XAUUSD with BUY/SELL markers</div>';
       const s=document.createElement('script');
       s.src='https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js';
       s.onload=()=>drawBacktestChart(data);
       document.head.appendChild(s);
       return;
     }
+    // Fetch real historical candles for replay
+    fetchHistoricalForReplay(data);
+  }catch(e){console.log('drawBacktestChart err',e);}
+}
+
+async function fetchHistoricalForReplay(backtestData){
+  try{
+    const container=document.getElementById('backtest_chart');
+    const equityContainer=document.getElementById('equity_chart');
+    if(!container)return;
+    // Fetch M15 history for real chart
+    const r=await fetch('/api/xauusd/history?granularity=M15&count=500',{headers:authHeaders()});
+    const d=await r.json();
+    if(d.status!=='ok'){container.innerHTML='<div style="padding:20px;color:var(--muted)">Failed to load historical data</div>';return;}
+    replayCandles=d.candles.map(c=>({time:Math.floor(new Date(c.time).getTime()/1000),open:c.open,high:c.high,low:c.low,close:c.close}));
+    const isLight=document.body.classList.contains('light-mode');
+    // Real trading chart - candlesticks
     backtestChart=LightweightCharts.createChart(container,{
-      layout:{background:{color:isLight?'#ffffff':'#1a1a1e'},textColor:'#888'},
-      grid:{vertLines:{color:isLight?'#e0e0e6':'#222226'},horzLines:{color:isLight?'#e0e0e6':'#222226'}},
+      layout:{background:{color:isLight?'#ffffff':'#111113'},textColor:'#888'},
+      grid:{vertLines:{color:isLight?'#e0e0e6':'#1a1a1e'},horzLines:{color:isLight?'#e0e0e6':'#1a1a1e'}},
       width:container.clientWidth,
-      height:280,
-      timeScale:{timeVisible:false,borderColor:'#222226'},
+      height:380,
+      timeScale:{timeVisible:true,borderColor:'#222226'},
       rightPriceScale:{borderColor:'#222226'}
     });
-    // Equity curve
-    backtestSeries=backtestChart.addLineSeries({color:'#22c55e',lineWidth:2});
-    let cumPnl=0;
-    const equityData=[];
+    const candleSeries=backtestChart.addCandlestickSeries({upColor:'#22c55e',downColor:'#ef4444',borderVisible:false,wickUpColor:'#22c55e',wickDownColor:'#ef4444'});
+    candleSeries.setData(replayCandles);
+    // Add BUY/SELL markers from backtest
     const markers=[];
-    data.signals.forEach((sig,idx)=>{
-      cumPnl+=sig.outcome.pnl||0;
-      equityData.push({time:idx+1,value:cumPnl});
-      markers.push({
-        time:idx+1,
-        position:sig.outcome.result==='WIN'?'belowBar':'aboveBar',
-        color:sig.outcome.result==='WIN'?'#22c55e':'#ef4444',
-        shape:sig.outcome.result==='WIN'?'arrowUp':'arrowDown',
-        text:sig.outcome.hit
+    backtestData.signals.forEach((sig,idx)=>{
+      // Find closest candle time
+      const sigTime=Math.floor(sig.timestamp);
+      // Find index in replayCandles closest to signal price time
+      let closestIdx=0;
+      let minDiff=Infinity;
+      replayCandles.forEach((c,i)=>{
+        const diff=Math.abs(c.time - sigTime);
+        if(diff<minDiff){minDiff=diff;closestIdx=i;}
       });
+      if(closestIdx<replayCandles.length){
+        markers.push({
+          time:replayCandles[closestIdx].time,
+          position:sig.type==='BUY'?'belowBar':'aboveBar',
+          color:sig.type==='BUY'?'#22c55e':'#ef4444',
+          shape:sig.type==='BUY'?'arrowUp':'arrowDown',
+          text:`${sig.type} ${sig.confluence} ${sig.outcome?sig.outcome.result:''}`
+        });
+      }
     });
-    backtestSeries.setData(equityData);
-    if(markers.length>0)backtestSeries.setMarkers(markers);
+    candleSeries.setMarkers(markers);
+    // Add SL/TP lines for last signal as example
+    if(backtestData.signals.length>0){
+      const last=backtestData.signals[backtestData.signals.length-1];
+      if(last.sl){
+        const slLine={price:last.sl,color:'#ef4444',lineWidth:1,lineStyle:2,title:`SL ${last.sl}`};
+        const tp1Line={price:last.tp1,color:'#22c55e',lineWidth:1,lineStyle:2,title:`TP1 ${last.tp1}`};
+        const tp2Line={price:last.tp2,color:'#22c55e',lineWidth:1,lineStyle:0,title:`TP2 ${last.tp2}`};
+        candleSeries.createPriceLine(slLine);
+        candleSeries.createPriceLine(tp1Line);
+        candleSeries.createPriceLine(tp2Line);
+      }
+    }
     backtestChart.timeScale().fitContent();
+    // Equity chart
+    if(equityContainer){
+      equityChart=LightweightCharts.createChart(equityContainer,{
+        layout:{background:{color:isLight?'#1a1a1e':'#1a1a1e'},textColor:'#888'},
+        grid:{vertLines:{color:'#222226'},horzLines:{color:'#222226'}},
+        width:equityContainer.clientWidth,
+        height:120,
+        timeScale:{visible:false},
+        rightPriceScale:{borderColor:'#222226'}
+      });
+      equitySeries=equityChart.addLineSeries({color:'#22c55e',lineWidth:2});
+      let cumPnl=0;
+      const equityData=[];
+      backtestData.signals.forEach((sig,idx)=>{
+        cumPnl+=sig.outcome.pnl||0;
+        equityData.push({time:idx+1,value:cumPnl});
+      });
+      equitySeries.setData(equityData);
+      equityChart.timeScale().fitContent();
+    }
     const info=document.getElementById('backtest-chart-info');
-    if(info)info.textContent=`${data.total_signals} trades • ${data.winrate}% WR • PnL ${data.total_pnl} • Green up = Win, Red down = Loss`;
-    // Resize observer
-    const ro=new ResizeObserver(()=>{if(backtestChart)backtestChart.applyOptions({width:container.clientWidth})});
+    if(info)info.textContent=`${backtestData.total_signals} trades • ${backtestData.winrate}% WR • PnL ${backtestData.total_pnl} • Real XAUUSD M15 replay`;
+    // Setup replay
+    replayIndex=0;
+    updateReplayInfo();
+    const ro=new ResizeObserver(()=>{
+      if(backtestChart)backtestChart.applyOptions({width:container.clientWidth});
+      if(equityChart)equityChart.applyOptions({width:equityContainer.clientWidth});
+    });
     ro.observe(container);
-    console.log('backtest chart drawn',equityData.length);
-  }catch(e){console.log('drawBacktestChart err',e);}
+    if(equityContainer)ro.observe(equityContainer);
+    console.log('real trading replay chart drawn');
+  }catch(e){console.log('fetchHistoricalForReplay err',e);}
+}
+
+function updateReplayInfo(){
+  const info=document.getElementById('replay-info');
+  if(!info||replayCandles.length===0)return;
+  const candle=replayCandles[replayIndex]||replayCandles[replayCandles.length-1];
+  const price=candle?candle.close:0;
+  let cumPnl=0;
+  if(window.lastBacktest){
+    for(let i=0;i<=Math.min(replayIndex,window.lastBacktest.signals.length-1);i++){
+      cumPnl+=window.lastBacktest.signals[i].outcome.pnl||0;
+    }
+  }
+  info.textContent=`Bar ${replayIndex+1}/${replayCandles.length} • Price $${price.toFixed(2)} • PnL ${cumPnl.toFixed(2)} • ${replayPlaying?'▶️ Playing':'⏸️ Paused'}`;
+}
+
+function replayPlay(){
+  if(replayPlaying)return;
+  replayPlaying=true;
+  const speed=parseInt(document.getElementById('replay-speed')?.value||'1000');
+  replayTimer=setInterval(()=>{
+    replayIndex++;
+    if(replayIndex>=replayCandles.length){
+      replayIndex=replayCandles.length-1;
+      replayPause();
+      return;
+    }
+    if(backtestChart){
+      backtestChart.timeScale().setVisibleRange({from:replayCandles[Math.max(0,replayIndex-50)].time,to:replayCandles[replayIndex].time});
+    }
+    updateReplayInfo();
+  },speed);
+  updateReplayInfo();
+}
+
+function replayPause(){
+  replayPlaying=false;
+  if(replayTimer){clearInterval(replayTimer);replayTimer=null;}
+  updateReplayInfo();
+}
+
+function replayNext(){
+  replayPause();
+  replayIndex=Math.min(replayCandles.length-1,replayIndex+1);
+  if(backtestChart && replayCandles[replayIndex]){
+    backtestChart.timeScale().setVisibleRange({from:replayCandles[Math.max(0,replayIndex-50)].time,to:replayCandles[replayIndex].time});
+  }
+  updateReplayInfo();
+}
+
+function replayPrev(){
+  replayPause();
+  replayIndex=Math.max(0,replayIndex-1);
+  if(backtestChart && replayCandles[replayIndex]){
+    backtestChart.timeScale().setVisibleRange({from:replayCandles[Math.max(0,replayIndex-50)].time,to:replayCandles[replayIndex].time});
+  }
+  updateReplayInfo();
+}
+
+function replayReset(){
+  replayPause();
+  replayIndex=0;
+  if(backtestChart)backtestChart.timeScale().fitContent();
+  updateReplayInfo();
 }
 
 function showBacktestChart(){
@@ -602,8 +754,9 @@ function showBacktestChart(){
     return;
   }
   if(wrap){
-    wrap.style.display=wrap.style.display==='none'?'block':'none';
-    if(wrap.style.display==='block' && window.lastBacktest){
+    const isHidden=wrap.style.display==='none';
+    wrap.style.display=isHidden?'block':'none';
+    if(isHidden && window.lastBacktest){
       setTimeout(()=>drawBacktestChart(window.lastBacktest),100);
     }
   }
@@ -853,6 +1006,11 @@ function initClicks(){
   bind('auth-submit',()=>submitAuth());
   bind('btn-backtest',()=>runBacktest());
   bind('btn-backtest-chart',()=>showBacktestChart());
+  bind('btn-replay-play',()=>replayPlay());
+  bind('btn-replay-pause',()=>replayPause());
+  bind('btn-replay-prev',()=>replayPrev());
+  bind('btn-replay-next',()=>replayNext());
+  bind('btn-replay-reset',()=>replayReset());
   // timeframe
   document.querySelectorAll('.tf-btn').forEach(b=>{
     b.onclick=()=>setTimeframe(b.dataset.tf);
