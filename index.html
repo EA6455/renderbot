@@ -176,67 +176,6 @@ body.light-mode .lock-card{background:#ffffff}
         <div class="card" style="text-align:center;padding:14px"><div class="label">Live</div><div class="mono" style="font-size:11px;color:var(--green)">● XAUUSD</div><div class="mono" id="stat-last" style="font-size:9px;margin-top:2px">--</div></div>
       </div>
 
-      <!-- Real Winrate Proof -->
-      <div class="card" style="margin-bottom:14px;border-color:rgba(245,197,24,0.3);background:linear-gradient(135deg,rgba(245,197,24,0.08),rgba(245,197,24,0.02))">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-          <div style="font-weight:900;font-size:14px">🥇 Gold Backtest • XAUUSD Actual Chart</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="btn btn-gold" id="btn-backtest" style="font-size:11px;padding:6px 12px">▶️ Backtest Gold</button>
-            <button class="btn" id="btn-backtest-reset" style="font-size:11px;padding:6px 12px">🔄 Reset</button>
-            <button class="btn" id="btn-backtest-chart" style="font-size:11px;padding:6px 12px">📈 Chart</button>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-          <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-            <div class="label">All Signals Winrate • XAUUSD</div>
-            <div class="mono" id="real-winrate" style="font-size:22px;font-weight:900;color:var(--gold)">--%</div>
-            <div class="mono" id="real-stats" style="font-size:10px;color:var(--muted)">-- trades • Gold</div>
-          </div>
-          <div style="background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.3);border-radius:10px;padding:12px;text-align:center">
-            <div class="label">High Conf ≥4.8 Winrate • Gold</div>
-            <div class="mono" id="high-winrate" style="font-size:22px;font-weight:900;color:var(--gold)">--%</div>
-            <div class="mono" id="high-stats" style="font-size:10px;color:var(--muted)">70%+ target • XAUUSD</div>
-          </div>
-        </div>
-        <div class="mono" id="backtest-result" style="font-size:11px;color:var(--muted);background:var(--card2);padding:10px;border-radius:8px;border:1px solid var(--border)">Backtest on Gold XAUUSD actual OANDA M15 real data. Click Backtest Gold to run 500 candles, checks TP/SL in next 20 bars. Shows actual XAUUSD chart with trades. Reset clears.</div>
-        <!-- Actual XAUUSD Chart for Backtest -->
-        <div id="backtest-chart-wrap" style="margin-top:12px;display:none">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-            <div style="font-weight:800;font-size:13px">🥇 XAUUSD Actual Chart • Gold Real Data Replay</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <button class="btn btn-gold" id="btn-replay-play" style="font-size:11px;padding:6px 10px">▶️ Play</button>
-              <button class="btn" id="btn-replay-pause" style="font-size:11px;padding:6px 10px">⏸️ Pause</button>
-              <button class="btn" id="btn-replay-prev" style="font-size:11px;padding:6px 10px">⏮️ Prev</button>
-              <button class="btn" id="btn-replay-next" style="font-size:11px;padding:6px 10px">⏭️ Next</button>
-              <button class="btn" id="btn-replay-reset" style="font-size:11px;padding:6px 10px">🔄 Reset Chart</button>
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
-            <div class="mono" style="font-size:10px;color:var(--muted)" id="backtest-chart-info">XAUUSD • OANDA • M15 • Actual Gold Price • Real Data</div>
-            <div class="mono" style="font-size:10px;color:var(--gold);font-weight:700" id="replay-info">Bar 0/0 • Gold $-- • PnL --</div>
-            <select id="replay-speed" style="padding:4px 8px;border-radius:6px;background:var(--card2);color:var(--text);border:1px solid var(--border);font-size:11px">
-              <option value="500">0.5s / bar</option>
-              <option value="1000" selected>1s / bar</option>
-              <option value="2000">2s / bar</option>
-              <option value="300">Fast 0.3s</option>
-            </select>
-          </div>
-          <div id="backtest_chart" style="height:420px;width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px"></div>
-          <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;font-size:10px" class="mono">
-            <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;background:#22c55e;border-radius:2px"></div> XAUUSD Candle Real</div>
-            <div style="display:flex;align-items:center;gap:4px"><div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:8px solid #22c55e"></div> BUY Gold</div>
-            <div style="display:flex;align-items:center;gap:4px"><div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #ef4444"></div> SELL Gold</div>
-            <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:2px;background:#ef4444;border-style:dashed"></div> SL Gold</div>
-            <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:2px;background:#22c55e"></div> TP1/TP2 Gold</div>
-          </div>
-          <!-- Equity mini -->
-          <div style="margin-top:12px">
-            <div class="label">Equity Curve • Cumulative PnL Gold XAUUSD</div>
-            <div id="equity_chart" style="height:140px;width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-top:6px"></div>
-          </div>
-        </div>
-        <div id="backtest-details" style="margin-top:10px;max-height:300px;overflow-y:auto;display:none"></div>
-      </div>
       <div class="card">
         <div style="font-weight:900;font-size:14px;margin-bottom:12px">🚨 Alerts</div>
         <div id="alerts-list" style="max-height:500px;overflow-y:auto">
