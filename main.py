@@ -1,5 +1,5 @@
 """
-ASTRA6BOT - Pure OANDA XAUUSD Live Terminal - No GPT-6
+ASTRA6BOT - Pure OANDA XAUUSD Live Terminal - 
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -88,7 +88,7 @@ def status():
     return {
         "name": "ASTRA6BOT",
         "oanda": {"has_key": bool(OANDA_API_KEY), "account_id": OANDA_ACCOUNT_ID, "env": OANDA_ENVIRONMENT},
-        "mode": "Pure OANDA XAUUSD Live - No GPT-6",
+        "mode": "Pure OANDA XAUUSD Live - ",
         "endpoints": ["/api/xauusd/live","/api/xauusd/history"]
     }
 
@@ -111,7 +111,7 @@ def live():
         "last_complete": complete[-1] if complete else None,
         "forming_candle": forming[-1] if forming else None,
         "last_10": candles[-10:],
-        "source": "OANDA v20 Practice - Pure, No GPT-6"
+        "source": "OANDA v20 Practice - Pure, "
     }
 
 @app.get("/api/xauusd/history")
@@ -131,5 +131,5 @@ def history(granularity: str = "M15", count: int = 100, from_time: str = None):
         "to": candles[-1]['time'],
         "latest_price": closes[-1],
         "candles": candles,
-        "source": "OANDA v20 - History back to 2005 - Pure OANDA, No GPT-6"
+        "source": "OANDA v20 - History back to 2005 - Pure OANDA, "
     }
