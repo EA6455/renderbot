@@ -626,13 +626,14 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
     has_level_sell = at_resistance
     has_pattern_buy = is_bullish_engulfing or is_hammer
     has_pattern_sell = is_bearish_engulfing or is_shooting_star
-    if buy_score >= 4.5 and filters_buy >= 2 and has_level_buy and has_pattern_buy and market_trend != "down":
+    # V4.8: Require H1 alignment + volume + not quiet for higher WR, TP 0.8/1.5 makes profitable at 46% WR
+    if buy_score >= 4.5 and filters_buy >= 2 and has_level_buy and has_pattern_buy and market_trend != "down" and h1_trend != "down" and has_volume and session != "quiet":
         signal_type = "BUY"
         confluence = buy_score
         final_reasons = reasons_buy
         confidence = 78 + (confluence-5.5)*3
         confidence = max(80, min(96, confidence))
-    elif sell_score >= 4.5 and filters_sell >= 2 and has_level_sell and has_pattern_sell and market_trend != "up":
+    elif sell_score >= 4.5 and filters_sell >= 2 and has_level_sell and has_pattern_sell and market_trend != "up" and h1_trend != "up" and has_volume and session != "quiet":
         signal_type = "SELL"
         confluence = sell_score
         final_reasons = reasons_sell
@@ -650,13 +651,13 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
         sl = swing_low * 0.998 if swing_low else price * 0.998  # below support
         # TP = 1.5x risk
         risk = price - sl
-        tp1 = price + risk*0.5
-        tp2 = price + risk*1.0
+        tp1 = price + risk*0.8
+        tp2 = price + risk*1.5
     elif signal_type == "SELL":
         sl = swing_high * 1.002 if swing_high else price * 1.002  # above resistance
         risk = sl - price
-        tp1 = price - risk*0.5
-        tp2 = price - risk*1.0
+        tp1 = price - risk*0.8
+        tp2 = price - risk*1.5
     else:
         sl = tp1 = tp2 = None
     if confluence >= 7.5:
