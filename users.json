@@ -34,5 +34,17 @@
     "is_active": true,
     "plan": "elite_70",
     "winrate_target": "70-76%"
+  },
+  "checksellbuy@astra6.com": {
+    "email": "checksellbuy@astra6.com",
+    "salt": "6681b670eeab2589c5aabb31e585299a",
+    "hash": "6540a2e36345ff06647a2c2f5d182175555f879c1d9f9fc64120f6fe305f5728",
+    "created": 1790454098.9592261,
+    "created_str": "2026-09-26 20:21:38 UTC",
+    "last_login": 1790454098.9592261,
+    "login_count": 1,
+    "is_active": true,
+    "plan": "elite_70",
+    "winrate_target": "70-76%"
   }
 }
