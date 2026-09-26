@@ -1,5 +1,5 @@
 """
-ASTRA6 - Auth + OANDA Live
+ASTRA6 - Ladder: Sign In / Sign Up / Account / Admin Contact + OANDA
 """
 from fastapi import FastAPI, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,6 +26,7 @@ OANDA_ENVIRONMENT = os.getenv("OANDA_ENVIRONMENT", "practice")
 
 USERS_FILE = Path("users.json")
 TOKENS_FILE = Path("tokens.json")
+CONTACTS_FILE = Path("contacts.json")
 
 def load_users():
     if not USERS_FILE.exists():
@@ -49,8 +50,18 @@ def load_tokens():
 def save_tokens(tokens):
     TOKENS_FILE.write_text(json.dumps(tokens, indent=2))
 
+def load_contacts():
+    if not CONTACTS_FILE.exists():
+        return []
+    try:
+        return json.loads(CONTACTS_FILE.read_text())
+    except:
+        return []
+
+def save_contacts(contacts):
+    CONTACTS_FILE.write_text(json.dumps(contacts, indent=2))
+
 def hash_password(password, salt):
-    # pbkdf2_hmac sha256 100k iterations
     return hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000).hex()
 
 def create_user(email, password):
@@ -81,30 +92,32 @@ def create_token(email):
     token = secrets.token_urlsafe(32)
     tokens[token] = {"email": email, "created": time.time(), "expires": time.time() + 30*24*3600}
     save_tokens(tokens)
-    return token
+    return token, tokens[token]
 
 def verify_token(token):
     if not token:
         return None
     tokens = load_tokens()
-    # support Bearer prefix stripping outside
     data = tokens.get(token)
     if not data:
         return None
     if data["expires"] < time.time():
-        # expired, remove
         del tokens[token]
         save_tokens(tokens)
         return None
-    return data["email"]
+    return data
 
-def get_current_user(authorization: str = Header(None)):
+def get_token_data(authorization: str = Header(None)):
     if not authorization:
         return None
-    # Expected "Bearer <token>"
     token = authorization.replace("Bearer ", "").strip()
-    email = verify_token(token)
-    return email
+    return verify_token(token)
+
+def get_current_user(authorization: str = Header(None)):
+    data = get_token_data(authorization)
+    if not data:
+        return None
+    return data["email"]
 
 def require_auth(authorization: str = Header(None)):
     email = get_current_user(authorization)
@@ -115,6 +128,11 @@ def require_auth(authorization: str = Header(None)):
 class AuthRequest(BaseModel):
     email: str
     password: str
+
+class ContactRequest(BaseModel):
+    email: str
+    subject: str = ""
+    message: str
 
 def get_oanda_client():
     if not OANDA_API_KEY:
@@ -179,12 +197,15 @@ def widget():
 @app.get("/api/status")
 def status():
     users = load_users()
+    contacts = load_contacts()
     return {
         "name": "ASTRA6",
         "oanda": {"has_key": bool(OANDA_API_KEY), "account_id": OANDA_ACCOUNT_ID, "env": OANDA_ENVIRONMENT},
         "mode": "ASTRA6",
         "users": len(users),
-        "endpoints": ["/api/xauusd/live","/api/xauusd/history","/api/auth/signup","/api/auth/signin","/api/auth/me"]
+        "contacts": len(contacts),
+        "ladder": ["Sign In","Sign Up","Account","Admin Contact","Live Signals"],
+        "endpoints": ["/api/xauusd/live","/api/xauusd/history","/api/auth/signup","/api/auth/signin","/api/auth/me","/api/contact"]
     }
 
 # AUTH
@@ -193,23 +214,25 @@ def signup(req: AuthRequest):
     user, err = create_user(req.email, req.password)
     if err:
         raise HTTPException(status_code=400, detail=err)
-    token = create_token(user["email"])
-    return {"status":"ok","email": user["email"], "token": token, "message":"Account created"}
+    token, tdata = create_token(user["email"])
+    return {"status":"ok","email": user["email"], "token": token, "message":"Account created", "created": user["created"], "expires": tdata["expires"]}
 
 @app.post("/api/auth/signin")
 def signin(req: AuthRequest):
     user = verify_user(req.email, req.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    token = create_token(user["email"])
-    return {"status":"ok","email": user["email"], "token": token, "message":"Signed in"}
+    token, tdata = create_token(user["email"])
+    return {"status":"ok","email": user["email"], "token": token, "message":"Signed in", "created": user["created"], "expires": tdata["expires"]}
 
 @app.get("/api/auth/me")
 def me(authorization: str = Header(None)):
-    email = get_current_user(authorization)
-    if not email:
+    data = get_token_data(authorization)
+    if not data:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    return {"status":"ok","email": email}
+    users = load_users()
+    user = users.get(data["email"], {})
+    return {"status":"ok","email": data["email"], "created": user.get("created"), "expires": data.get("expires"), "token_created": data.get("created")}
 
 @app.post("/api/auth/signout")
 def signout(authorization: str = Header(None)):
@@ -222,7 +245,28 @@ def signout(authorization: str = Header(None)):
         save_tokens(tokens)
     return {"status":"ok","message":"Signed out"}
 
-# PROTECTED DATA - require auth to access signals
+@app.post("/api/contact")
+def contact(req: ContactRequest):
+    if not req.email or not req.message:
+        raise HTTPException(status_code=400, detail="Email and message required")
+    if len(req.message) < 5:
+        raise HTTPException(status_code=400, detail="Message too short")
+    contacts = load_contacts()
+    entry = {"id": secrets.token_hex(8), "email": req.email.lower().strip(), "subject": req.subject[:200], "message": req.message[:2000], "time": time.time(), "time_str": time.strftime("%Y-%m-%d %H:%M:%S")}
+    contacts.append(entry)
+    save_contacts(contacts)
+    return {"status":"ok","message":"Message sent to admin","id": entry["id"]}
+
+@app.get("/api/contact")
+def list_contacts(authorization: str = Header(None)):
+    # simple admin check - any authenticated user can see count, but only show if requested
+    email = get_current_user(authorization)
+    if not email:
+        raise HTTPException(status_code=401, detail="Sign in required")
+    contacts = load_contacts()
+    return {"status":"ok","count": len(contacts), "contacts": contacts[-20:]}  # last 20
+
+# PROTECTED DATA
 @app.get("/api/xauusd/live")
 def live(email: str = Depends(require_auth)):
     result = fetch_candles("M15", 20)

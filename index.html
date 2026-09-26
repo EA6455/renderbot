@@ -6,209 +6,278 @@
 <title>ASTRA6</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#070709;--card:#111113;--card2:#1a1a1e;--border:#222226;--gold:#f5c518;--green:#22c55e;--red:#ef4444;--text:#e6e6e6;--muted:#666}
+:root{--bg:#070709;--card:#111113;--card2:#1a1a1e;--border:#222226;--gold:#f5c518;--green:#22c55e;--red:#ef4444;--text:#e6e6e6;--muted:#777;--active:#1e1e22}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text)}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
 .mono{font-family:JetBrains Mono,monospace}
-.header{height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:20}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-icon{width:36px;height:36px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:18px;box-shadow:0 0 20px rgba(245,197,24,0.3)}
-.logo-text{font-weight:900;font-size:18px;letter-spacing:-0.5px}
-.logo-sub{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:1px}
-.badge{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;color:var(--green)}
+/* Sidebar Ladder */
+.sidebar{width:240px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:30}
+.side-top{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-icon{width:38px;height:38px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:18px;box-shadow:0 0 20px rgba(245,197,24,0.25)}
+.logo-text{font-weight:900;font-size:16px;letter-spacing:-0.3px}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:1px;font-weight:700}
+.ladder{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border:1px solid transparent;transition:0.18s}
+.nav-item:hover{background:var(--card2);color:var(--text);border-color:var(--border)}
+.nav-item.active{background:var(--active);color:var(--text);border-color:var(--border);box-shadow:inset 0 0 0 1px rgba(245,197,24,0.15)}
+.nav-item .ico{width:22px;text-align:center}
+.nav-item.gold.active{background:rgba(245,197,24,0.12);border-color:rgba(245,197,24,0.25);color:var(--gold)}
+.side-bottom{padding:12px;border-top:1px solid var(--border)}
+.badge{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:6px 10px;border-radius:20px;font-size:10px;font-weight:700;color:var(--green);margin-bottom:10px}
 .dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,0.6)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
-.auth-btns{display:flex;align-items:center;gap:8px}
-.btn{padding:8px 16px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--card2);color:var(--text);transition:0.2s}
-.btn-gold{background:var(--gold);color:#000;border-color:var(--gold);box-shadow:0 0 15px rgba(245,197,24,0.3)}
-.btn:hover{opacity:0.9;transform:translateY(-1px)}
-.btn-ghost{background:transparent}
-.main{max-width:1600px;margin:0 auto;padding:12px}
+.user-box{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;display:none}
+.user-box.show{display:block}
+.btn{padding:8px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--card2);color:var(--text);transition:0.2s}
+.btn-gold{background:var(--gold);color:#000;border-color:var(--gold)}
+.btn:hover{opacity:0.9}
+.btn-full{width:100%}
+/* Main */
+.main-wrap{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:54px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 18px;gap:12px}
+.price-block{display:flex;align-items:center;gap:12px}
+.price-main{font-size:26px;font-weight:900;letter-spacing:-0.5px}
+.bidask{font-size:11px;background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.2);padding:4px 10px;border-radius:20px;color:var(--gold);font-family:JetBrains Mono,monospace}
+.content{flex:1;padding:14px;max-width:1600px;width:100%;margin:0 auto}
+.view{display:none}
+.view.active{display:block}
 .terminal{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:relative}
 .terminal-top{padding:14px 18px;background:linear-gradient(90deg,#1a1a1e,#111113);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-.pair-name{font-weight:900;font-size:18px}
+.pair-name{font-weight:900;font-size:16px}
 .pair-desc{font-size:10px;color:var(--muted);margin-top:2px}
-.price-block{display:flex;align-items:center;gap:12px}
-.price-main{font-size:30px;font-weight:900;letter-spacing:-1px}
-.bidask{font-size:11px;background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.2);padding:4px 10px;border-radius:20px;color:var(--gold);font-family:JetBrains Mono,monospace}
 #oanda_chart{height:72vh;min-height:520px;width:100%;background:var(--card)}
 .info-bar{padding:10px 16px;background:#0f0f10;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:JetBrains Mono,monospace;flex-wrap:wrap;gap:8px}
-.lock-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(7,7,9,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:5;flex-direction:column;gap:16px;text-align:center;padding:20px}
-.lock-card{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.lock-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(7,7,9,0.88);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:5;flex-direction:column;gap:16px;text-align:center;padding:20px}
+.lock-card{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:380px;width:100%}
 .lock-icon{width:56px;height:56px;background:rgba(245,197,24,0.15);border:1px solid rgba(245,197,24,0.3);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px}
-.auth-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.card-title{font-weight:900;font-size:16px;margin-bottom:12px}
+.field{margin-bottom:12px}
+.label{font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:700;letter-spacing:0.5px}
+.input, .textarea{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:13px;outline:none}
+.textarea{min-height:100px;resize:vertical}
+.input:focus,.textarea:focus{border-color:var(--gold)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}.sidebar{width:70px}.sidebar .hide-m{display:none}.nav-item{justify-content:center;padding:10px}.main-wrap{flex:1}}
+.auth-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
 .auth-modal.active{display:flex}
 .auth-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:360px}
 .auth-tabs{display:flex;gap:8px;margin-bottom:20px}
 .tab{flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;text-align:center}
 .tab.active{background:var(--gold);color:#000;border-color:var(--gold)}
-.input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:13px;margin-bottom:12px;outline:none}
-.input:focus{border-color:var(--gold)}
 .error{color:var(--red);font-size:11px;margin-bottom:10px;display:none}
 .success{color:var(--green);font-size:11px;margin-bottom:10px;display:none}
+.admin-item{display:flex;gap:12px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card2);margin-bottom:10px}
 </style>
 <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
-<div class="header">
-  <div class="logo">
+<!-- Sidebar Ladder -->
+<div class="sidebar">
+  <div class="side-top">
     <div class="logo-icon">A6</div>
-    <div>
-      <div class="logo-text">ASTRA6</div>
-      <div class="logo-sub">LIVE</div>
-    </div>
+    <div class="hide-m"><div class="logo-text">ASTRA6</div><div class="logo-sub">LIVE TERMINAL</div></div>
   </div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <div class="badge"><div class="dot"></div><span id="market-status">LIVE</span> • <span id="live-time" class="mono">--:--:--</span></div>
-    <div class="auth-btns" id="auth-btns">
-      <button class="btn btn-ghost" onclick="openAuth('signin')">Sign In</button>
-      <button class="btn btn-gold" onclick="openAuth('signup')">Sign Up</button>
+  <div class="ladder">
+    <div class="nav-item active" id="nav-signals" onclick="showView('signals')"><span class="ico">📊</span><span class="hide-m">Live Signals</span></div>
+    <div class="nav-item" id="nav-signin" onclick="openAuth('signin')"><span class="ico">🔐</span><span class="hide-m">Sign In</span></div>
+    <div class="nav-item" id="nav-signup" onclick="openAuth('signup')"><span class="ico">📝</span><span class="hide-m">Sign Up</span></div>
+    <div class="nav-item" id="nav-account" onclick="showView('account')"><span class="ico">👤</span><span class="hide-m">Account</span></div>
+    <div class="nav-item" id="nav-contact" onclick="showView('contact')"><span class="ico">📞</span><span class="hide-m">Admin Contact</span></div>
+  </div>
+  <div class="side-bottom">
+    <div class="badge"><div class="dot"></div><span id="market-status">LIVE</span> • <span id="live-time" class="mono hide-m">--:--:--</span></div>
+    <div class="user-box" id="user-box">
+      <div class="mono" id="user-email" style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:8px"></div>
+      <button class="btn btn-full" onclick="signOut()">Sign Out</button>
     </div>
-    <div class="auth-btns" id="user-btns" style="display:none">
-      <span id="user-email" class="mono" style="font-size:11px;color:var(--muted)"></span>
-      <button class="btn btn-ghost" onclick="signOut()">Sign Out</button>
+    <div id="guest-box">
+      <button class="btn btn-gold btn-full" onclick="openAuth('signup')">Sign Up Free</button>
     </div>
   </div>
 </div>
 
-<div class="main">
-  <div class="terminal" id="terminal">
-    <div class="terminal-top">
-      <div>
-        <div class="pair-name">XAUUSD <span style="color:var(--muted);font-weight:400">/ GOLD</span></div>
-        <div class="pair-desc mono" id="candle-info">Live • XAUUSD</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:14px">
-        <div class="price-block">
-          <div class="price-main" id="price">$--.--</div>
-          <div class="bidask mono" id="bidask">BID -- / ASK --</div>
+<div class="main-wrap">
+  <div class="topbar">
+    <div class="price-block">
+      <div class="price-main" id="price">$--.--</div>
+      <div class="bidask mono" id="bidask">BID -- / ASK --</div>
+      <div class="mono" id="candle-info" style="font-size:10px;color:var(--muted)">Live • XAUUSD</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="mono" style="font-size:10px;color:var(--muted)" id="forming">Updates every 5s</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Signals View -->
+    <div class="view active" id="view-signals">
+      <div class="terminal" id="terminal">
+        <div class="terminal-top">
+          <div><div class="pair-name">XAUUSD <span style="color:var(--muted);font-weight:400">/ GOLD</span></div></div>
+          <div class="mono" style="font-size:10px;color:var(--muted)">ASTRA6 • Real-time • Requires Sign In</div>
+        </div>
+        <div id="oanda_chart"></div>
+        <div class="info-bar"><span>ASTRA6 • XAUUSD • Sign in to access</span><span class="mono">M15 • Live</span></div>
+        <div class="lock-overlay" id="lock-overlay">
+          <div class="lock-card">
+            <div class="lock-icon">🔒</div>
+            <div style="font-weight:900;font-size:18px;margin-bottom:6px">Sign in to access signals</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Ladder menu → Sign In / Sign Up to unlock live XAUUSD chart. Free.</div>
+            <div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="openAuth('signin')">Sign In</button><button class="btn btn-gold" style="flex:1" onclick="openAuth('signup')">Sign Up</button></div>
+          </div>
         </div>
       </div>
     </div>
-    <div id="oanda_chart"></div>
-    <div class="info-bar">
-      <span>ASTRA6 • XAUUSD • Sign in to access signals</span>
-      <span id="forming" class="mono">Updates every 5s</span>
-    </div>
-    <!-- Locked overlay -->
-    <div class="lock-overlay" id="lock-overlay">
-      <div class="lock-card">
-        <div class="lock-icon">🔒</div>
-        <div style="font-weight:900;font-size:18px;margin-bottom:6px">Sign in to access signals</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Create account or sign in to view live XAUUSD chart and real-time signals. Free access.</div>
-        <div style="display:flex;gap:8px;justify-content:center">
-          <button class="btn btn-ghost" onclick="openAuth('signin')" style="flex:1">Sign In</button>
-          <button class="btn btn-gold" onclick="openAuth('signup')" style="flex:1">Sign Up</button>
+
+    <!-- Account View -->
+    <div class="view" id="view-account">
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">👤 Account</div>
+          <div id="account-guest">
+            <div style="font-size:13px;color:var(--muted);margin-bottom:14px">You are not signed in. Sign in to view your account and access signals.</div>
+            <div style="display:flex;gap:8px"><button class="btn" onclick="openAuth('signin')">Sign In</button><button class="btn btn-gold" onclick="openAuth('signup')">Sign Up</button></div>
+          </div>
+          <div id="account-user" style="display:none">
+            <div class="field"><div class="label">EMAIL</div><div class="mono" id="acc-email" style="font-size:13px"></div></div>
+            <div class="field"><div class="label">STATUS</div><div style="font-size:12px"><span style="color:var(--green)">● Active</span> • Free Plan • Access to live signals</div></div>
+            <div class="field"><div class="label">MEMBER SINCE</div><div class="mono" id="acc-created" style="font-size:12px"></div></div>
+            <div class="field"><div class="label">TOKEN EXPIRES</div><div class="mono" id="acc-expires" style="font-size:12px"></div></div>
+            <button class="btn" onclick="signOut()" style="margin-top:10px">Sign Out</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 Access</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6">
+            • Live XAUUSD chart (M15)<br>
+            • Real-time bid/ask<br>
+            • History back to 2005<br>
+            • Free account<br><br>
+            Sign in required to view signals. Your account is stored securely with hashed passwords.
+          </div>
+          <div style="margin-top:14px;padding:10px;background:var(--card2);border-radius:10px;border:1px solid var(--border);font-size:11px" class="mono">
+            API: /api/xauusd/live • /api/xauusd/history<br>
+            Auth: Bearer token • 30 days expiry
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Admin Contact View -->
+    <div class="view" id="view-contact">
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">📞 Admin Contact</div>
+          <div class="admin-item"><span>📧</span><div><div style="font-weight:700;font-size:13px">Email</div><div class="mono" style="font-size:12px;color:var(--muted)">admin@astra6.com • support@astra6.com</div></div></div>
+          <div class="admin-item"><span>💬</span><div><div style="font-weight:700;font-size:13px">Telegram</div><div class="mono" style="font-size:12px;color:var(--muted)">@ASTRA6_admin • @ASTRA6_support</div></div></div>
+          <div class="admin-item"><span>🌐</span><div><div style="font-weight:700;font-size:13px">Website</div><div class="mono" style="font-size:12px;color:var(--muted)">https://astra6.onrender.com</div></div></div>
+          <div class="admin-item"><span>🕒</span><div><div style="font-weight:700;font-size:13px">Support Hours</div><div class="mono" style="font-size:12px;color:var(--muted)">24/7 • Response within 2h</div></div></div>
+          <div style="margin-top:14px;font-size:11px;color:var(--muted)">For account issues, signal access, or partnership — contact admin. We reply fast.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">✉️ Message Admin</div>
+          <div class="field"><div class="label">YOUR EMAIL</div><input class="input" id="contact-email" placeholder="you@email.com"></div>
+          <div class="field"><div class="label">SUBJECT</div><input class="input" id="contact-subject" placeholder="Help with account / signals"></div>
+          <div class="field"><div class="label">MESSAGE</div><textarea class="textarea" id="contact-message" placeholder="Write your message..."></textarea></div>
+          <div class="error" id="contact-error"></div><div class="success" id="contact-success"></div>
+          <button class="btn btn-gold btn-full" onclick="sendContact()">Send Message</button>
+          <div style="font-size:10px;color:var(--muted);margin-top:10px;text-align:center">Messages stored securely • Admin replies via email</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <!-- Auth Modal -->
 <div class="auth-modal" id="auth-modal" onclick="if(event.target==this)closeAuth()">
   <div class="auth-box">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div style="font-weight:900;font-size:16px" id="auth-title">Sign In</div>
-      <button class="btn btn-ghost" onclick="closeAuth()" style="padding:4px 10px">✕</button>
-    </div>
-    <div class="auth-tabs">
-      <div class="tab active" id="tab-signin" onclick="switchTab('signin')">Sign In</div>
-      <div class="tab" id="tab-signup" onclick="switchTab('signup')">Sign Up</div>
-    </div>
-    <div class="error" id="auth-error"></div>
-    <div class="success" id="auth-success"></div>
-    <input class="input" id="email" type="email" placeholder="Email" autocomplete="email">
-    <input class="input" id="password" type="password" placeholder="Password (min 6 chars)" autocomplete="current-password">
-    <button class="btn btn-gold" id="auth-submit" style="width:100%;padding:12px;margin-top:4px" onclick="submitAuth()">Sign In</button>
-    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:12px">Free account • Access live signals instantly</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-weight:900;font-size:16px" id="auth-title">Sign In</div><button class="btn" onclick="closeAuth()" style="padding:4px 10px">✕</button></div>
+    <div class="auth-tabs"><div class="tab active" id="tab-signin" onclick="switchTab('signin')">Sign In</div><div class="tab" id="tab-signup" onclick="switchTab('signup')">Sign Up</div></div>
+    <div class="error" id="auth-error"></div><div class="success" id="auth-success"></div>
+    <input class="input" id="email" type="email" placeholder="Email"><input class="input" id="password" type="password" placeholder="Password (min 6 chars)">
+    <button class="btn btn-gold btn-full" id="auth-submit" style="padding:12px" onclick="submitAuth()">Sign In</button>
   </div>
 </div>
 
 <script>
-let chart, candleSeries, lastCandles=[], currentTab='signin', authToken=null;
-
+let chart, candleSeries, lastCandles=[], currentTab='signin', currentView='signals';
 function getToken(){return localStorage.getItem('astra6_token');}
-function setToken(t,e){if(t){localStorage.setItem('astra6_token',t);localStorage.setItem('astra6_email',e||'');}else{localStorage.removeItem('astra6_token');localStorage.removeItem('astra6_email');}authToken=t;}
+function setToken(t,e){if(t){localStorage.setItem('astra6_token',t);if(e)localStorage.setItem('astra6_email',e);}else{localStorage.removeItem('astra6_token');localStorage.removeItem('astra6_email');}}
 function authHeaders(){const t=getToken();return t?{'Authorization':'Bearer '+t}:{};}
-
-function openAuth(tab){
-  currentTab=tab||'signin';
-  switchTab(currentTab);
-  document.getElementById('auth-modal').classList.add('active');
-  document.getElementById('auth-error').style.display='none';
-  document.getElementById('auth-success').style.display='none';
+function showView(v){
+  currentView=v;
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const nav=document.getElementById('nav-'+v);
+  if(nav)nav.classList.add('active');
+  if(v==='account')loadAccount();
 }
+function openAuth(tab){currentTab=tab||'signin';switchTab(currentTab);document.getElementById('auth-modal').classList.add('active');document.getElementById('auth-error').style.display='none';document.getElementById('auth-success').style.display='none';}
 function closeAuth(){document.getElementById('auth-modal').classList.remove('active');}
-function switchTab(tab){
-  currentTab=tab;
-  document.getElementById('tab-signin').classList.toggle('active',tab==='signin');
-  document.getElementById('tab-signup').classList.toggle('active',tab==='signup');
-  document.getElementById('auth-title').textContent=tab==='signin'?'Sign In':'Sign Up';
-  document.getElementById('auth-submit').textContent=tab==='signin'?'Sign In':'Create Account';
-}
-
+function switchTab(tab){currentTab=tab;document.getElementById('tab-signin').classList.toggle('active',tab==='signin');document.getElementById('tab-signup').classList.toggle('active',tab==='signup');document.getElementById('auth-title').textContent=tab==='signin'?'Sign In':'Sign Up';document.getElementById('auth-submit').textContent=tab==='signin'?'Sign In':'Create Account';}
 async function submitAuth(){
   const email=document.getElementById('email').value.trim();
   const pass=document.getElementById('password').value;
-  const errEl=document.getElementById('auth-error');
-  const okEl=document.getElementById('auth-success');
-  errEl.style.display='none'; okEl.style.display='none';
-  if(!email||!pass){errEl.textContent='Email and password required';errEl.style.display='block';return;}
-  if(pass.length<6){errEl.textContent='Password min 6 chars';errEl.style.display='block';return;}
+  const err=document.getElementById('auth-error'), ok=document.getElementById('auth-success');
+  err.style.display='none';ok.style.display='none';
+  if(!email||!pass){err.textContent='Email and password required';err.style.display='block';return;}
+  if(pass.length<6){err.textContent='Password min 6 chars';err.style.display='block';return;}
   const url=currentTab==='signin'?'/api/auth/signin':'/api/auth/signup';
   try{
     const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
-    const d=await r.json();
-    if(!r.ok)throw new Error(d.detail||'Failed');
-    setToken(d.token,d.email);
-    okEl.textContent=d.message||'Success'; okEl.style.display='block';
-    setTimeout(()=>{closeAuth();checkAuth();},600);
-  }catch(e){errEl.textContent=e.message;errEl.style.display='block';}
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||'Failed');
+    setToken(d.token,d.email);ok.textContent=d.message;ok.style.display='block';
+    setTimeout(()=>{closeAuth();checkAuth();showView('signals');},600);
+  }catch(e){err.textContent=e.message;err.style.display='block';}
 }
-
 async function checkAuth(){
   const token=getToken();
   const lock=document.getElementById('lock-overlay');
-  const authBtns=document.getElementById('auth-btns');
-  const userBtns=document.getElementById('user-btns');
-  if(!token){
-    lock.style.display='flex';
-    authBtns.style.display='flex';
-    userBtns.style.display='none';
-    return false;
-  }
+  const userBox=document.getElementById('user-box'), guestBox=document.getElementById('guest-box');
+  if(!token){lock.style.display='flex';userBox.classList.remove('show');guestBox.style.display='block';document.getElementById('nav-signin').style.display='flex';document.getElementById('nav-signup').style.display='flex';return false;}
   try{
-    const r=await fetch('/api/auth/me',{headers:authHeaders()});
-    if(!r.ok)throw new Error('invalid');
-    const d=await r.json();
+    const r=await fetch('/api/auth/me',{headers:authHeaders()});if(!r.ok)throw new Error('invalid');const d=await r.json();
     document.getElementById('user-email').textContent=d.email;
+    userBox.classList.add('show');guestBox.style.display='none';
     lock.style.display='none';
-    authBtns.style.display='none';
-    userBtns.style.display='flex';
-    setToken(token,d.email);
-    if(!chart)initChart();
-    fetchLive();
-    return true;
-  }catch(e){
-    setToken(null);
-    lock.style.display='flex';
-    authBtns.style.display='flex';
-    userBtns.style.display='none';
-    return false;
-  }
+    document.getElementById('nav-signin').style.display='none';document.getElementById('nav-signup').style.display='none';
+    if(!chart)initChart();fetchLive();return true;
+  }catch(e){setToken(null);lock.style.display='flex';userBox.classList.remove('show');guestBox.style.display='block';document.getElementById('nav-signin').style.display='flex';document.getElementById('nav-signup').style.display='flex';return false;}
 }
-
-async function signOut(){
-  try{await fetch('/api/auth/signout',{method:'POST',headers:authHeaders()});}catch(e){}
-  setToken(null);
-  checkAuth();
+async function signOut(){try{await fetch('/api/auth/signout',{method:'POST',headers:authHeaders()});}catch(e){}setToken(null);checkAuth();showView('signals');}
+async function loadAccount(){
+  const token=getToken();
+  const guest=document.getElementById('account-guest'), user=document.getElementById('account-user');
+  if(!token){guest.style.display='block';user.style.display='none';return;}
+  try{
+    const r=await fetch('/api/auth/me',{headers:authHeaders()});if(!r.ok)throw new Error();const d=await r.json();
+    guest.style.display='none';user.style.display='block';
+    document.getElementById('acc-email').textContent=d.email;
+    document.getElementById('acc-created').textContent=d.created?new Date(d.created*1000).toLocaleString():'-';
+    document.getElementById('acc-expires').textContent=d.expires?new Date(d.expires*1000).toLocaleString():'-';
+  }catch(e){guest.style.display='block';user.style.display='none';}
 }
-
+async function sendContact(){
+  const email=document.getElementById('contact-email').value.trim();
+  const subj=document.getElementById('contact-subject').value.trim();
+  const msg=document.getElementById('contact-message').value.trim();
+  const err=document.getElementById('contact-error'), ok=document.getElementById('contact-success');
+  err.style.display='none';ok.style.display='none';
+  if(!email||!msg){err.textContent='Email and message required';err.style.display='block';return;}
+  try{
+    const r=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,subject:subj,message:msg})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||'Failed');
+    ok.textContent='Message sent! Admin will reply soon.';ok.style.display='block';
+    document.getElementById('contact-message').value='';document.getElementById('contact-subject').value='';
+  }catch(e){err.textContent=e.message;err.style.display='block';}
+}
 let chartInit=false;
 function initChart(){
-  if(chartInit)return;
-  chartInit=true;
+  if(chartInit)return;chartInit=true;
   const c=document.getElementById('oanda_chart');
   chart=LightweightCharts.createChart(c,{layout:{background:{color:'#111113'},textColor:'#888'},grid:{vertLines:{color:'#1a1a1e'},horzLines:{color:'#1a1a1e'}},width:c.clientWidth,height:520,timeScale:{timeVisible:true,borderColor:'#222226'},rightPriceScale:{borderColor:'#222226'}});
   candleSeries=chart.addCandlestickSeries({upColor:'#22c55e',downColor:'#ef4444',borderVisible:false,wickUpColor:'#22c55e',wickDownColor:'#ef4444'});
@@ -235,7 +304,6 @@ async function fetchLive(){
     }
   }catch(e){}
 }
-
 checkAuth();
 setInterval(()=>{if(getToken())fetchLive();},5000);
 </script>
