@@ -3,93 +3,108 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Astra Standby • Live XAUUSD OANDA Chart</title>
+<title>Astra • XAUUSD OANDA Live + Alerts</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:Inter,system-ui,sans-serif;background:#0a0a0c;color:#e6e6e6;line-height:1.6}
-  .nav{padding:20px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1f1f25;position:sticky;top:0;background:#0a0a0c;z-index:10}
-  .logo{font-weight:900;font-size:20px;letter-spacing:-0.5px}
+  .nav{padding:16px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1f1f25;position:sticky;top:0;background:#0a0a0c;z-index:10}
+  .logo{font-weight:900;font-size:18px}
   .logo span{color:#f5c518}
-  .live-badge{display:flex;align-items:center;gap:8px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:6px 12px;border-radius:20px;font-size:12px}
+  .live-badge{display:flex;align-items:center;gap:8px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:6px 12px;border-radius:20px;font-size:11px}
   .live-dot{width:8px;height:8px;background:#22c55e;border-radius:50%;animation:pulse 2s infinite}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,0.7)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
-  .hero{padding:24px 40px;max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 320px;gap:24px}
-  .chart-wrap{background:#121216;border:1px solid #1f1f25;border-radius:20px;overflow:hidden}
-  .chart-header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1f1f25;background:#1a1a1f}
-  .price{font-size:28px;font-weight:800}
+  .alert-banner{display:none;background:linear-gradient(90deg,#f5c518,#ff8c00);color:#000;padding:12px 24px;font-weight:700;font-size:13px;align-items:center;justify-content:space-between}
+  .alert-banner.show{display:flex;animation:slideDown 0.3s}
+  @keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+  .hero{padding:16px 24px;max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 340px;gap:16px}
+  .chart-wrap{background:#121216;border:1px solid #1f1f25;border-radius:16px;overflow:hidden}
+  .chart-header{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1f1f25;background:#1a1a1f}
+  .price{font-size:24px;font-weight:800}
   .price.up{color:#22c55e}.price.down{color:#ef4444}
-  .signal{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700}
+  .signal{padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700}
   .signal.long{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3)}
   .signal.short{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
   .signal.hold{background:rgba(100,100,100,0.15);color:#888;border:1px solid #2a2a30}
-  #tradingview_chart{height:500px;width:100%}
-  .side{display:flex;flex-direction:column;gap:16px}
-  .card{background:#121216;border:1px solid #1f1f25;border-radius:16px;padding:20px}
-  .card h3{font-size:14px;margin-bottom:12px;color:#fff}
-  .stat{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1f1f25;font-size:13px}
+  #tradingview_chart{height:460px;width:100%}
+  .side{display:flex;flex-direction:column;gap:12px}
+  .card{background:#121216;border:1px solid #1f1f25;border-radius:14px;padding:16px}
+  .card h3{font-size:13px;margin-bottom:10px;color:#fff;display:flex;justify-content:space-between;align-items:center}
+  .stat{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1f1f25;font-size:12px}
   .stat span:last-child{color:#f5c518;font-weight:700}
-  .btn{background:#f5c518;color:#000;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block;font-size:13px;text-align:center;width:100%;margin-top:8px}
-  .btn2{background:#1e1e24;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;border:1px solid #2a2a30;display:inline-block;font-size:13px;text-align:center;width:100%;margin-top:8px}
-  #oanda-candles{max-height:300px;overflow-y:auto;font-size:12px}
-  .candle-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:6px 0;border-bottom:1px solid #1a1a1f;color:#888}
+  .btn{background:#f5c518;color:#000;padding:8px 12px;border-radius:8px;text-decoration:none;font-weight:700;display:inline-block;font-size:11px;text-align:center;width:100%;margin-top:6px;border:none;cursor:pointer}
+  .btn2{background:#1e1e24;color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;border:1px solid #2a2a30;display:inline-block;font-size:11px;text-align:center;width:100%;margin-top:6px;cursor:pointer}
+  #oanda-candles{max-height:220px;overflow-y:auto;font-size:11px}
+  .candle-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;padding:4px 0;border-bottom:1px solid #1a1a1f;color:#888}
   .candle-row.header{color:#fff;font-weight:700;position:sticky;top:0;background:#121216}
-  @media(max-width:900px){.hero{grid-template-columns:1fr} #tradingview_chart{height:400px}}
+  #alerts-log{max-height:320px;overflow-y:auto}
+  .alert-item{background:#1a1a1f;border:1px solid #2a2a30;border-radius:10px;padding:10px;margin-bottom:8px;font-size:11px;line-height:1.4}
+  .alert-item .time{color:#666;font-size:10px}
+  .alert-item.long{border-left:3px solid #22c55e}
+  .alert-item.short{border-left:3px solid #ef4444}
+  @media(max-width:900px){.hero{grid-template-columns:1fr} #tradingview_chart{height:360px}}
 </style>
 </head>
 <body>
 <div class="nav">
-  <div class="logo">ASTRA <span>• XAUUSD OANDA LIVE</span></div>
-  <div class="live-badge"><div class="live-dot"></div> OANDA Practice • <span id="live-time">connecting...</span></div>
+  <div class="logo">ASTRA <span>• XAUUSD + ALERTS</span></div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div class="live-badge"><div class="live-dot"></div> <span id="live-time">connecting...</span></div>
+    <button class="btn2" style="width:auto;padding:6px 12px" onclick="testAlert()">🧪 Test Alert</button>
+  </div>
+</div>
+
+<div id="alert-banner" class="alert-banner">
+  <span id="alert-banner-text">🚨 ASTRA ALERT: XAUUSD LONG at $4284.97</span>
+  <button onclick="this.parentElement.classList.remove('show')" style="background:#000;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">Dismiss</button>
 </div>
 
 <div class="hero">
   <div class="chart-wrap">
     <div class="chart-header">
       <div>
-        <div style="font-size:12px;color:#888">OANDA:XAUUSD • 15M • Real Spot (same as TradingView)</div>
+        <div style="font-size:10px;color:#888">OANDA:XAUUSD • 15M • Astra Alert System • Every 60s</div>
         <div class="price" id="live-price">$--.--</div>
       </div>
       <div style="text-align:right">
         <div id="live-signal" class="signal hold">LOADING</div>
-        <div style="font-size:11px;color:#666;margin-top:6px" id="signal-details">EMA 20/50 + RSI</div>
+        <div style="font-size:10px;color:#666;margin-top:4px" id="signal-details">EMA 20/50 + RSI + ATR</div>
       </div>
     </div>
-    <!-- TradingView Chart (OANDA data) -->
     <div id="tradingview_chart"></div>
   </div>
 
   <div class="side">
     <div class="card">
-      <h3>🪙 Live OANDA Account</h3>
-      <div class="stat"><span>Account</span><span id="acc-id">101-001-40547390-001</span></div>
-      <div class="stat"><span>Balance</span><span>$100,000 demo</span></div>
-      <div class="stat"><span>Instrument</span><span>XAU_USD</span></div>
-      <div class="stat"><span>Source</span><span>api-fxpractice.oanda.com</span></div>
-      <div class="stat"><span>EMA Fast/Slow</span><span id="ema-val">-- / --</span></div>
-      <div class="stat"><span>RSI (14)</span><span id="rsi-val">--</span></div>
-      <a class="btn" href="/api/xauusd/live" target="_blank">View Raw OANDA JSON</a>
-      <a class="btn2" href="/api/xauusd/signal" target="_blank">View Signal JSON</a>
+      <h3>🚨 Astra Alerts <span id="alerts-count" style="background:#f5c518;color:#000;padding:2px 6px;border-radius:10px;font-size:10px">0</span></h3>
+      <div id="alerts-log">
+        <div style="padding:20px;text-align:center;color:#666;font-size:11px">No alerts yet<br>Monitoring every 60s<br>Will alert on LONG/SHORT</div>
+      </div>
+      <button class="btn" onclick="fetchAlerts()">Refresh Alerts</button>
+      <button class="btn2" onclick="testAlert()">🧪 Test Alert (Force LONG)</button>
+      <div style="font-size:10px;color:#666;margin-top:8px">Astra generates alert explanation with SL/TP (1.5x/3x ATR). Add TELEGRAM_BOT_TOKEN in Render Env for Telegram alerts.</div>
     </div>
 
     <div class="card">
-      <h3>📊 Last 10 OANDA Candles (M15)</h3>
-      <div id="oanda-candles">
-        <div class="candle-row header"><span>Time</span><span>Open</span><span>Close</span><span>Vol</span></div>
-        <div style="padding:20px;text-align:center;color:#666">Loading OANDA...</div>
+      <h3>🪙 Live OANDA</h3>
+      <div class="stat"><span>Account</span><span id="acc-id" style="font-size:10px">101-001-40547390-001</span></div>
+      <div class="stat"><span>Balance</span><span>$100k demo</span></div>
+      <div class="stat"><span>EMA 20/50</span><span id="ema-val">-- / --</span></div>
+      <div class="stat"><span>RSI / ATR</span><span id="rsi-val">-- / --</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <a class="btn2" href="/api/xauusd/live" target="_blank">Live JSON</a>
+        <a class="btn2" href="/api/alerts" target="_blank">Alerts JSON</a>
       </div>
     </div>
 
     <div class="card">
-      <h3>🤖 Astra Standby</h3>
-      <p style="font-size:12px;color:#888">Click orb bottom-right to chat with Astra. Ask "XAUUSD signal" for live analysis. Powered by GPT-6 Astra + OANDA v20.</p>
-      <a class="btn2" href="/embed">How to embed on your site</a>
+      <h3>📊 Last 10 Candles M15</h3>
+      <div id="oanda-candles"><div style="padding:20px;text-align:center;color:#666">Loading OANDA...</div></div>
     </div>
   </div>
 </div>
 
-<!-- TradingView Widget -->
 <script type="text/javascript" src="https://s.tradingview.com/tv.js"></script>
-<script type="text/javascript">
+<script>
 new TradingView.widget({
   "autosize": true,
   "symbol": "OANDA:XAUUSD",
@@ -100,19 +115,12 @@ new TradingView.widget({
   "locale": "en",
   "toolbar_bg": "#121216",
   "enable_publishing": false,
-  "hide_top_toolbar": false,
-  "hide_legend": false,
-  "save_image": false,
   "container_id": "tradingview_chart",
-  "studies": [
-    "EMA@tv-basicstudies",
-    "RSI@tv-basicstudies"
-  ]
+  "studies": ["EMA@tv-basicstudies","RSI@tv-basicstudies"]
 });
-</script>
 
-<!-- OANDA Live Data Fetch -->
-<script>
+let lastAlertId = null;
+
 async function fetchOandaLive(){
   try{
     const res = await fetch('/api/xauusd/signal');
@@ -121,17 +129,16 @@ async function fetchOandaLive(){
       const s = data.signal;
       document.getElementById('live-price').textContent = '$' + s.close.toFixed(2);
       document.getElementById('live-price').className = 'price ' + (s.close > s.ema_fast ? 'up' : 'down');
-      document.getElementById('ema-val').textContent = s.ema_fast.toFixed(2) + ' / ' + s.ema_slow.toFixed(2);
-      document.getElementById('rsi-val').textContent = s.rsi.toFixed(1);
-      document.getElementById('live-time').textContent = new Date(s.time).toLocaleTimeString();
-      
+      document.getElementById('ema-val').textContent = s.ema_fast.toFixed(1) + ' / ' + s.ema_slow.toFixed(1);
+      document.getElementById('rsi-val').textContent = s.rsi.toFixed(1) + ' / ' + s.atr.toFixed(2);
+      document.getElementById('live-time').textContent = new Date().toLocaleTimeString();
       const sigEl = document.getElementById('live-signal');
       if(s.signal===1){ sigEl.textContent='LONG 🟢'; sigEl.className='signal long'; }
       else if(s.signal===-1){ sigEl.textContent='SHORT 🔴'; sigEl.className='signal short'; }
       else { sigEl.textContent='HOLD ⚪'; sigEl.className='signal hold'; }
-      document.getElementById('signal-details').textContent = `RSI ${s.rsi.toFixed(1)} • ${s.time.substring(11,16)} UTC`;
+      document.getElementById('signal-details').textContent = `RSI ${s.rsi.toFixed(1)} • ATR ${s.atr.toFixed(2)}`;
     }
-  }catch(e){ console.log('OANDA signal error', e); }
+  }catch(e){}
 
   try{
     const res2 = await fetch('/api/xauusd/live');
@@ -142,17 +149,59 @@ async function fetchOandaLive(){
       data2.last_10.slice().reverse().forEach(c=>{
         const time = c.time.substring(11,16);
         const up = c.close >= c.open;
-        html += `<div class="candle-row"><span>${time}</span><span>${c.open.toFixed(2)}</span><span style="color:${up?'#22c55e':'#ef4444'}">${c.close.toFixed(2)}</span><span>${c.volume}</span></div>`;
+        html += `<div class="candle-row"><span>${time}</span><span>${c.open.toFixed(1)}</span><span style="color:${up?'#22c55e':'#ef4444'}">${c.close.toFixed(1)}</span><span>${c.volume}</span></div>`;
       });
       container.innerHTML = html;
     }
-  }catch(e){ console.log('OANDA live error', e); }
+  }catch(e){}
 }
+
+async function fetchAlerts(){
+  try{
+    const res = await fetch('/api/alerts');
+    const data = await res.json();
+    if(data.alerts && data.alerts.length>0){
+      document.getElementById('alerts-count').textContent = data.alerts.length;
+      const container = document.getElementById('alerts-log');
+      let html = '';
+      data.alerts.slice(0,5).forEach(a=>{
+        const cls = a.signal===1?'long':a.signal===-1?'short':'';
+        const time = new Date(a.time).toLocaleString();
+        html += `<div class="alert-item ${cls}"><div class="time">${time} • $${a.price?.toFixed(2)}</div><div style="margin-top:4px;white-space:pre-wrap">${a.alert_text.substring(0,250)}...</div></div>`;
+      });
+      container.innerHTML = html;
+      // Show banner if new alert
+      if(data.alerts[0] && data.alerts[0].time !== lastAlertId){
+        lastAlertId = data.alerts[0].time;
+        const banner = document.getElementById('alert-banner');
+        document.getElementById('alert-banner-text').textContent = `🚨 ASTRA ALERT: XAUUSD ${data.alerts[0].signal===1?'LONG 🟢':'SHORT 🔴'} at $${data.alerts[0].price?.toFixed(2)} — ${data.alerts[0].alert_text.substring(0,80)}...`;
+        banner.classList.add('show');
+        // Browser notification
+        if(Notification && Notification.permission==='granted'){
+          new Notification(`Astra Alert: XAUUSD ${data.alerts[0].signal===1?'LONG':'SHORT'}`, {body: `Price $${data.alerts[0].price?.toFixed(2)}`});
+        }
+      }
+    }
+  }catch(e){}
+}
+
+async function testAlert(){
+  try{
+    const res = await fetch('/api/alerts/test', {method:'POST'});
+    const data = await res.json();
+    alert('Test alert generated! Check alerts panel.');
+    fetchAlerts();
+  }catch(e){ alert('Test failed: '+e.message); }
+}
+
+if(Notification && Notification.permission!=='granted'){ Notification.requestPermission(); }
+
 fetchOandaLive();
-setInterval(fetchOandaLive, 15000); // refresh every 15s
+fetchAlerts();
+setInterval(fetchOandaLive, 15000);
+setInterval(fetchAlerts, 15000);
 </script>
 
-<!-- Astra Widget -->
-<script src="/widget.js" data-api="/api/chat" data-color="#f5c518" data-title="Astra • XAUUSD Live"></script>
+<script src="/widget.js" data-api="/api/chat" data-color="#f5c518" data-title="Astra • Alerts"></script>
 </body>
 </html>
