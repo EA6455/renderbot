@@ -1,0 +1,14 @@
+{
+  "finalv29b_1@astra6.com": {
+    "email": "finalv29b_1@astra6.com",
+    "salt": "b3f5b6f1fab2950331eedd9ad15447d5",
+    "hash": "9836c75c3454d6f9998bbd6d03ba8f9d12920b31ff36ec9e362fae36c57b196b",
+    "created": 1790454369.4610364,
+    "created_str": "2026-09-26 20:26:09 UTC",
+    "last_login": 1790454369.4610364,
+    "login_count": 1,
+    "is_active": true,
+    "plan": "elite_70",
+    "winrate_target": "70-76%"
+  }
+}
