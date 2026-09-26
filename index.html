@@ -3,22 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Astra • LIVE XAUUSD OANDA</title>
+<title>Astra • LIVE + OLD XAUUSD Data</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:Inter,sans-serif;background:#0a0a0c;color:#e6e6e6}
 .nav{padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1f1f25;position:sticky;top:0;background:#0a0a0c;z-index:10}
 .logo{font-weight:900;font-size:16px}.logo span{color:#f5c518}
-.live-badge{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:5px 10px;border-radius:20px;font-size:10px}
-.live-dot{width:7px;height:7px;background:#22c55e;border-radius:50%;animation:pulse 2s infinite}
+.badge{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:5px 10px;border-radius:20px;font-size:10px;display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;background:#22c55e;border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,0.7)}70%{box-shadow:0 0 0 6px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
-.alert-banner{display:none;background:linear-gradient(90deg,#f5c518,#ff8c00);color:#000;padding:10px 20px;font-weight:700;font-size:12px;justify-content:space-between;align-items:center}
-.alert-banner.show{display:flex}
-.hero{padding:12px;max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 320px;gap:12px}
+.hero{padding:12px;max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 340px;gap:12px}
 .chart-wrap{background:#121216;border:1px solid #1f1f25;border-radius:14px;overflow:hidden}
 .chart-header{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;background:#1a1a1f;border-bottom:1px solid #1f1f25}
-.price{font-size:22px;font-weight:800}.price.up{color:#22c55e}.price.down{color:#ef4444}
-.live-price{font-size:11px;color:#22c55e;background:rgba(34,197,94,0.1);padding:2px 6px;border-radius:6px;border:1px solid rgba(34,197,94,0.2)}
+.price{font-size:22px;font-weight:800}
 .signal{padding:4px 8px;border-radius:12px;font-size:10px;font-weight:700}
 .signal.long{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3)}
 .signal.short{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
@@ -26,80 +23,95 @@ body{font-family:Inter,sans-serif;background:#0a0a0c;color:#e6e6e6}
 #tradingview_chart{height:460px;width:100%}
 .side{display:flex;flex-direction:column;gap:10px}
 .card{background:#121216;border:1px solid #1f1f25;border-radius:12px;padding:12px}
-.card h3{font-size:12px;margin-bottom:8px}
+.card h3{font-size:12px;margin-bottom:8px;display:flex;justify-content:space-between}
 .stat{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1a1a1f;font-size:11px}
 .stat span:last-child{color:#f5c518;font-weight:700}
-.btn{background:#f5c518;color:#000;padding:7px 10px;border-radius:8px;text-decoration:none;font-weight:700;display:block;font-size:10px;text-align:center;width:100%;margin-top:5px;border:none;cursor:pointer}
-.btn2{background:#1e1e24;color:#fff;padding:7px 10px;border-radius:8px;border:1px solid #2a2a30;display:block;font-size:10px;text-align:center;width:100%;margin-top:5px;cursor:pointer}
-#candles{max-height:240px;overflow-y:auto;font-size:10px}
-.row{display:grid;grid-template-columns:60px 1fr 1fr 50px;gap:4px;padding:3px 0;border-bottom:1px solid #1a1a1f;color:#888}
+.btn{background:#f5c518;color:#000;padding:7px 10px;border-radius:8px;font-weight:700;display:block;font-size:10px;text-align:center;width:100%;margin-top:5px;border:none;cursor:pointer;text-decoration:none}
+.btn2{background:#1e1e24;color:#fff;padding:7px 10px;border-radius:8px;border:1px solid #2a2a30;display:block;font-size:10px;text-align:center;width:100%;margin-top:5px;cursor:pointer;text-decoration:none}
+.row{display:grid;grid-template-columns:60px 1fr 1fr 50px;gap:4px;padding:3px 0;border-bottom:1px solid #1a1a1f;color:#888;font-size:10px}
 .row.header{color:#fff;font-weight:700;position:sticky;top:0;background:#121216}
-.row.live{background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.2);border-radius:6px;color:#f5c518}
-#alerts{max-height:260px;overflow-y:auto}
-.alert-item{background:#1a1a1f;border:1px solid #2a2a30;border-radius:8px;padding:8px;margin-bottom:6px;font-size:10px}
-.alert-item.long{border-left:3px solid #22c55e}.alert-item.short{border-left:3px solid #ef4444}
+.row.live{background:rgba(245,197,24,0.1);border-radius:6px;color:#f5c518}
+select, input{background:#0f0f12;border:1px solid #2a2a30;color:#fff;padding:6px 8px;border-radius:6px;font-size:11px;width:100%}
+.old-data-controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
+#old-candles{max-height:300px;overflow-y:auto}
 @media(max-width:900px){.hero{grid-template-columns:1fr} #tradingview_chart{height:340px}}
 </style>
 </head>
 <body>
 <div class="nav">
-  <div class="logo">ASTRA <span>• LIVE XAUUSD</span></div>
+  <div class="logo">ASTRA <span>• LIVE + OLD DATA</span></div>
   <div style="display:flex;gap:6px;align-items:center">
-    <div class="live-badge"><div class="live-dot"></div><span id="market-status">OANDA LIVE</span> • <span id="live-time">--:--:--</span></div>
-    <button class="btn2" style="width:auto;padding:5px 10px" onclick="testAlert()">🧪 Test</button>
+    <div class="badge"><div class="dot"></div><span id="live-time">OANDA LIVE</span></div>
+    <button class="btn2" style="width:auto" onclick="testAlert()">🧪 Test</button>
   </div>
-</div>
-
-<div id="alert-banner" class="alert-banner">
-  <span id="alert-text">🚨 ASTRA ALERT</span>
-  <button onclick="this.parentElement.classList.remove('show')" style="background:#000;color:#fff;border:none;padding:3px 8px;border-radius:5px;cursor:pointer;font-size:10px">X</button>
 </div>
 
 <div class="hero">
   <div class="chart-wrap">
     <div class="chart-header">
       <div>
-        <div style="font-size:9px;color:#888">OANDA:XAUUSD • M15 • <span id="candle-info">Loading OANDA...</span></div>
+        <div style="font-size:9px;color:#888">OANDA:XAUUSD • <span id="candle-info">Loading...</span></div>
         <div style="display:flex;align-items:center;gap:8px">
           <div class="price" id="price">$--.--</div>
-          <div class="live-price" id="live-bid-ask">BID -- / ASK --</div>
+          <div style="font-size:10px;color:#22c55e;background:rgba(34,197,94,0.1);padding:2px 6px;border-radius:6px" id="bidask">BID -- / ASK --</div>
         </div>
       </div>
       <div style="text-align:right">
         <div id="signal" class="signal hold">LOADING</div>
-        <div style="font-size:9px;color:#666;margin-top:3px" id="signal-detail">EMA20/50 RSI</div>
+        <div style="font-size:9px;color:#666" id="signal-detail">EMA RSI</div>
       </div>
     </div>
     <div id="tradingview_chart"></div>
     <div style="padding:8px 12px;background:#0f0f12;border-top:1px solid #1f1f25;font-size:10px;color:#666;display:flex;justify-content:space-between">
-      <span>📡 OANDA Practice API • api-fxpractice.oanda.com • Same as TradingView</span>
-      <span id="forming-note">Forming candle: --</span>
+      <span>📡 OANDA v20 • History back to 2005 [1] • Live + Old Data</span>
+      <span id="market-note">Loading...</span>
     </div>
   </div>
 
   <div class="side">
     <div class="card">
-      <h3>🚨 Astra Alerts <span id="alerts-count" style="background:#f5c518;color:#000;padding:1px 5px;border-radius:8px;font-size:9px">0</span> <span style="float:right;font-size:9px;color:#22c55e">● every 60s</span></h3>
-      <div id="alerts"><div style="padding:16px;text-align:center;color:#666;font-size:10px">No alerts yet<br>Will alert on LONG/SHORT<br>Market closed Sat/Sun</div></div>
-      <button class="btn" onclick="fetchAlerts()">Refresh Alerts</button>
-      <button class="btn2" onclick="testAlert()">🧪 Force LONG Alert</button>
+      <h3>📜 OLD DATA — History Back to 2005 <span style="font-size:9px;color:#f5c518">OANDA v20</span></h3>
+      <p style="font-size:10px;color:#888;margin-bottom:8px">OANDA gives historical pricing back to 2005 [1]. Fetch old candles:</p>
+      <div class="old-data-controls">
+        <select id="granularity">
+          <option value="M15">M15 (15min)</option>
+          <option value="M5">M5</option>
+          <option value="H1" selected>H1 (1 hour)</option>
+          <option value="H4">H4</option>
+          <option value="D">D (Daily)</option>
+          <option value="W">W (Weekly)</option>
+        </select>
+        <select id="count">
+          <option value="50">50 candles</option>
+          <option value="100" selected>100</option>
+          <option value="500">500 (~5 days M15)</option>
+          <option value="1000">1000</option>
+        </select>
+        <button class="btn" onclick="fetchOldData()">Load Old</button>
+      </div>
+      <input id="from-date" type="text" placeholder="From date ISO e.g. 2024-01-01T00:00:00Z (optional for OLD data)" style="margin-bottom:6px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+        <button class="btn2" onclick="loadOld('D','365')">365 Days Daily</button>
+        <button class="btn2" onclick="loadOld('H1','500','2024-01-01T00:00:00Z')">Jan 2024 Old</button>
+      </div>
+      <div id="old-stats" style="font-size:10px;color:#888;margin-top:8px"></div>
+      <div id="old-candles"><div style="padding:12px;text-align:center;color:#666">Click Load Old to see historical candles</div></div>
     </div>
 
     <div class="card">
-      <h3>🪙 OANDA Live</h3>
+      <h3>🪙 Live + Alerts</h3>
       <div class="stat"><span>Live Mid</span><span id="stat-mid">--</span></div>
-      <div class="stat"><span>Bid / Ask</span><span id="stat-bidask">-- / --</span></div>
+      <div class="stat"><span>Bid/Ask</span><span id="stat-bidask">--</span></div>
       <div class="stat"><span>EMA 20/50</span><span id="stat-ema">--</span></div>
-      <div class="stat"><span>RSI / ATR</span><span id="stat-rsi">--</span></div>
-      <div class="stat"><span>Account</span><span style="font-size:9px">101-001-40547390-001</span></div>
+      <div class="stat"><span>RSI/ATR</span><span id="stat-rsi">--</span></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px">
         <a class="btn2" href="/api/xauusd/live" target="_blank">Live JSON</a>
-        <a class="btn2" href="/api/xauusd/signal" target="_blank">Signal JSON</a>
+        <a class="btn2" href="/api/xauusd/history?granularity=D&count=100" target="_blank">Old JSON</a>
       </div>
     </div>
 
     <div class="card">
-      <h3>📊 OANDA Candles LIVE <span style="font-size:9px;color:#f5c518">● includes forming</span></h3>
+      <h3>📊 Live Candles (20) <span style="color:#f5c518">● LIVE</span></h3>
       <div id="candles"><div style="padding:12px;text-align:center;color:#666">Loading...</div></div>
     </div>
   </div>
@@ -116,9 +128,7 @@ new TradingView.widget({
   "style": "1",
   "locale": "en",
   "toolbar_bg": "#121216",
-  "enable_publishing": false,
-  "container_id": "tradingview_chart",
-  "studies": ["EMA@tv-basicstudies","RSI@tv-basicstudies"]
+  "container_id": "tradingview_chart"
 });
 
 async function fetchLive(){
@@ -126,95 +136,89 @@ async function fetchLive(){
     const r = await fetch('/api/xauusd/live');
     const d = await r.json();
     if(d.status==='ok'){
-      const price = d.price;
-      const live = d.live_price;
-      const forming = d.forming_candle;
-      const last = d.last_complete;
-      
-      document.getElementById('price').textContent = '$' + price.toFixed(2);
-      document.getElementById('stat-mid').textContent = '$' + price.toFixed(2);
-      
-      if(live){
-        document.getElementById('live-bid-ask').textContent = `BID ${live.bid.toFixed(2)} / ASK ${live.ask.toFixed(2)}`;
-        document.getElementById('stat-bidask').textContent = `${live.bid.toFixed(2)} / ${live.ask.toFixed(2)}`;
+      document.getElementById('price').textContent = '$' + d.price.toFixed(2);
+      document.getElementById('stat-mid').textContent = '$' + d.price.toFixed(2);
+      if(d.live_price){
+        document.getElementById('bidask').textContent = `BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)}`;
+        document.getElementById('stat-bidask').textContent = `${d.live_price.bid.toFixed(2)}/${d.live_price.ask.toFixed(2)}`;
       }
+      document.getElementById('market-note').textContent = d.market_closed || '';
+      document.getElementById('candle-info').textContent = d.forming_candle ? `Forming LIVE ${d.forming_candle.time.substring(11,16)}` : `Last ${d.last_complete.time.substring(11,16)} UTC`;
       
-      document.getElementById('live-time').textContent = new Date().toLocaleTimeString();
-      document.getElementById('market-status').textContent = d.market_closed && d.market_closed.includes('closed') ? 'MARKET CLOSED (Weekend)' : 'OANDA LIVE';
-      
-      if(forming){
-        document.getElementById('forming-note').textContent = `Forming: O ${forming.open.toFixed(1)} H ${forming.high.toFixed(1)} L ${forming.low.toFixed(1)} C ${forming.close.toFixed(1)} • Incomplete`;
-        document.getElementById('candle-info').textContent = `Forming candle LIVE • ${forming.time.substring(11,16)} UTC • Vol ${forming.volume}`;
-      } else if(last){
-        document.getElementById('candle-info').textContent = `Last complete ${last.time.substring(11,16)} UTC • Vol ${last.volume}`;
-      }
-
-      // Candles table with live forming highlighted
       const container = document.getElementById('candles');
       let html = '<div class="row header"><span>Time</span><span>Open</span><span>Close</span><span>Vol</span></div>';
-      const all = d.last_10 || [];
-      all.slice().reverse().forEach(c=>{
+      (d.last_10||[]).slice().reverse().forEach(c=>{
         const isLive = !c.complete;
         const time = c.time.substring(11,16);
         const up = c.close >= c.open;
-        html += `<div class="row ${isLive?'live':''}"><span>${time} ${isLive?'●LIVE':''}</span><span>${c.open.toFixed(1)}</span><span style="color:${up?'#22c55e':'#ef4444'}">${c.close.toFixed(1)}</span><span>${c.volume}</span></div>`;
+        html += `<div class="row ${isLive?'live':''}"><span>${time} ${isLive?'●':''}</span><span>${c.open.toFixed(1)}</span><span style="color:${up?'#22c55e':'#ef4444'}">${c.close.toFixed(1)}</span><span>${c.volume}</span></div>`;
       });
       container.innerHTML = html;
     }
-  }catch(e){ console.log(e); }
-  
+  }catch(e){}
   try{
     const r2 = await fetch('/api/xauusd/signal');
     const d2 = await r2.json();
-    if(d2.status==='ok' && d2.signal){
+    if(d2.signal){
       const s = d2.signal;
       const el = document.getElementById('signal');
       if(s.signal===1){ el.textContent='LONG 🟢'; el.className='signal long'; }
       else if(s.signal===-1){ el.textContent='SHORT 🔴'; el.className='signal short'; }
       else { el.textContent='HOLD ⚪'; el.className='signal hold'; }
-      document.getElementById('signal-detail').textContent = `RSI ${s.rsi.toFixed(1)} ATR ${s.atr.toFixed(2)}`;
       document.getElementById('stat-ema').textContent = `${s.ema_fast.toFixed(1)}/${s.ema_slow.toFixed(1)}`;
       document.getElementById('stat-rsi').textContent = `${s.rsi.toFixed(1)}/${s.atr.toFixed(2)}`;
     }
   }catch(e){}
 }
 
-async function fetchAlerts(){
+async function fetchOldData(){
+  const gran = document.getElementById('granularity').value;
+  const count = document.getElementById('count').value;
+  const from = document.getElementById('from-date').value.trim();
+  let url = `/api/xauusd/history?granularity=${gran}&count=${count}`;
+  if(from) url += `&from_time=${encodeURIComponent(from)}`;
+  
+  document.getElementById('old-candles').innerHTML = '<div style="padding:12px;text-align:center;color:#888">Loading old data...</div>';
   try{
-    const r = await fetch('/api/alerts');
+    const r = await fetch(url);
     const d = await r.json();
-    if(d.alerts && d.alerts.length>0){
-      document.getElementById('alerts-count').textContent = d.alerts.length;
-      const c = document.getElementById('alerts');
-      let h = '';
-      d.alerts.slice(0,4).forEach(a=>{
-        const cls = a.signal===1?'long':'short';
-        const t = new Date(a.time).toLocaleTimeString();
-        h += `<div class="alert-item ${cls}"><div style="color:#666;font-size:9px">${t} • $${a.price?.toFixed(2)}</div><div style="margin-top:3px;white-space:pre-wrap">${a.alert_text.substring(0,180)}</div></div>`;
+    if(d.status==='ok'){
+      document.getElementById('old-stats').innerHTML = `
+        <div>From: ${d.from?.substring(0,10)} To: ${d.to?.substring(0,10)} • ${d.count} candles • ${gran}</div>
+        <div>Oldest: $${d.oldest_price?.toFixed(2)} Latest: $${d.latest_price?.toFixed(2)} High: $${d.high?.toFixed(2)} Low: $${d.low?.toFixed(2)}</div>
+        <div style="color:#666">Source: ${d.source}</div>
+      `;
+      let html = '<div class="row header"><span>Date</span><span>Open</span><span>Close</span><span>High/Low</span></div>';
+      d.candles.slice(-20).reverse().forEach(c=>{
+        const date = c.time.substring(0,10);
+        const up = c.close >= c.open;
+        html += `<div class="row"><span>${date}</span><span>${c.open.toFixed(1)}</span><span style="color:${up?'#22c55e':'#ef4444'}">${c.close.toFixed(1)}</span><span>${c.high.toFixed(0)}/${c.low.toFixed(0)}</span></div>`;
       });
-      c.innerHTML = h;
-      // banner
-      if(d.alerts[0]){
-        const b = document.getElementById('alert-banner');
-        document.getElementById('alert-text').textContent = `🚨 ${d.alerts[0].alert_text.substring(0,100)}`;
-        b.classList.add('show');
-      }
+      document.getElementById('old-candles').innerHTML = html;
+    } else {
+      document.getElementById('old-candles').innerHTML = `<div style="color:#ef4444;padding:12px">Error: ${d.error}</div>`;
     }
-  }catch(e){}
+  }catch(e){
+    document.getElementById('old-candles').innerHTML = `<div style="color:#ef4444;padding:12px">Error: ${e.message}</div>`;
+  }
+}
+
+function loadOld(gran,count,from){
+  document.getElementById('granularity').value = gran;
+  document.getElementById('count').value = count;
+  document.getElementById('from-date').value = from||'';
+  fetchOldData();
 }
 
 async function testAlert(){
   await fetch('/api/alerts/test',{method:'POST'});
-  fetchAlerts();
-  alert('Test alert sent! Check banner + alerts panel');
+  alert('Test alert sent!');
 }
 
 fetchLive();
-fetchAlerts();
-setInterval(fetchLive, 5000); // live every 5s for forming candle
-setInterval(fetchAlerts, 15000);
+setInterval(fetchLive, 5000);
 </script>
 
-<script src="/widget.js" data-api="/api/chat" data-color="#f5c518" data-title="Astra • LIVE"></script>
+<script src="/widget.js" data-api="/api/chat" data-color="#f5c518" data-title="Astra • LIVE+OLD"></script>
 </body>
 </html>
