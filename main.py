@@ -1,5 +1,5 @@
 """
-ASTRA6 - Pure OANDA XAUUSD Live Terminal - 
+ASTRA6
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = FastAPI(title="ASTRA6 OANDA Live")
+app = FastAPI(title="ASTRA6")
 
 app.add_middleware(
     CORSMiddleware,
@@ -81,14 +81,14 @@ def widget():
     try:
         return HTMLResponse(open("widget.js").read(), media_type="application/javascript")
     except:
-        return HTMLResponse("// widget removed - ASTRA6 pure OANDA", media_type="application/javascript")
+        return HTMLResponse("// ASTRA6", media_type="application/javascript")
 
 @app.get("/api/status")
 def status():
     return {
         "name": "ASTRA6",
         "oanda": {"has_key": bool(OANDA_API_KEY), "account_id": OANDA_ACCOUNT_ID, "env": OANDA_ENVIRONMENT},
-        "mode": "Pure OANDA XAUUSD Live - ",
+        "mode": "ASTRA6",
         "endpoints": ["/api/xauusd/live","/api/xauusd/history"]
     }
 
