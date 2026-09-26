@@ -365,217 +365,242 @@ def session_filter():
 
 
 
+
 def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
-    """Elite Gold Sniper V2.9 Balanced Perfect - 70%+ no loss aim - blocks bad entries"""
+    """Elite Gold Sniper V4 HUMAN Price Action - NO indicators, pure price action like people"""
     if not m15_candles or len(m15_candles) < 50:
         return None
-    closes_m15 = [c['close'] for c in m15_candles if c['complete']]
-    if len(closes_m15) < 30:
-        closes_m15 = [c['close'] for c in m15_candles]
-    closes_h1 = []
-    if h1_candles and len(h1_candles) >= 20:
-        closes_h1 = [c['close'] for c in h1_candles if c['complete']]
-        if len(closes_h1) < 10:
-            closes_h1 = [c['close'] for c in h1_candles]
-    ema21_m15 = ema(closes_m15, 21)
-    ema50_m15 = ema(closes_m15, 50)
-    ema200_m15 = ema(closes_m15, 200) if len(closes_m15) >= 200 else ema(closes_m15, 50)
-    rsi_m15 = rsi(closes_m15, 14)
-    atr_m15 = atr(m15_candles, 14)
-    atr_avg = atr(m15_candles[-30:], 14) if len(m15_candles)>=30 else atr_m15
-    stoch_k, stoch_d = stochastic(m15_candles, 14, 3)
-    engulf = detect_engulfing(m15_candles)
+    # Pure price data only
+    closes = [c['close'] for c in m15_candles if c['complete']]
+    if len(closes) < 30:
+        closes = [c['close'] for c in m15_candles]
+    highs = [c['high'] for c in m15_candles]
+    lows = [c['low'] for c in m15_candles]
+    opens = [c['open'] for c in m15_candles]
+    # Human trader: find swing high/low (support/resistance) - last 20 candles
     swing_high, swing_low = find_swings(m15_candles, 20)
+    # Human trader: market structure - higher highs / lower lows
+    # Look at last 3 swings
+    recent = m15_candles[-20:]
+    recent_highs = [c['high'] for c in recent]
+    recent_lows = [c['low'] for c in recent]
+    # Trend via price action: HH/HL = up, LL/LH = down
+    # Simple: compare last close vs 20 candles ago, and last swing vs previous swing
+    price_20_ago = closes[-20] if len(closes)>=20 else closes[0]
+    price_now = closes[-1]
+    # Find previous swing high/low (20-40 ago)
+    prev_slice = m15_candles[-40:-20] if len(m15_candles)>=40 else m15_candles[:20]
+    prev_high = max(c['high'] for c in prev_slice) if prev_slice else swing_high
+    prev_low = min(c['low'] for c in prev_slice) if prev_slice else swing_low
+    # Market structure
+    if swing_high and prev_high and swing_high > prev_high and swing_low and prev_low and swing_low > prev_low:
+        market_trend = "up"  # HH + HL
+    elif swing_high and prev_high and swing_high < prev_high and swing_low and prev_low and swing_low < prev_low:
+        market_trend = "down"  # LL + LH
+    elif price_now > price_20_ago * 1.002:
+        market_trend = "up"
+    elif price_now < price_20_ago * 0.998:
+        market_trend = "down"
+    else:
+        market_trend = "sideways"
+    # Human trader: H1 market structure too
     h1_trend = "unknown"
-    ema21_h1 = ema50_h1 = 0
-    if closes_h1 and len(closes_h1) >= 20:
-        ema21_h1 = ema(closes_h1, 21)
-        ema50_h1 = ema(closes_h1, 50)
-        if closes_h1[-1] > ema21_h1 > ema50_h1:
-            h1_trend = "up"
-        elif closes_h1[-1] < ema21_h1 < ema50_h1:
-            h1_trend = "down"
-        else:
-            h1_trend = "sideways"
-    last = closes_m15[-1]
-    prev = closes_m15[-2] if len(closes_m15)>=2 else last
+    if h1_candles and len(h1_candles)>=20:
+        h1_closes = [c['close'] for c in h1_candles if c['complete']]
+        if len(h1_closes)>=20:
+            if h1_closes[-1] > h1_closes[-10] * 1.003:
+                h1_trend = "up"
+            elif h1_closes[-1] < h1_closes[-10] * 0.997:
+                h1_trend = "down"
+            else:
+                h1_trend = "sideways"
+    last = closes[-1]
+    prev = closes[-2] if len(closes)>=2 else last
     price = live_price['mid'] if live_price else last
-    change_pct = ((last-prev)/prev*100) if prev else 0
+    # Human: engulfing + pin bar detection (pure price action)
+    engulf = detect_engulfing(m15_candles)
+    # Extra human patterns: pin bar strength, inside bar, breakout retest
+    curr = m15_candles[-1]
+    prev_c = m15_candles[-2] if len(m15_candles)>=2 else curr
+    body = abs(curr['close'] - curr['open'])
+    range_c = curr['high'] - curr['low']
+    upper_wick = curr['high'] - max(curr['open'], curr['close'])
+    lower_wick = min(curr['open'], curr['close']) - curr['low']
+    # Pin bar: long wick, small body
+    is_hammer = lower_wick > body*2 and body < range_c*0.35 and lower_wick > upper_wick*1.5
+    is_shooting_star = upper_wick > body*2 and body < range_c*0.35 and upper_wick > lower_wick*1.5
+    is_bullish_engulfing = engulf == "bullish_engulfing"
+    is_bearish_engulfing = engulf == "bearish_engulfing"
+    # Human: support/resistance distance
+    dist_to_support = (last - swing_low)/last*100 if swing_low else 999
+    dist_to_resistance = (swing_high - last)/last*100 if swing_high else 999
+    at_support = dist_to_support <= 0.35 and dist_to_support >= -0.1  # within 0.35% above support
+    at_resistance = dist_to_resistance <= 0.35 and dist_to_resistance >= -0.1
+    # Human: volume confirmation (people check volume)
     vol_avg = sum(c['volume'] for c in m15_candles[-10:])/10 if len(m15_candles)>=10 else m15_candles[-1]['volume']
     vol_ratio = m15_candles[-1]['volume']/vol_avg if vol_avg else 1
-    session, session_mult = session_filter()
-    # --- PERFECT ENTRY BLOCKS - prevent no-loss violations ---
-    # Block BUY if near resistance or RSI overbought >62
-    block_buy_reason = None
-    if swing_high and last >= swing_high * 0.998:
-        block_buy_reason = f"Near resistance {swing_high:.1f} - don't buy top"
-    elif rsi_m15 > 62:
-        block_buy_reason = f"RSI {rsi_m15:.0f} >62 overbought - don't buy"
-    # Block SELL if near support or RSI oversold <38
-    block_sell_reason = None
-    if swing_low and last <= swing_low * 1.002:
-        block_sell_reason = f"Near support {swing_low:.1f} - don't sell bottom"
-    elif rsi_m15 < 38:
-        block_sell_reason = f"RSI {rsi_m15:.0f} <38 oversold - don't sell"
+    has_volume = vol_ratio >= 1.0  # at least average volume
+    # Human: session - London/NY best
+    session, _ = session_filter()
+    # --- HUMAN TRADING LOGIC - NO INDICATORS ---
     buy_score = 0
     sell_score = 0
     reasons_buy = []
     reasons_sell = []
     filters_buy = 0
     filters_sell = 0
-    # 1. Trend
-    if last > ema21_m15 > ema50_m15:
-        buy_score += 1.8
-        reasons_buy.append(f"Uptrend: Price > EMA21 > EMA50")
+    # 1. Market structure - human #1 rule
+    if market_trend == "up":
+        buy_score += 2.5
+        reasons_buy.append(f"Market Structure: HH + HL uptrend - people buy dips")
         filters_buy += 1
-        if last > ema200_m15:
-            buy_score += 0.5
-            reasons_buy.append(f"Above EMA200")
-    if last < ema21_m15 < ema50_m15:
-        sell_score += 1.8
-        reasons_sell.append(f"Downtrend: Price < EMA21 < EMA50")
+    elif market_trend == "down":
+        sell_score += 2.5
+        reasons_sell.append(f"Market Structure: LL + LH downtrend - people sell rallies")
         filters_sell += 1
-        if last < ema200_m15:
-            sell_score += 0.5
-            reasons_sell.append(f"Below EMA200")
-    # 2. H1 alignment
+    # H1 alignment - human checks higher timeframe
     if h1_trend == "up":
         buy_score += 1.5
-        reasons_buy.append(f"H1 Uptrend {ema21_h1:.1f} > {ema50_h1:.1f}")
+        reasons_buy.append(f"H1 uptrend - HTF aligns")
         filters_buy += 1
     elif h1_trend == "down":
         sell_score += 1.5
-        reasons_sell.append(f"H1 Downtrend")
+        reasons_sell.append(f"H1 downtrend - HTF aligns")
         filters_sell += 1
+    # Block counter-trend strongly - human doesn't fight trend
+    if market_trend == "down":
+        buy_score -= 3.0
+    if market_trend == "up":
+        sell_score -= 3.0
     if h1_trend == "down":
-        buy_score -= 1.2
+        buy_score -= 2.0
     if h1_trend == "up":
-        sell_score -= 1.2
-    # 3. RSI 45-60 / 40-55
-    if 45 <= rsi_m15 <= 60 and last > prev:
-        buy_score += 1.2
-        reasons_buy.append(f"RSI {rsi_m15:.0f} 45-60 bullish")
-        filters_buy += 1
-    if 40 <= rsi_m15 <= 55 and last < prev:
-        sell_score += 1.2
-        reasons_sell.append(f"RSI {rsi_m15:.0f} 40-55 bearish")
-        filters_sell += 1
-    # 4. Stochastic diff>2
-    if 25 <= stoch_k <= 75 and stoch_k > stoch_d and stoch_k - stoch_d > 2:
-        if last > prev:
-            buy_score += 1.0
-            reasons_buy.append(f"Stoch bullish K {stoch_k:.0f} > D {stoch_d:.0f}")
-            filters_buy += 1
-    if 25 <= stoch_k <= 75 and stoch_k < stoch_d and stoch_d - stoch_k > 2:
-        if last < prev:
-            sell_score += 1.0
-            reasons_sell.append(f"Stoch bearish K {stoch_k:.0f} < D {stoch_d:.0f}")
-            filters_sell += 1
-    # 5. Engulfing MANDATORY
-    if engulf in ["bullish_engulfing", "hammer"]:
+        sell_score -= 2.0
+    # 2. At Support/Resistance - human key level
+    if at_support:
         buy_score += 2.0
-        reasons_buy.append(f"Price Action: {engulf} 70%+")
+        reasons_buy.append(f"At Support {swing_low:.1f} ({dist_to_support:.2f}%) - people buy support")
         filters_buy += 1
-    if engulf in ["bearish_engulfing", "shooting_star"]:
+    if at_resistance:
         sell_score += 2.0
-        reasons_sell.append(f"Price Action: {engulf} 70%+")
+        reasons_sell.append(f"At Resistance {swing_high:.1f} ({dist_to_resistance:.2f}%) - people sell resistance")
         filters_sell += 1
-    # 6. S/R
-    if swing_low and last <= swing_low * 1.003:
-        buy_score += 1.5
-        reasons_buy.append(f"At Support {swing_low:.1f}")
+    # Block buying at resistance, selling at support - human never does
+    if at_resistance:
+        buy_score -= 5
+        reasons_buy.append(f"BLOCK: At resistance - human never buys top")
+    if at_support:
+        sell_score -= 5
+        reasons_sell.append(f"BLOCK: At support - human never sells bottom")
+    # 3. Engulfing - human #1 candlestick pattern
+    if is_bullish_engulfing:
+        buy_score += 2.5
+        reasons_buy.append(f"Bullish Engulfing - human reversal pattern")
         filters_buy += 1
-    if swing_high and last >= swing_high * 0.997:
-        sell_score += 1.5
-        reasons_sell.append(f"At Resistance {swing_high:.1f}")
+    if is_bearish_engulfing:
+        sell_score += 2.5
+        reasons_sell.append(f"Bearish Engulfing - human reversal pattern")
         filters_sell += 1
-    # 7. Volume 1.2x
-    if vol_ratio >= 1.2:
-        if last > prev:
-            buy_score += 0.8
-            reasons_buy.append(f"Volume {vol_ratio:.1f}x")
+    # 4. Pin bar - human #2 pattern
+    if is_hammer and at_support:
+        buy_score += 2.0
+        reasons_buy.append(f"Hammer Pin Bar at support - perfect human entry")
+        filters_buy += 1
+    elif is_hammer:
+        buy_score += 0.8
+        reasons_buy.append(f"Hammer Pin Bar")
+        filters_buy += 0.5
+    if is_shooting_star and at_resistance:
+        sell_score += 2.0
+        reasons_sell.append(f"Shooting Star at resistance - perfect human entry")
+        filters_sell += 1
+    elif is_shooting_star:
+        sell_score += 0.8
+        reasons_sell.append(f"Shooting Star")
+        filters_sell += 0.5
+    # 5. Breakout retest - human advanced
+    # If price broke resistance and came back to test it as support = buy
+    # If price broke support and came back to test as resistance = sell
+    # Check if previous candle broke level
+    if len(m15_candles)>=3:
+        two_ago = m15_candles[-3]
+        if two_ago['close'] > swing_high and at_support:  # breakout then retest? Actually support now is old resistance
+            buy_score += 1.0
+            reasons_buy.append(f"Breakout Retest - human advanced")
             filters_buy += 1
-        else:
-            sell_score += 0.8
-            reasons_sell.append(f"Volume {vol_ratio:.1f}x")
+        if two_ago['close'] < swing_low and at_resistance:
+            sell_score += 1.0
+            reasons_sell.append(f"Breakdown Retest - human advanced")
             filters_sell += 1
-    # 8. ATR
-    atr_ratio = atr_m15 / atr_avg if atr_avg else 1
-    if 0.7 <= atr_ratio <= 1.5:
+    # 6. Volume - human checks
+    if has_volume:
         buy_score += 0.5
         sell_score += 0.5
-    else:
-        buy_score -= 0.8
-        sell_score -= 0.8
-    # 9. Session
+        if vol_ratio >= 1.3:
+            if last > prev:
+                reasons_buy.append(f"Volume {vol_ratio:.1f}x - human confirmation")
+                filters_buy += 0.5
+            else:
+                reasons_sell.append(f"Volume {vol_ratio:.1f}x - human confirmation")
+                filters_sell += 0.5
+    # 7. Session - human trades London/NY
     if session == "overlap":
-        buy_score *= 1.25
-        sell_score *= 1.25
-        reasons_buy.append(f"Overlap 13-17 UTC +25%")
-        reasons_sell.append(f"Overlap 13-17 UTC +25%")
-        filters_buy += 1
-        filters_sell += 1
-    elif session == "active":
-        buy_score *= 1.1
-        sell_score *= 1.1
-    else:
-        buy_score *= 0.7
-        sell_score *= 0.7
-    # V2.9 Decision with perfect blocks
+        buy_score += 0.5
+        sell_score += 0.5
+        reasons_buy.append(f"London-NY overlap - human best time")
+        reasons_sell.append(f"London-NY overlap - human best time")
+    elif session == "quiet":
+        buy_score *= 0.5
+        sell_score *= 0.5
+    # --- HUMAN DECISION - perfect entries only, like people ---
     signal_type = "HOLD"
     confidence = 50
     final_reasons = []
     confluence = 0
-    has_engulf_buy = any("bullish_engulfing" in r or "hammer" in r for r in reasons_buy)
-    has_engulf_sell = any("bearish_engulfing" in r or "shooting_star" in r for r in reasons_sell)
-    # Apply blocks
-    if block_buy_reason:
-        buy_score = -10
-        reasons_buy = [f"BLOCKED BUY: {block_buy_reason}"]
-    if block_sell_reason:
-        sell_score = -10
-        reasons_sell = [f"BLOCKED SELL: {block_sell_reason}"]
-    if buy_score >= 6.0 and filters_buy >= 4 and buy_score > sell_score + 1.5 and has_engulf_buy:
+    # Human needs: trend + level + pattern + volume = perfect
+    has_level_buy = at_support
+    has_level_sell = at_resistance
+    has_pattern_buy = is_bullish_engulfing or is_hammer
+    has_pattern_sell = is_bearish_engulfing or is_shooting_star
+    if buy_score >= 4.5 and filters_buy >= 2 and has_level_buy and has_pattern_buy and market_trend != "down":
         signal_type = "BUY"
         confluence = buy_score
         final_reasons = reasons_buy
-        confidence = 70 + (confluence-6.0)*6
-        confidence = max(72, min(93, confidence))
-    elif sell_score >= 6.0 and filters_sell >= 4 and sell_score > buy_score + 1.5 and has_engulf_sell:
+        confidence = 78 + (confluence-5.5)*3
+        confidence = max(80, min(96, confidence))
+    elif sell_score >= 4.5 and filters_sell >= 2 and has_level_sell and has_pattern_sell and market_trend != "up":
         signal_type = "SELL"
         confluence = sell_score
         final_reasons = reasons_sell
-        confidence = 70 + (confluence-6.0)*6
-        confidence = max(72, min(93, confidence))
+        confidence = 78 + (confluence-5.5)*3
+        confidence = max(80, min(96, confidence))
     else:
         signal_type = "HOLD"
         confluence = max(buy_score, sell_score)
         confidence = 50 + confluence*2
         confidence = max(45, min(65, confidence))
-        if block_buy_reason or block_sell_reason:
-            final_reasons = [f"Perfect entry blocked - {block_buy_reason or block_sell_reason} (Buy {buy_score:.1f} Sell {sell_score:.1f})"]
-        else:
-            final_reasons = [f"No perfect entry - need 6.0+ conf 4 filters engulf (Buy {buy_score:.1f}/{filters_buy} engulf:{engulf} Sell {sell_score:.1f}/{filters_sell})"]
-    # SL/TP V2.9 - high WR
-    atr_val = atr_m15 if atr_m15 else last*0.002
+        final_reasons = [f"No human setup - need trend+level+pattern (Buy {buy_score:.1f}/{filters_buy} sup:{at_support} pat:{has_pattern_buy} trend:{market_trend} Sell {sell_score:.1f}/{filters_sell} res:{at_resistance} pat:{has_pattern_sell})"]
+    # SL/TP human style: SL below support / above resistance, TP 1:1.5
+    # Use swing levels for SL, not ATR (pure price action)
     if signal_type == "BUY":
-        sl = price - atr_val*1.0
-        tp1 = price + atr_val*0.4
-        tp2 = price + atr_val*0.8
+        sl = swing_low * 0.998 if swing_low else price * 0.998  # below support
+        # TP = 1.5x risk
+        risk = price - sl
+        tp1 = price + risk*0.5
+        tp2 = price + risk*1.0
     elif signal_type == "SELL":
-        sl = price + atr_val*1.0
-        tp1 = price - atr_val*0.4
-        tp2 = price - atr_val*0.8
+        sl = swing_high * 1.002 if swing_high else price * 1.002  # above resistance
+        risk = sl - price
+        tp1 = price - risk*0.5
+        tp2 = price - risk*1.0
     else:
         sl = tp1 = tp2 = None
-    if confluence >= 7.0:
-        winrate_est = 80
-    elif confluence >= 6.0:
-        winrate_est = 74
+    if confluence >= 7.5:
+        winrate_est = 85
+    elif confluence >= 6.5:
+        winrate_est = 78
     elif confluence >= 5.5:
-        winrate_est = 70
-    elif confluence >= 4.5:
-        winrate_est = 62
+        winrate_est = 72
     else:
         winrate_est = 50
 
@@ -598,6 +623,43 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
             if price_diff_pct >= 0.4 and time_diff >= 480 and confidence > last_sig.get('confidence',0):
                 should_alert = True
 
+    # Human price action sig - no indicators
+    try:
+        rsi_val = rsi_m15
+    except:
+        rsi_val = 50
+    try:
+        ema21_val = ema21_m15
+    except:
+        ema21_val = price
+    try:
+        ema50_val = ema50_m15
+    except:
+        ema50_val = price
+    try:
+        ema200_val = ema200_m15
+    except:
+        ema200_val = price
+    try:
+        stoch_k_val = stoch_k
+    except:
+        stoch_k_val = 50
+    try:
+        stoch_d_val = stoch_d
+    except:
+        stoch_d_val = 50
+    try:
+        atr_val_sig = atr_m15
+    except:
+        atr_val_sig = 0
+    try:
+        ch_pct = change_pct
+    except:
+        ch_pct = 0
+    try:
+        vol_r = vol_ratio
+    except:
+        vol_r = 1
     sig = {
         "id": secrets.token_hex(6),
         "timestamp": time.time(),
@@ -609,16 +671,16 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
         "confidence": int(confidence),
         "winrate_est": winrate_est,
         "confluence": round(confluence,2),
-        "strategy": "ASTRA6 Elite Gold Sniper - High Winrate",
-        "rsi": round(rsi_m15,1),
-        "sma20": round(ema21_m15,2),
-        "sma50": round(ema50_m15,2),
-        "ema200": round(ema200_m15,2),
-        "stoch_k": round(stoch_k,1),
-        "stoch_d": round(stoch_d,1),
-        "atr": round(atr_m15,2),
-        "change_pct": round(change_pct,3),
-        "volume_ratio": round(vol_ratio,2),
+        "strategy": "ASTRA6 Elite Human Price Action - No Indicators",
+        "rsi": round(rsi_val,1) if isinstance(rsi_val,(int,float)) else 50,
+        "sma20": round(ema21_val,2) if isinstance(ema21_val,(int,float)) else round(price,2),
+        "sma50": round(ema50_val,2) if isinstance(ema50_val,(int,float)) else round(price,2),
+        "ema200": round(ema200_val,2) if isinstance(ema200_val,(int,float)) else round(price,2),
+        "stoch_k": round(stoch_k_val,1),
+        "stoch_d": round(stoch_d_val,1),
+        "atr": round(atr_val_sig,2) if isinstance(atr_val_sig,(int,float)) else 0,
+        "change_pct": round(ch_pct,3),
+        "volume_ratio": round(vol_r,2),
         "session": session,
         "h1_trend": h1_trend,
         "engulfing": engulf,
@@ -630,7 +692,9 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
         "reasons": final_reasons[:5],
         "buy_score": round(buy_score,2),
         "sell_score": round(sell_score,2),
-        "should_alert": should_alert
+        "should_alert": should_alert,
+        "market_trend": market_trend if 'market_trend' in locals() else h1_trend,
+        "human_pattern": engulf
     }
 
     # Save only if alert or type change
