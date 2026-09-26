@@ -3,12 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ASTRA6</title>
+<title>ASTRA6 - Best Gold Trading Signals | XAUUSD Elite 70%+ Winrate</title>
+<meta name="description" content="ASTRA6 Elite - Best Gold Trading Signals XAUUSD with 70%+ winrate. Human price-action, big flow following, multi-timeframe scan M1 M5 M15 M30 H1. Asian session 0-7 UTC Phnom Penh. White & black design.">
+<meta name="keywords" content="ASTRA6, gold trading, XAUUSD signals, gold signals, trading signals, elite winrate, forex gold, Phnom Penh trading, Asian session gold, best gold signals">
+<meta name="author" content="ASTRA6">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="ASTRA6 - Best Gold Trading Signals">
+<meta property="og:description" content="Elite Gold Trading Signals XAUUSD 70%+ winrate, human price-action, big flow, multi-TF scan">
+<meta property="og:image" content="/logo.png">
+<meta property="og:url" content="https://astra6.onrender.com">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ASTRA6 - Best Gold Trading Signals">
+<meta name="twitter:description" content="Elite XAUUSD signals 70%+ winrate">
+<meta name="twitter:image" content="/logo.png">
+<link rel="icon" href="/logo.png" type="image/png">
+<link rel="apple-touch-icon" href="/logo.png">
 <style>
-:root{--bg:#070709;--card:#111113;--card2:#1a1a1e;--border:#222226;--gold:#f5c518;--green:#22c55e;--red:#ef4444;--text:#e6e6e6;--muted:#888;--active:#1e1e22}
+:root{--bg:#ffffff;--card:#ffffff;--card2:#f5f5f5;--border:#000000;--gold:#000000;--green:#000000;--red:#000000;--text:#000000;--muted:#666666;--active:#f0f0f0}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:system-ui,-apple-system,Inter,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;transition:background 0.3s,color 0.3s}
-body.light-mode{--bg:#f5f5f7;--card:#ffffff;--card2:#f0f0f2;--border:#e0e0e6;--text:#1a1a1e;--muted:#666;--active:#e8e8ea}
+body.dark-mode{--bg:#070709;--card:#111113;--card2:#1a1a1e;--border:#222226;--gold:#f5c518;--green:#22c55e;--red:#ef4444;--text:#e6e6e6;--muted:#888;--active:#1e1e22}
+body.light-mode{--bg:#ffffff;--card:#ffffff;--card2:#f5f5f5;--border:#e0e0e0;--text:#000000;--muted:#666;--active:#f0f0f0}
 body.light-mode .sidebar{background:#ffffff;border-right-color:#e0e0e6}
 body.light-mode .topbar{background:#ffffff;border-bottom-color:#e0e0e6}
 body.light-mode .card{background:#ffffff;border-color:#e0e0e6}
@@ -36,7 +52,10 @@ body.light-mode .lock-card{background:#ffffff}
 .content{flex:1;padding:16px;max-width:1200px;width:100%;margin:0 auto}
 .view{display:none}
 .view.active{display:block}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
+.card{background:#ffffff;border:2px solid #000000;border-radius:14px;padding:18px;color:#000}
+.signal-card{border-radius:18px;padding:24px;border:2px solid #000;text-align:center;background:#fff}
+.terminal{background:#ffffff;border:2px solid #000000;border-radius:14px;overflow:hidden;position:relative}
+.terminal-top{background:#000;color:#fff;border-bottom:2px solid #000}
 .signal-card{border-radius:18px;padding:24px;border:1px solid var(--border);text-align:center}
 .signal-card.buy{background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.3)}
 .signal-card.sell{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.3)}
@@ -108,12 +127,12 @@ body.light-mode .lock-card{background:#ffffff}
 </div>
 
 <div class="main-wrap">
-  <div class="topbar">
+  <div class="topbar" style="background:#ffffff;border-bottom:2px solid #000000">
     <div style="display:flex;align-items:center;gap:12px">
-      <div class="mobile-logo"><div class="logo-icon">A6</div><div><div class="logo-text" style="font-size:14px">ASTRA6</div><div class="logo-sub" style="font-size:8px">EASY</div></div></div>
+      <div class="mobile-logo" style="display:flex;align-items:center;gap:10px"><img src="/logo.png" alt="ASTRA6 Best Logo" style="height:36px;width:auto;object-fit:contain"><div><div class="logo-text" style="font-size:16px;font-weight:900;color:#000">ASTRA6</div><div class="logo-sub" style="font-size:9px;color:#666">ELITE • 70%+</div></div></div>
       <div class="price-block">
-        <div class="price-main" id="price">$--.--</div>
-        <div class="bidask mono" id="bidask">BID -- / ASK --</div>
+        <div class="price-main" id="price" style="color:#000">$--.--</div>
+        <div class="bidask mono" id="bidask" style="background:#000;color:#fff;border-color:#000">BID -- / ASK --</div>
       </div>
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:relative">
@@ -142,16 +161,25 @@ body.light-mode .lock-card{background:#ffffff}
   <div class="content">
     <div class="view active" id="view-dashboard">
       <div style="margin-bottom:14px"><div style="font-weight:900;font-size:20px">Signals <span class="elite-badge">70%+ WIN</span></div><div class="mono" style="font-size:10px;color:var(--muted)">Easy catalog • Only BUY/SELL alerts • All devices</div></div>
-      <div class="signal-card hold" id="current-signal-card" style="margin-bottom:14px">
+      <div class="signal-card hold" id="current-signal-card" style="margin-bottom:14px;border:2px solid #000">
+        <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:8px">
+          <img src="/logo.png" alt="ASTRA6 Logo" style="height:32px;width:auto">
+          <div class="mono" style="font-size:10px;font-weight:900;letter-spacing:1px">ASTRA6 ELITE</div>
+        </div>
         <div class="signal-type hold" id="sig-type">--</div>
         <div style="display:flex;justify-content:center;gap:20px;margin-top:14px;flex-wrap:wrap">
           <div><div class="label">Price</div><div class="mono" id="sig-price" style="font-size:18px;font-weight:900">$--</div></div>
           <div><div class="label">Confidence</div><div class="mono" id="sig-conf" style="font-size:16px;font-weight:800">--%</div></div>
-          <div><div class="label">Winrate</div><div class="mono" id="sig-winrate" style="font-size:16px;font-weight:800;color:var(--gold)">--%</div></div>
+          <div><div class="label">Winrate</div><div class="mono" id="sig-winrate" style="font-size:16px;font-weight:800;color:#000">--%</div></div>
         </div>
         <div class="sltp-row" id="sig-sltp"></div>
         <div style="margin-top:14px;font-size:12px;color:var(--muted);max-width:500px;margin-left:auto;margin-right:auto" id="sig-reasons">Sign in to view easy signals</div>
         <div class="mono" style="font-size:9px;color:var(--muted);margin-top:10px" id="sig-time">--</div>
+        <!-- Terminal Link Web - easy access -->
+        <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <button class="btn" onclick="showView('signals')" style="background:#000;color:#fff;border-color:#000;font-size:12px;padding:10px 18px">📈 Open Terminal - Live Chart</button>
+          <a href="/api/signals/current" target="_blank" style="text-decoration:none"><button class="btn" style="font-size:12px;padding:10px 18px;background:#fff;color:#000;border:2px solid #000">🔗 Terminal API Link</button></a>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
         <div class="card" style="text-align:center;padding:14px"><div class="label">Alerts</div><div class="mono" id="stat-total" style="font-size:20px;font-weight:900">0</div></div>

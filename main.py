@@ -904,6 +904,24 @@ def health():
 @app.get("/", response_class=HTMLResponse)
 def home(): return open("index.html").read()
 
+@app.get("/logo.png")
+def logo():
+    p = Path("logo.png")
+    if p.exists(): return FileResponse(p, media_type="image/png")
+    raise HTTPException(status_code=404, detail="Logo not found")
+
+@app.get("/robots.txt")
+def robots():
+    p = Path("robots.txt")
+    if p.exists(): return FileResponse(p, media_type="text/plain")
+    return HTMLResponse("User-agent: *\nAllow: /\n", media_type="text/plain")
+
+@app.get("/sitemap.xml")
+def sitemap():
+    p = Path("sitemap.xml")
+    if p.exists(): return FileResponse(p, media_type="application/xml")
+    return HTMLResponse("<urlset></urlset>", media_type="application/xml")
+
 @app.get("/telegram-qr.jpg")
 def telegram_qr():
     p = Path("telegram-qr.jpg")
