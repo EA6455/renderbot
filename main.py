@@ -1,7 +1,8 @@
 """
-Astra + OANDA XAUUSD - Live + Old Historical Data
+ASTRA6BOT - Real GPT-6 Astra Signal Only (No EMA/RSI lines)
+OANDA XAUUSD Live
 """
-from fastapi import FastAPI, Query
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -13,7 +14,7 @@ import time
 
 load_dotenv()
 
-app = FastAPI(title="Astra XAUUSD Live + History")
+app = FastAPI(title="ASTRA6BOT GPT-6 Signal")
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,19 +23,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 OANDA_API_KEY = os.getenv("OANDA_API_KEY")
 OANDA_ACCOUNT_ID = os.getenv("OANDA_ACCOUNT_ID")
 OANDA_ENVIRONMENT = os.getenv("OANDA_ENVIRONMENT", "practice")
+MODEL_ID = os.getenv("ASTRA_MODEL", "gpt-6-astra")
 
 alerts_log = []
 last_signal = 0
+last_gpt6_signal = None
 last_oanda_error = None
 last_live_price = None
 
 class ChatRequest(BaseModel):
     message: str
     history: list = []
-    system_prompt: str = "You are Astra."
+    system_prompt: str = "You are GPT-6 Astra XAUUSD expert."
 
 class ChatResponse(BaseModel):
     reply: str
@@ -52,7 +58,7 @@ def get_oanda_client():
         last_oanda_error = f"Client error: {e}"
         return None
 
-def fetch_oanda_candles(granularity="M15", count=100, from_time=None):
+def fetch_oanda_candles(granularity="M15", count=100):
     global last_oanda_error, last_live_price
     client = get_oanda_client()
     if not client:
@@ -61,8 +67,6 @@ def fetch_oanda_candles(granularity="M15", count=100, from_time=None):
         import oandapyV20.endpoints.instruments as instruments
         import oandapyV20.endpoints.pricing as pricing
         params = {"granularity": granularity, "count": count}
-        if from_time:
-            params["from"] = from_time
         r = instruments.InstrumentsCandles(instrument="XAU_USD", params=params)
         client.request(r)
         rows = []
@@ -76,7 +80,6 @@ def fetch_oanda_candles(granularity="M15", count=100, from_time=None):
                 "volume": int(c['volume']),
                 "complete": c['complete']
             })
-        # Live pricing
         try:
             params_price = {"instruments": "XAU_USD"}
             r_price = pricing.PricingInfo(accountID=OANDA_ACCOUNT_ID, params=params_price)
@@ -95,82 +98,192 @@ def fetch_oanda_candles(granularity="M15", count=100, from_time=None):
         return rows
     except Exception as e:
         last_oanda_error = f"Fetch error: {e}"
-        print(last_oanda_error)
         return None
 
-def ema(prices, period):
-    k = 2/(period+1)
-    ema_vals = [prices[0]]
-    for p in prices[1:]:
-        ema_vals.append(p*k + ema_vals[-1]*(1-k))
-    return ema_vals
-
-def rsi(prices, period=14):
-    gains = []
-    losses = []
-    for i in range(1, len(prices)):
-        diff = prices[i] - prices[i-1]
-        gains.append(max(diff,0))
-        losses.append(max(-diff,0))
-    if len(gains) < period:
-        return [50]*len(prices)
-    avg_gain = sum(gains[:period])/period
-    avg_loss = sum(losses[:period])/period
-    rsi_vals = [0]*period
-    for i in range(period, len(gains)):
-        avg_gain = (avg_gain*(period-1) + gains[i])/period
-        avg_loss = (avg_loss*(period-1) + losses[i])/period
-        if avg_loss==0:
-            rsi_vals.append(100)
-        else:
-            rs = avg_gain/avg_loss
-            rsi_vals.append(100 - (100/(1+rs)))
-    return [50]* (len(prices)-len(rsi_vals)) + rsi_vals
-
-def atr(candles, period=14):
-    trs = []
-    for i in range(1, len(candles)):
-        h = candles[i]['high']
-        l = candles[i]['low']
-        pc = candles[i-1]['close']
-        tr = max(h-l, abs(h-pc), abs(l-pc))
-        trs.append(tr)
-    if len(trs) < period:
-        return [5.0]*len(candles)
-    avg = sum(trs[:period])/period
-    atr_vals = [avg]*period
-    for i in range(period, len(trs)):
-        avg = (avg*(period-1) + trs[i])/period
-        atr_vals.append(avg)
-    return [atr_vals[0]]*(len(candles)-len(atr_vals)) + atr_vals
-
-def compute_signal(candles):
-    if not candles or len(candles) < 60:
+def generate_gpt6_signal(candles):
+    """Real GPT-6 Astra gives signal only - no EMA/RSI"""
+    global last_gpt6_signal
+    if not candles or len(candles) < 20:
         return None
-    complete = [c for c in candles if c.get('complete', True)]
-    if len(complete) < 60:
-        complete = candles
-    closes = [c['close'] for c in complete]
-    ema_fast = ema(closes, 20)
-    ema_slow = ema(closes, 50)
-    rsi_vals = rsi(closes, 14)
-    atr_vals = atr(complete, 14)
-    last = len(closes)-1
-    prev = last-1
-    sig = 0
-    if ema_fast[last] > ema_slow[last] and ema_fast[prev] <= ema_slow[prev] and rsi_vals[last] < 70 and rsi_vals[last] > 50:
-        sig = 1
-    elif ema_fast[last] < ema_slow[last] and ema_fast[prev] >= ema_slow[prev] and rsi_vals[last] > 30 and rsi_vals[last] < 50:
-        sig = -1
-    return {
-        "close": closes[last],
-        "ema_fast": ema_fast[last],
-        "ema_slow": ema_slow[last],
-        "rsi": rsi_vals[last],
-        "atr": atr_vals[last],
-        "signal": sig,
-        "time": complete[last]['time']
+    
+    # Prepare candle data for GPT-6
+    recent = candles[-20:]
+    closes = [c['close'] for c in recent]
+    highs = [c['high'] for c in recent]
+    lows = [c['low'] for c in recent]
+    
+    # Simple stats for prompt
+    price = closes[-1]
+    price_1h_ago = closes[-4] if len(closes)>=4 else closes[0]
+    price_4h_ago = closes[-16] if len(closes)>=16 else closes[0]
+    change_1h = ((price - price_1h_ago)/price_1h_ago*100) if price_1h_ago else 0
+    change_4h = ((price - price_4h_ago)/price_4h_ago*100) if price_4h_ago else 0
+    high_20 = max(highs)
+    low_20 = min(lows)
+    
+    candle_text = "\n".join([f"{c['time'][11:16]} O:{c['open']:.2f} H:{c['high']:.2f} L:{c['low']:.2f} C:{c['close']:.2f} V:{c['volume']}" for c in recent[-10:]])
+    
+    prompt = f"""You are GPT-6 Astra, OpenAI's flagship trading analyst for XAUUSD (Gold). Analyze REAL OANDA data and give ONLY signal.
+
+REAL OANDA XAUUSD M15 Data (last 10 candles):
+{candle_text}
+
+Current Stats:
+- Current Price: ${price:.2f} (Bid/Ask from OANDA Practice live)
+- 1H change: {change_1h:.2f}% | 4H change: {change_4h:.2f}%
+- 20-candle High: ${high_20:.2f} Low: ${low_20:.2f}
+- Time: {recent[-1]['time']} UTC
+- Market: Weekend closed, last candle Friday (but analyze anyway)
+
+Task: As GPT-6 Astra, give XAUUSD signal based on price action, support/resistance, trend, momentum from REAL candles above. NO EMA/RSI - use pure price action analysis like GPT-6 would.
+
+Respond in EXACT JSON format (no extra text):
+{{
+  "signal": 1 or -1 or 0,
+  "confidence": 0-100,
+  "direction": "LONG" or "SHORT" or "HOLD",
+  "reason": "1 sentence reason with price levels",
+  "sl": float,
+  "tp": float,
+  "analysis": "2-3 sentences GPT-6 style analysis"
+}}
+
+Signal: 1=LONG BUY, -1=SHORT SELL, 0=HOLD
+SL/TP: Calculate based on recent swing high/low, ATR estimate.
+Confidence: Your confidence 0-100."""
+
+    # Try OpenAI GPT-6 Astra
+    if OPENAI_API_KEY:
+        try:
+            from openai import OpenAI
+            client = OpenAI(api_key=OPENAI_API_KEY)
+            resp = client.chat.completions.create(
+                model=MODEL_ID,
+                messages=[
+                    {"role":"system","content":"You are GPT-6 Astra, expert XAUUSD trader. Respond ONLY with valid JSON, no markdown."},
+                    {"role":"user","content":prompt}
+                ],
+                max_tokens=500,
+                temperature=0.3
+            )
+            import json
+            text = resp.choices[0].message.content.strip()
+            # Try parse JSON
+            # Remove markdown code blocks if any
+            if "```" in text:
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+            data = json.loads(text)
+            # Ensure required fields
+            result = {
+                "close": price,
+                "signal": int(data.get("signal",0)),
+                "confidence": int(data.get("confidence",50)),
+                "direction": data.get("direction","HOLD"),
+                "reason": data.get("reason","GPT-6 analysis"),
+                "sl": float(data.get("sl", price*0.99)),
+                "tp": float(data.get("tp", price*1.01)),
+                "analysis": data.get("analysis","GPT-6 Astra analysis"),
+                "time": recent[-1]['time'],
+                "model": MODEL_ID,
+                "source": "GPT-6 Astra Real"
+            }
+            last_gpt6_signal = result
+            return result
+        except Exception as e:
+            print(f"GPT-6 Astra error: {e}")
+            # fall through to free models
+
+    # Fallback Gemini (free) - also GPT-6 style
+    if GEMINI_API_KEY:
+        try:
+            import requests, json
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+            payload = {"contents":[{"role":"user","parts":[{"text":prompt + "\n\nRespond ONLY JSON, no markdown."}]}]}
+            r = requests.post(url, json=payload, timeout=20)
+            data = r.json()
+            text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+            if "```" in text:
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+            j = json.loads(text)
+            result = {
+                "close": price,
+                "signal": int(j.get("signal",0)),
+                "confidence": int(j.get("confidence",50)),
+                "direction": j.get("direction","HOLD"),
+                "reason": j.get("reason","Gemini as Astra analysis"),
+                "sl": float(j.get("sl", price*0.99)),
+                "tp": float(j.get("tp", price*1.01)),
+                "analysis": j.get("analysis","Analysis via Gemini free as Astra"),
+                "time": recent[-1]['time'],
+                "model": "gemini-2.5-flash (as Astra)",
+                "source": "Gemini Free as GPT-6 Astra"
+            }
+            last_gpt6_signal = result
+            return result
+        except Exception as e:
+            print(f"Gemini error: {e}")
+
+    # Fallback Groq free
+    if GROQ_API_KEY:
+        try:
+            from openai import OpenAI
+            import json
+            client = OpenAI(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
+            resp = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role":"system","content":"You are GPT-6 Astra. Respond ONLY JSON."},
+                    {"role":"user","content":prompt}
+                ],
+                max_tokens=500,
+                temperature=0.3
+            )
+            text = resp.choices[0].message.content.strip()
+            if "```" in text:
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+            j = json.loads(text)
+            result = {
+                "close": price,
+                "signal": int(j.get("signal",0)),
+                "confidence": int(j.get("confidence",50)),
+                "direction": j.get("direction","HOLD"),
+                "reason": j.get("reason","Groq as Astra"),
+                "sl": float(j.get("sl", price*0.99)),
+                "tp": float(j.get("tp", price*1.01)),
+                "analysis": j.get("analysis","Groq analysis as Astra"),
+                "time": recent[-1]['time'],
+                "model": "llama-3.3-70b (as Astra)",
+                "source": "Groq Free as Astra"
+            }
+            last_gpt6_signal = result
+            return result
+        except Exception as e:
+            print(f"Groq error: {e}")
+
+    # Ultimate fallback - simple price action without EMA/RSI (still not EMA/RSI, just trend)
+    trend = 1 if price > sum(closes[-10:])/10 else -1 if price < sum(closes[-10:])/10 else 0
+    # If no AI key, return HOLD with explanation to add key
+    result = {
+        "close": price,
+        "signal": 0,
+        "confidence": 0,
+        "direction": "HOLD",
+        "reason": f"No AI key set - Add GEMINI_API_KEY (free) or OPENAI_API_KEY for real GPT-6 Astra signal. Price ${price:.2f} trend {'up' if trend==1 else 'down' if trend==-1 else 'flat'} last 10 candles.",
+        "sl": price*0.995,
+        "tp": price*1.005,
+        "analysis": f"Demo mode: Need GEMINI_API_KEY (free at aistudio.google.com) or OPENAI_API_KEY for GPT-6 Astra. OANDA price ${price:.2f} from {recent[-1]['time']}. Add key in Render Env vars.",
+        "time": recent[-1]['time'],
+        "model": "demo - no AI key",
+        "source": "Demo - Add GEMINI_API_KEY for real GPT-6 Astra"
     }
+    last_gpt6_signal = result
+    return result
 
 def check_and_alert():
     global last_signal
@@ -180,14 +293,14 @@ def check_and_alert():
             if not candles:
                 time.sleep(60)
                 continue
-            sig = compute_signal(candles)
+            sig = generate_gpt6_signal(candles)
             if sig and sig['signal']!=0 and sig['signal']!=last_signal:
-                txt = f"🚨 ASTRA ALERT: XAUUSD {'LONG' if sig['signal']==1 else 'SHORT'} at ${sig['close']:.2f}"
-                alerts_log.insert(0, {"time": datetime.utcnow().isoformat(), "signal": sig['signal'], "price": sig['close'], "alert_text": txt})
+                txt = f"🚨 ASTRA6BOT GPT-6 ALERT: XAUUSD {sig['direction']} at ${sig['close']:.2f} Conf {sig['confidence']}% - {sig['reason']}"
+                alerts_log.insert(0, {"time": datetime.utcnow().isoformat(), "signal": sig['signal'], "price": sig['close'], "alert_text": txt, "gpt6": sig})
                 last_signal = sig['signal']
-        except:
-            pass
-        time.sleep(60)
+        except Exception as e:
+            print(f"Alert error: {e}")
+        time.sleep(120)  # GPT-6 check every 2 min to save API calls
 
 threading.Thread(target=check_and_alert, daemon=True).start()
 
@@ -199,16 +312,15 @@ def home():
 def widget():
     return HTMLResponse(open("widget.js").read(), media_type="application/javascript")
 
-@app.get("/embed", response_class=HTMLResponse)
-def embed():
-    return HTMLResponse(open("embed.html").read())
-
 @app.get("/api/status")
 def status():
     return {
-        "oanda": {"has_key": bool(OANDA_API_KEY), "account_id": OANDA_ACCOUNT_ID, "env": OANDA_ENVIRONMENT, "last_error": last_oanda_error, "last_live_price": last_live_price},
-        "old_data": "OANDA v20 gives history back to 2005 - use /api/xauusd/history?granularity=H1&count=500&from=2024-01-01T00:00:00Z",
-        "endpoints": ["/api/xauusd/live","/api/xauusd/history","/api/xauusd/signal","/api/alerts"]
+        "model": MODEL_ID,
+        "standby": True,
+        "mode": "GPT-6 Astra Signal Only - No EMA/RSI",
+        "oanda": {"has_key": bool(OANDA_API_KEY), "account_id": OANDA_ACCOUNT_ID, "last_error": last_oanda_error, "live_price": last_live_price},
+        "gpt6": {"last_signal": last_gpt6_signal, "has_openai_key": bool(OPENAI_API_KEY), "has_gemini_key": bool(GEMINI_API_KEY), "has_groq_key": bool(GROQ_API_KEY)},
+        "endpoints": ["/api/xauusd/live","/api/xauusd/history","/api/xauusd/signal-gpt6","/api/alerts"]
     }
 
 @app.get("/api/xauusd/live")
@@ -226,67 +338,59 @@ def live():
         "live_price": last_live_price,
         "last_complete": complete[-1] if complete else None,
         "forming_candle": forming[-1] if forming else None,
-        "last_10": candles[-10:],
-        "market_closed": "Weekend - market closed Sat/Sun, last candle Friday" if datetime.utcnow().weekday()>=5 else "Market open",
-        "old_data_note": "This is latest 20 candles. For old data use /api/xauusd/history"
+        "last_10": candles[-10:]
     }
 
 @app.get("/api/xauusd/history")
-def history(
-    granularity: str = Query("M15", description="S5,S10,M1,M5,M15,M30,H1,H4,D,W,M"),
-    count: int = Query(100, description="1-5000 candles"),
-    from_time: str = Query(None, description="ISO8601 e.g. 2024-01-01T00:00:00Z - for OLD data")
-):
-    """
-    OLD DATA: OANDA v20 gives historical pricing back to 2005 [1]
-    Examples:
-    - /api/xauusd/history?granularity=D&count=365 - last 365 days daily
-    - /api/xauusd/history?granularity=H1&count=500&from=2024-01-01T00:00:00Z - old data from Jan 2024
-    - /api/xauusd/history?granularity=M15&count=500 - last 500 M15 candles (~5 days)
-    """
+def history(granularity: str = "M15", count: int = 100, from_time: str = None):
     candles = fetch_oanda_candles(granularity, min(count,5000), from_time)
     if not candles:
         return {"status":"error","error": last_oanda_error}
-    
-    # Stats for old data
-    if candles:
-        closes = [c['close'] for c in candles]
-        return {
-            "status":"ok",
-            "source": f"OANDA v20 Practice - {granularity} - history back to 2005",
-            "instrument": "XAU_USD",
-            "granularity": granularity,
-            "count": len(candles),
-            "from": candles[0]['time'] if candles else None,
-            "to": candles[-1]['time'] if candles else None,
-            "oldest_price": closes[0] if closes else None,
-            "latest_price": closes[-1] if closes else None,
-            "high": max([c['high'] for c in candles]) if candles else None,
-            "low": min([c['low'] for c in candles]) if candles else None,
-            "candles": candles
-        }
-    return {"status":"error","error":"No candles"}
+    closes = [c['close'] for c in candles]
+    return {
+        "status":"ok",
+        "granularity": granularity,
+        "count": len(candles),
+        "from": candles[0]['time'] if candles else None,
+        "to": candles[-1]['time'] if candles else None,
+        "latest_price": closes[-1] if closes else None,
+        "candles": candles
+    }
 
+@app.get("/api/xauusd/signal-gpt6")
+def signal_gpt6():
+    candles = fetch_oanda_candles("M15", 100)
+    if not candles:
+        return {"status":"error","error": last_oanda_error}
+    sig = generate_gpt6_signal(candles)
+    return {"status":"ok","gpt6_signal": sig, "source": "Real GPT-6 Astra - No EMA/RSI"}
+
+# Keep old endpoint for compatibility but now returns GPT-6
 @app.get("/api/xauusd/signal")
 def signal():
     candles = fetch_oanda_candles("M15", 100)
     if not candles:
         return {"status":"error","error": last_oanda_error}
-    sig = compute_signal(candles)
-    return {"status":"ok","signal": sig}
+    sig = generate_gpt6_signal(candles)
+    return {"status":"ok","signal": sig, "note": "Now GPT-6 Astra only, no EMA/RSI"}
 
 @app.get("/api/alerts")
 def alerts():
-    return {"status":"ok","alerts": alerts_log}
+    return {"status":"ok","alerts": alerts_log, "last_gpt6": last_gpt6_signal}
 
 @app.post("/api/alerts/test")
 def test():
-    sig = {"close": last_live_price['mid'] if last_live_price else 4284.97, "ema_fast":4280,"ema_slow":4275,"rsi":58,"atr":5.2,"signal":1,"time":datetime.utcnow().isoformat()}
-    txt = f"🚨 TEST ALERT: XAUUSD LONG at ${sig['close']:.2f}"
-    entry = {"time": datetime.utcnow().isoformat(), "signal": 1, "price": sig['close'], "alert_text": txt}
+    candles = fetch_oanda_candles("M15", 100)
+    sig = generate_gpt6_signal(candles) if candles else {"close":4284.97,"signal":1,"confidence":85,"direction":"LONG","reason":"Test GPT-6 LONG","sl":4270,"tp":4310,"analysis":"Test","time":datetime.utcnow().isoformat(),"model":"test","source":"test"}
+    txt = f"🧪 TEST GPT-6 ALERT: XAUUSD {sig['direction']} at ${sig['close']:.2f} - {sig['reason']}"
+    entry = {"time": datetime.utcnow().isoformat(), "signal": sig['signal'], "price": sig['close'], "alert_text": txt, "gpt6": sig}
     alerts_log.insert(0, entry)
     return {"status":"ok","alert": entry}
 
 @app.post("/api/chat")
 def chat(req: ChatRequest):
-    return ChatResponse(reply=f"Live ${last_live_price['mid']:.2f} if live else 4284.97 | Old data: /api/xauusd/history?granularity=D&count=365", model="oanda")
+    candles = fetch_oanda_candles("M15", 100)
+    sig = generate_gpt6_signal(candles) if candles else None
+    if sig:
+        return ChatResponse(reply=f"🤖 ASTRA6BOT GPT-6 Signal:\n\nDirection: {sig['direction']} ({sig['signal']}) Conf: {sig['confidence']}%\nPrice: ${sig['close']:.2f}\nReason: {sig['reason']}\nSL: ${sig['sl']:.2f} TP: ${sig['tp']:.2f}\nAnalysis: {sig['analysis']}\nModel: {sig['model']}\nTime: {sig['time']}", model=sig['model'])
+    return ChatResponse(reply="No OANDA data", model="error")

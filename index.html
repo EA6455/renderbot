@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASTRA6BOT • OANDA XAUUSD Live Terminal</title>
+<title>ASTRA6BOT • Real GPT-6 Astra Signal</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#070709;--card:#111113;--card2:#1a1a1e;--border:#222226;--gold:#f5c518;--green:#22c55e;--red:#ef4444;--text:#e6e6e6;--muted:#888}
@@ -13,29 +13,25 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text)}
 .header{height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:100}
 .logo{display:flex;align-items:center;gap:10px}
 .logo-icon{width:36px;height:36px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:18px;box-shadow:0 0 20px rgba(245,197,24,0.3)}
-.logo-text{font-weight:900;font-size:18px;letter-spacing:-0.5px}.logo-text span{color:var(--gold)}
-.logo-sub{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:1px;margin-top:-2px}
-.header-right{display:flex;align-items:center;gap:10px}
-.badge{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700}
-.dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,0.6)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
-.btn-gold{background:var(--gold);color:#000;border:none;padding:8px 14px;border-radius:8px;font-weight:800;font-size:11px;cursor:pointer}
-.btn-ghost{background:var(--card2);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:8px;font-size:11px;cursor:pointer}
-.layout{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:1fr 360px;gap:12px;padding:12px}
+.logo-text{font-weight:900;font-size:18px}.logo-text span{color:var(--gold)}
+.logo-sub{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:1px}
+.badge{display:flex;align-items:center;gap:6px;background:rgba(245,197,24,0.15);border:1px solid rgba(245,197,24,0.3);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;color:var(--gold)}
+.dot{width:7px;height:7px;background:var(--gold);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(245,197,24,0.6)}70%{box-shadow:0 0 0 8px rgba(245,197,24,0)}100%{box-shadow:0 0 0 0 rgba(245,197,24,0)}}
+.layout{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:12px;padding:12px}
 @media(max-width:1100px){.layout{grid-template-columns:1fr}}
 .terminal{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
-.terminal-top{padding:12px 16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.pair-name{font-weight:900;font-size:16px}
-.pair-desc{font-size:10px;color:var(--muted)}
+.terminal-top{padding:14px 16px;background:linear-gradient(90deg,#1a1a1e,#111113);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.pair-name{font-weight:900;font-size:18px}.pair-desc{font-size:10px;color:var(--muted)}
 .price-block{display:flex;align-items:baseline;gap:10px}
-.price-main{font-size:26px;font-weight:900;letter-spacing:-1px}
+.price-main{font-size:28px;font-weight:900;letter-spacing:-1px}
 .price-main.up{color:var(--green)}.price-main.down{color:var(--red)}
-.bidask{font-size:10px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:3px 8px;border-radius:20px;color:var(--green);font-family:JetBrains Mono,monospace}
-.signal{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:800}
-.signal.long{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
-.signal.short{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
+.bidask{font-size:10px;background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.2);padding:3px 8px;border-radius:20px;color:var(--gold);font-family:JetBrains Mono,monospace}
+.signal{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:900;letter-spacing:0.5px}
+.signal.long{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3);box-shadow:0 0 20px rgba(34,197,94,0.2)}
+.signal.short{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3);box-shadow:0 0 20px rgba(239,68,68,0.2)}
 .signal.hold{background:rgba(120,120,120,0.1);color:var(--muted);border:1px solid var(--border)}
-#oanda_chart{height:500px;width:100%;background:var(--card)}
+#oanda_chart{height:520px;width:100%;background:var(--card)}
 .info-bar{padding:8px 14px;background:#0f0f10;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:JetBrains Mono,monospace}
 .sidebar{display:flex;flex-direction:column;gap:10px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px}
@@ -43,12 +39,18 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text)}
 .badge-count{background:var(--gold);color:#000;padding:2px 6px;border-radius:10px;font-size:9px}
 .stat{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1a1a1e;font-size:11px}
 .stat-label{color:var(--muted)}.stat-value{color:var(--gold);font-weight:700;font-family:JetBrains Mono,monospace}
+.gpt6-box{background:linear-gradient(135deg,#1a1a1e,#111113);border:1px solid rgba(245,197,24,0.3);border-radius:10px;padding:12px;margin-bottom:10px}
+.gpt6-title{font-size:10px;color:var(--gold);font-weight:800;letter-spacing:1px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.gpt6-reason{font-size:11px;line-height:1.4;color:var(--text);margin-bottom:6px}
+.gpt6-analysis{font-size:10px;color:var(--muted);line-height:1.4;background:#0f0f10;padding:8px;border-radius:6px;border:1px solid var(--border)}
 .row{display:grid;grid-template-columns:48px 1fr 1fr 44px;gap:4px;padding:3px 0;border-bottom:1px solid #1a1a1e;font-size:10px;color:#888;font-family:JetBrains Mono,monospace}
-.row.header{color:#fff;font-weight:700;position:sticky;top:0;background:var(--card);font-family:Inter,sans-serif}
-.row.live{background:rgba(245,197,24,0.12);border:1px solid rgba(245,197,24,0.2);border-radius:6px;color:var(--gold)}
+.row.header{color:#fff;font-weight:700;background:var(--card);font-family:Inter,sans-serif}
+.row.live{background:rgba(245,197,24,0.12);border-radius:6px;color:var(--gold)}
 select,input{background:#0f0f10;border:1px solid var(--border);color:#fff;padding:6px 8px;border-radius:6px;font-size:11px;width:100%}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.alert-item{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:6px;font-size:10px;line-height:1.4}
+.btn-gold{background:var(--gold);color:#000;border:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:11px;cursor:pointer;width:100%;margin-top:6px}
+.btn-ghost{background:var(--card2);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:8px;font-size:11px;cursor:pointer;width:100%;margin-top:6px;text-decoration:none;display:block;text-align:center}
+.alert-item{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:6px;font-size:10px}
 .alert-item.long{border-left:3px solid var(--green)}.alert-item.short{border-left:3px solid var(--red)}
 .banner{display:none;background:linear-gradient(90deg,var(--gold),#ff8c00);color:#000;padding:10px 16px;font-weight:800;font-size:12px;justify-content:space-between;align-items:center}
 .banner.show{display:flex}
@@ -62,16 +64,16 @@ select,input{background:#0f0f10;border:1px solid var(--border);color:#fff;paddin
     <div class="logo-icon">A6</div>
     <div>
       <div class="logo-text">ASTRA6BOT</div>
-      <div class="logo-sub">OANDA XAUUSD • LIVE TERMINAL</div>
+      <div class="logo-sub">REAL GPT-6 ASTRA SIGNAL ONLY • NO EMA/RSI</div>
     </div>
   </div>
-  <div class="header-right">
-    <div class="badge"><div class="dot"></div><span id="market-status">OANDA LIVE</span> • <span id="live-time" class="mono">--:--:--</span></div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="badge"><div class="dot"></div><span id="model-badge">GPT-6 ASTRA</span> • <span id="live-time" class="mono">--:--:--</span></div>
   </div>
 </div>
 
 <div id="alert-banner" class="banner">
-  <span id="alert-banner-text">🚨 ASTRA6BOT ALERT</span>
+  <span id="alert-banner-text">🚨 ASTRA6BOT GPT-6 ALERT</span>
   <button onclick="this.parentElement.classList.remove('show')" style="background:#000;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:10px">DISMISS</button>
 </div>
 
@@ -79,8 +81,8 @@ select,input{background:#0f0f10;border:1px solid var(--border);color:#fff;paddin
   <div class="terminal">
     <div class="terminal-top">
       <div>
-        <div class="pair-name">XAUUSD <span style="color:var(--muted);font-weight:400">/ GOLD • OANDA Practice</span></div>
-        <div class="pair-desc mono" id="candle-info">Loading OANDA v20 • api-fxpractice.oanda.com • Real XAUUSD Spot</div>
+        <div class="pair-name">XAUUSD <span style="color:var(--muted);font-weight:400">/ GOLD • OANDA Practice • GPT-6 Signal</span></div>
+        <div class="pair-desc mono" id="candle-info">GPT-6 Astra analyzing real OANDA candles • No EMA/RSI lines • Pure AI</div>
       </div>
       <div style="display:flex;align-items:center;gap:12px">
         <div class="price-block">
@@ -88,56 +90,55 @@ select,input{background:#0f0f10;border:1px solid var(--border);color:#fff;paddin
           <div class="bidask mono" id="bidask">BID -- / ASK --</div>
         </div>
         <div style="text-align:right">
-          <div id="signal" class="signal hold">LOADING</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:4px" id="signal-detail">EMA20/50 RSI14 ATR</div>
+          <div id="signal" class="signal hold">GPT-6 LOADING</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:4px" id="signal-detail">Confidence --%</div>
         </div>
       </div>
     </div>
     <div id="oanda_chart"></div>
     <div class="info-bar">
-      <span>📡 OANDA v20 • 101-001-40547390-001 • $100k demo • History back to 2005 • No TradingView</span>
-      <span id="forming" class="mono">Forming: -- • Updates every 5s</span>
+      <span>🤖 Real GPT-6 Astra (gpt-6-astra) gives signal only • No EMA/RSI • OANDA 101-001-40547390-001</span>
+      <span id="forming" class="mono">GPT-6 analyzing every 2 min • Updates every 5s</span>
     </div>
   </div>
 
   <div class="sidebar">
     <div class="card">
-      <div class="card-title">🚨 ASTRA6BOT Alerts <span class="badge-count" id="alerts-count">0</span> <span style="font-size:9px;color:var(--green)">● 60s</span></div>
-      <div id="alerts"><div style="padding:16px;text-align:center;color:var(--muted);font-size:10px">No alerts yet<br>Monitoring LONG/SHORT</div></div>
-      <button class="btn-gold" onclick="fetchAlerts()">↻ Refresh</button>
+      <div class="card-title">🤖 ASTRA6BOT GPT-6 Signal <span class="badge-count" id="model-count">GPT-6</span></div>
+      <div id="gpt6-box" class="gpt6-box">
+        <div class="gpt6-title">🧠 GPT-6 ASTRA ANALYSIS</div>
+        <div class="gpt6-reason" id="gpt6-reason">Loading GPT-6 Astra analysis of real OANDA candles...</div>
+        <div class="stat"><span class="stat-label">Direction</span><span class="stat-value" id="gpt6-direction">--</span></div>
+        <div class="stat"><span class="stat-label">Confidence</span><span class="stat-value" id="gpt6-conf">--%</span></div>
+        <div class="stat"><span class="stat-label">SL / TP</span><span class="stat-value" id="gpt6-sltp">-- / --</span></div>
+        <div class="gpt6-analysis" id="gpt6-analysis">GPT-6 Astra will analyze price action, support/resistance, trend from real OANDA candles. No EMA/RSI lines — pure AI reasoning. Add GEMINI_API_KEY (free) or OPENAI_API_KEY for real GPT-6.</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:6px" id="gpt6-model">Model: checking...</div>
+      </div>
+      <div class="grid2">
+        <button class="btn-gold" onclick="fetchGPT6Signal()">↻ GPT-6 Signal Now</button>
+        <button class="btn-ghost" onclick="fetchAlerts()">Alerts Log</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🚨 GPT-6 Alerts <span class="badge-count" id="alerts-count">0</span></div>
+      <div id="alerts"><div style="padding:12px;text-align:center;color:var(--muted);font-size:10px">Monitoring GPT-6 signals every 2 min<br>Will alert on LONG/SHORT</div></div>
     </div>
 
     <div class="card">
       <div class="card-title">🪙 OANDA Live</div>
       <div class="stat"><span class="stat-label">Mid / Bid / Ask</span><span class="stat-value" id="stat-mid">--</span></div>
-      <div class="stat"><span class="stat-label">EMA 20 / 50</span><span class="stat-value" id="stat-ema">--</span></div>
-      <div class="stat"><span class="stat-label">RSI / ATR</span><span class="stat-value" id="stat-rsi">--</span></div>
-      <div class="stat"><span class="stat-label">Last Candle</span><span class="stat-value" id="stat-last" style="font-size:9px">--</span></div>
+      <div class="stat"><span class="stat-label">Last Candle Time</span><span class="stat-value" id="stat-last" style="font-size:9px">--</span></div>
+      <div class="stat"><span class="stat-label">Status</span><span class="stat-value" id="stat-err" style="color:var(--green)">OK</span></div>
       <div class="grid2">
         <a class="btn-ghost" href="/api/xauusd/live" target="_blank">Live JSON</a>
-        <a class="btn-ghost" href="/api/xauusd/history?granularity=D&count=100" target="_blank">History JSON</a>
+        <a class="btn-ghost" href="/api/xauusd/signal-gpt6" target="_blank">GPT-6 JSON</a>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">📊 Live Candles M15 <span style="color:var(--gold)">● LIVE 5s</span> <span id="candle-count" class="badge-count">0</span></div>
+      <div class="card-title">📊 Live Candles M15 <span style="color:var(--gold)">● OANDA</span></div>
       <div id="candles"><div style="padding:10px;text-align:center;color:var(--muted);font-size:10px">Loading OANDA...</div></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">📜 OLD DATA — Back to 2005</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 60px;gap:4px;margin-bottom:6px">
-        <select id="gran"><option value="M15">M15</option><option value="H1" selected>H1</option><option value="D">D</option></select>
-        <select id="cnt"><option value="100" selected>100</option><option value="500">500</option></select>
-        <button class="btn-gold" onclick="fetchOld()">Load</button>
-      </div>
-      <input id="from" placeholder="From: 2024-01-01T00:00:00Z (optional)">
-      <div class="grid2" style="margin-top:4px">
-        <button class="btn-ghost" onclick="loadOld('D','365')">365D</button>
-        <button class="btn-ghost" onclick="loadOld('H1','500','2024-01-01T00:00:00Z')">2024 Old</button>
-      </div>
-      <div id="old-stats" style="font-size:9px;color:var(--muted);margin-top:6px"></div>
-      <div id="old-candles" style="max-height:180px;overflow-y:auto;margin-top:6px"></div>
     </div>
   </div>
 </div>
@@ -152,7 +153,7 @@ function initChart(){
     layout: { background: { color: '#111113' }, textColor: '#888' },
     grid: { vertLines: { color: '#1a1a1e' }, horzLines: { color: '#1a1a1e' } },
     width: container.clientWidth,
-    height: 500,
+    height: 520,
     timeScale: { timeVisible: true, borderColor: '#222226' },
     rightPriceScale: { borderColor: '#222226' }
   });
@@ -168,14 +169,10 @@ async function fetchLive(){
     const d = await r.json();
     if(d.status==='ok'){
       document.getElementById('price').textContent = '$' + d.price.toFixed(2);
-      document.getElementById('price').className = 'price-main up';
       if(d.live_price){
-        document.getElementById('bidask').textContent = `BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)} • OANDA LIVE`;
+        document.getElementById('bidask').textContent = `BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)}`;
       }
       document.getElementById('live-time').textContent = new Date().toLocaleTimeString();
-      document.getElementById('market-status').textContent = d.market_closed && d.market_closed.includes('closed') ? 'CLOSED Weekend' : 'LIVE';
-      document.getElementById('candle-info').textContent = d.forming_candle ? `Forming LIVE ${d.forming_candle.time.substring(11,16)} UTC` : `Last ${d.last_complete.time.substring(11,16)} UTC • Market closed weekend`;
-      document.getElementById('forming').textContent = d.forming_candle ? `Forming: O${d.forming_candle.open.toFixed(1)} H${d.forming_candle.high.toFixed(1)} L${d.forming_candle.low.toFixed(1)} C${d.forming_candle.close.toFixed(1)}` : 'Market closed - last Fri';
       
       if(d.last_10 && candleSeries && lastCandles.length===0){
         const r2 = await fetch('/api/xauusd/history?granularity=M15&count=100');
@@ -185,37 +182,41 @@ async function fetchLive(){
           candleSeries.setData(data);
           lastCandles = data;
         }
-      } else if(candleSeries && d.last_10.length>0){
-        const last = d.last_10[d.last_10.length-1];
-        candleSeries.update({ time: Math.floor(new Date(last.time).getTime()/1000), open: last.open, high: last.high, low: last.low, close: last.close });
       }
 
       const container = document.getElementById('candles');
       let html = '<div class="row header"><span>Time</span><span>Open</span><span>Close</span><span>Vol</span></div>';
       (d.last_10||[]).slice().reverse().forEach(c=>{
-        const isLive = !c.complete;
         const time = c.time.substring(11,16);
         const up = c.close >= c.open;
-        html += `<div class="row ${isLive?'live':''}"><span>${time} ${isLive?'●':''}</span><span>${c.open.toFixed(1)}</span><span style="color:${up?'#22c55e':'#ef4444'}">${c.close.toFixed(1)}</span><span>${c.volume}</span></div>`;
+        html += `<div class="row ${!c.complete?'live':''}"><span>${time}</span><span>${c.open.toFixed(1)}</span><span style="color:${up?'#22c55e':'#ef4444'}">${c.close.toFixed(1)}</span><span>${c.volume}</span></div>`;
       });
       container.innerHTML = html;
     }
   }catch(e){}
+}
 
+async function fetchGPT6Signal(){
+  document.getElementById('gpt6-reason').textContent = '🧠 GPT-6 Astra analyzing real OANDA candles...';
   try{
-    const r2 = await fetch('/api/xauusd/signal');
-    const d2 = await r2.json();
-    if(d2.signal){
-      const s = d2.signal;
-      const el = document.getElementById('signal');
-      if(s.signal===1){ el.textContent='LONG 🟢'; el.className='signal long'; }
-      else if(s.signal===-1){ el.textContent='SHORT 🔴'; el.className='signal short'; }
-      else { el.textContent='HOLD ⚪'; el.className='signal hold'; }
-      document.getElementById('stat-ema').textContent = `${s.ema_fast.toFixed(1)}/${s.ema_slow.toFixed(1)}`;
-      document.getElementById('stat-rsi').textContent = `${s.rsi.toFixed(1)}/${s.atr.toFixed(2)}`;
-      document.getElementById('stat-last').textContent = s.time.substring(11,16) + ' UTC';
+    const r = await fetch('/api/xauusd/signal-gpt6');
+    const d = await r.json();
+    if(d.status==='ok' && d.gpt6_signal){
+      const s = d.gpt6_signal;
+      document.getElementById('signal').textContent = s.direction + (s.confidence?` ${s.confidence}%`:'');
+      document.getElementById('signal').className = 'signal ' + (s.signal===1?'long':s.signal===-1?'short':'hold');
+      document.getElementById('gpt6-direction').textContent = s.direction + ` (${s.signal})`;
+      document.getElementById('gpt6-conf').textContent = s.confidence + '%';
+      document.getElementById('gpt6-sltp').textContent = `$${s.sl.toFixed(2)} / $${s.tp.toFixed(2)}`;
+      document.getElementById('gpt6-reason').textContent = s.reason;
+      document.getElementById('gpt6-analysis').textContent = s.analysis;
+      document.getElementById('gpt6-model').textContent = `Model: ${s.model} • Source: ${s.source} • ${s.time.substring(11,16)} UTC`;
+      document.getElementById('model-badge').textContent = s.model.includes('gpt-6') ? 'GPT-6 ASTRA LIVE' : s.model.includes('gemini') ? 'GEMINI as ASTRA' : s.model;
+      document.getElementById('candle-info').textContent = `GPT-6: ${s.reason} • Conf ${s.confidence}%`;
     }
-  }catch(e){}
+  }catch(e){
+    document.getElementById('gpt6-reason').textContent = 'Error: '+e.message;
+  }
 }
 
 async function fetchAlerts(){
@@ -238,41 +239,15 @@ async function fetchAlerts(){
   }catch(e){}
 }
 
-async function fetchOld(){
-  const gran = document.getElementById('gran').value;
-  const cnt = document.getElementById('cnt').value;
-  const from = document.getElementById('from').value.trim();
-  let url = `/api/xauusd/history?granularity=${gran}&count=${cnt}`;
-  if(from) url += `&from_time=${encodeURIComponent(from)}`;
-  document.getElementById('old-candles').innerHTML = 'Loading...';
-  try{
-    const r = await fetch(url);
-    const d = await r.json();
-    if(d.status==='ok'){
-      document.getElementById('old-stats').textContent = `${d.from?.substring(0,10)} to ${d.to?.substring(0,10)} • ${d.count} • H $${d.high?.toFixed(1)} L $${d.low?.toFixed(1)}`;
-      let html = '<div class="row header"><span>Date</span><span>Open</span><span>Close</span><span>H/L</span></div>';
-      d.candles.slice(-12).reverse().forEach(c=>{
-        const date = c.time.substring(5,10);
-        const up = c.close >= c.open;
-        html += `<div class="row"><span>${date}</span><span>${c.open.toFixed(1)}</span><span style="color:${up?'#22c55e':'#ef4444'}">${c.close.toFixed(1)}</span><span>${c.high.toFixed(0)}/${c.low.toFixed(0)}</span></div>`;
-      });
-      document.getElementById('old-candles').innerHTML = html;
-      if(candleSeries){
-        const chartData = d.candles.map(c=>({ time: Math.floor(new Date(c.time).getTime()/1000), open: c.open, high: c.high, low: c.low, close: c.close }));
-        candleSeries.setData(chartData);
-      }
-    }
-  }catch(e){}
-}
-function loadOld(g,c,f){ document.getElementById('gran').value=g; document.getElementById('cnt').value=c; document.getElementById('from').value=f||''; fetchOld(); }
-
 initChart();
 fetchLive();
+fetchGPT6Signal();
 fetchAlerts();
 setInterval(fetchLive, 5000);
+setInterval(fetchGPT6Signal, 120000); // GPT-6 every 2 min
 setInterval(fetchAlerts, 15000);
 </script>
 
-<script src="/widget.js" data-api="/api/chat" data-color="#f5c518" data-title="ASTRA6BOT"></script>
+<script src="/widget.js" data-api="/api/chat" data-color="#f5c518" data-title="ASTRA6BOT GPT-6"></script>
 </body>
 </html>
