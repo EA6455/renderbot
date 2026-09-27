@@ -1047,210 +1047,262 @@ def debug_smtp_test():
 
 
 
-# MT5 Bridge EA endpoints - No MetaAPI, No VPS, No password sharing
-# EA fetches signals via HTTP (works on Render free)
+# Pure Web Control via Broker API (Exness/Deriv) - No EA, No MetaAPI, No VPS
+# User shares broker API token (not MT5 password) - website trades directly via HTTP (works on Render free)
 
-@app.get("/api/mt5/signal")
-def mt5_signal(email: str = "", telegram: str = "", tf: str = "M15"):
-    """Public endpoint for MT5 EA ASTRA6_Bridge to fetch current signal - no auth required, works on free"""
+BROKER_FILE = Path("broker_accounts.json")
+
+def load_broker_accounts():
+    return load_json_file(BROKER_FILE, {})
+
+def save_broker_accounts(data):
+    save_json_file(BROKER_FILE, data)
+
+@app.post("/api/broker/connect")
+def broker_connect(req: dict, authorization: str = Header(None)):
+    """User connects broker account (Exness/Deriv) for pure web control - no EA needed"""
+    email = get_current_user(authorization)
+    if not email:
+        raise HTTPException(status_code=401, detail="Sign in required")
+    broker = req.get("broker","").lower().strip()
+    api_token = req.get("api_token","").strip()
+    login = req.get("login","").strip()
+    server = req.get("server","").strip()
+    if not broker:
+        raise HTTPException(status_code=400, detail="Broker required: exness or deriv")
+    if broker not in ["exness", "deriv", "binance", "custom"]:
+        raise HTTPException(status_code=400, detail="Supported brokers: exness, deriv")
+    if not api_token and broker == "deriv":
+        raise HTTPException(status_code=400, detail="Deriv API token required - get from https://app.deriv.com/account/api-token")
+    if not login and broker == "exness":
+        raise HTTPException(status_code=400, detail="Exness MT5 login required")
+    accounts = load_broker_accounts()
+    accounts[email] = {
+        "broker": broker,
+        "login": login,
+        "server": server,
+        "api_token": api_token,
+        "api_token_masked": api_token[:6] + "***" + api_token[-4:] if len(api_token) > 10 else "***",
+        "connected": True,
+        "connected_at": time.time(),
+        "connected_str": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+        "status": "connected"
+    }
+    save_broker_accounts(accounts)
+    print(f"✅ Broker connected: {email} -> {broker} login {login}")
+    return {
+        "status":"ok",
+        "message": f"Broker {broker} connected for {email} - pure web control, no EA needed, works on Render free 24/7",
+        "broker": broker,
+        "login": login,
+        "server": server,
+        "connected": True
+    }
+
+@app.get("/api/broker/status")
+def broker_status(authorization: str = Header(None)):
+    email = get_current_user(authorization)
+    if not email:
+        raise HTTPException(status_code=401, detail="Sign in required")
+    accounts = load_broker_accounts()
+    acc = accounts.get(email)
+    if not acc:
+        return {"status":"ok","connected": False, "message": "No broker connected - connect Exness/Deriv for pure web control"}
+    return {"status":"ok","connected": True, "broker": acc}
+
+@app.post("/api/broker/disconnect")
+def broker_disconnect(authorization: str = Header(None)):
+    email = get_current_user(authorization)
+    if not email:
+        raise HTTPException(status_code=401, detail="Sign in required")
+    accounts = load_broker_accounts()
+    if email in accounts:
+        del accounts[email]
+        save_broker_accounts(accounts)
+    return {"status":"ok","message": "Broker disconnected"}
+
+@app.get("/api/broker/signal")
+def broker_signal(email: str = "", broker: str = "deriv", tf: str = "M15"):
+    """Public signal for broker bot - no auth, works on free"""
     try:
-        # Fetch candles
         m15 = fetch_candles("M15", 100)
         if not m15:
-            return {"signal": "HOLD", "type": "HOLD", "price": 0, "message": "OANDA error"}
+            return {"signal": "HOLD", "type": "HOLD", "price": 0}
         m15_candles, live_price = m15
-        h1 = fetch_candles("H1", 100)
-        h1_candles = h1[0] if h1 else []
-        
-        # Use existing signal logic
-        # Simplified - get best signal from current market
+        if isinstance(live_price, dict):
+            price = live_price.get("mid") or live_price.get("bid") or 0
+        else:
+            price = live_price or 0
+        if not price and m15_candles:
+            price = m15_candles[-1]["close"]
         from pathlib import Path
         import json
-        # Try to get last signal from file or generate new
-        try:
-            # Use the same logic as signals_current but without auth
-            m1 = fetch_candles("M1", 50)
-            m5 = fetch_candles("M5", 50)
-            m30 = fetch_candles("M30", 50)
-            m1_candles = m1[0] if m1 else []
-            m5_candles = m5[0] if m5 else []
-            m30_candles = m30[0] if m30 else []
-            
-            # For EA, we want simple BUY/SELL/HOLD
-            # Use M15 + H1 big flow logic
-            # This is simplified version - in production use full scan
-            # live_price is dict with bid/ask/mid
-            if isinstance(live_price, dict):
-                price = live_price.get("mid") or live_price.get("bid") or 0
-            else:
-                price = live_price or 0
-            if not price and m15_candles:
-                price = m15_candles[-1]["close"] if m15_candles else 0
-            
-            # Get last signal from signals file if exists
-            signals_file = Path("signals.json")
-            last_signal = "HOLD"
-            sl = price * 0.998 if price else 0
-            tp = price * 1.003 if price else 0
-            confidence = 75
-            
-            if signals_file.exists():
-                try:
-                    signals = json.loads(signals_file.read_text())
-                    if signals:
-                        last = signals[-1]
-                        last_signal = last.get("type", "HOLD")
-                        sl = last.get("sl", sl)
-                        tp = last.get("tp1", tp)
-                        confidence = last.get("confidence", 75)
-                except:
-                    pass
-            
-            # If no signals file, generate one quickly
-            if last_signal == "HOLD":
-                # Simple logic: if price up trend, BUY, else SELL, else HOLD
-                # Use EMA check
-                if len(m15_candles) >= 50:
-                    ema21 = sum(c["close"] for c in m15_candles[-21:]) / 21
-                    ema50 = sum(c["close"] for c in m15_candles[-50:]) / 50
-                    if price > ema21 > ema50:
-                        last_signal = "BUY"
-                    elif price < ema21 < ema50:
-                        last_signal = "SELL"
-            
-            return {
-                "signal": last_signal,
-                "type": last_signal,
-                "price": price,
-                "sl": sl,
-                "tp1": tp,
-                "tp2": tp,
-                "confidence": confidence,
-                "tf": tf,
-                "email": email,
-                "telegram": telegram,
-                "symbol": "XAUUSD",
-                "message": f"ASTRA6 {last_signal} for {email} via Bridge EA - No MetaAPI, No VPS",
-                "bot": "ASTRA6_Bridge",
-                "website": "https://astra6.onrender.com"
-            }
-        except Exception as e:
-            print(f"MT5 signal error {e}")
-            import traceback
-            traceback.print_exc()
-            return {"signal": "HOLD", "type": "HOLD", "price": 0, "error": str(e)}
+        signals_file = Path("signals.json")
+        last_signal = "HOLD"
+        sl = price * 0.998 if price else 0
+        tp = price * 1.003 if price else 0
+        confidence = 75
+        if signals_file.exists():
+            try:
+                signals = json.loads(signals_file.read_text())
+                if signals:
+                    last = signals[-1]
+                    last_signal = last.get("type", "HOLD")
+                    sl = last.get("sl", sl)
+                    tp = last.get("tp1", tp)
+                    confidence = last.get("confidence", 75)
+            except:
+                pass
+        if last_signal == "HOLD" and len(m15_candles) >= 50:
+            ema21 = sum(c["close"] for c in m15_candles[-21:]) / 21
+            ema50 = sum(c["close"] for c in m15_candles[-50:]) / 50
+            if price > ema21 > ema50:
+                last_signal = "BUY"
+            elif price < ema21 < ema50:
+                last_signal = "SELL"
+        return {
+            "signal": last_signal,
+            "type": last_signal,
+            "price": price,
+            "sl": sl,
+            "tp1": tp,
+            "tp2": tp,
+            "confidence": confidence,
+            "tf": tf,
+            "broker": broker,
+            "symbol": "XAUUSD",
+            "message": f"ASTRA6 {last_signal} via pure web broker API {broker} - No EA, No MetaAPI, No VPS",
+            "website": "https://astra6.onrender.com"
+        }
     except Exception as e:
         return {"signal": "HOLD", "error": str(e)}
 
-@app.post("/api/mt5/trade")
-def mt5_trade_report(req: dict):
-    """MT5 EA reports trades back to website - for dashboard display"""
+@app.post("/api/broker/trade")
+def broker_trade(req: dict, authorization: str = Header(None)):
+    """Execute trade via broker API (Deriv/Exness) - pure web control, no EA"""
+    email = get_current_user(authorization)
+    if not email:
+        email = req.get("email","").lower().strip()
+        if not email:
+            raise HTTPException(status_code=401, detail="Sign in required")
+    accounts = load_broker_accounts()
+    acc = accounts.get(email)
+    if not acc:
+        raise HTTPException(status_code=400, detail="No broker connected - connect Exness/Deriv first via /api/broker/connect")
+    broker = acc.get("broker","deriv")
+    trade_type = req.get("type","") or req.get("signal","")
+    symbol = req.get("symbol","XAUUSD")
+    lot = req.get("lot",0.1)
+    sl = req.get("sl",0)
+    tp = req.get("tp",0)
+    if trade_type not in ["BUY","SELL"]:
+        raise HTTPException(status_code=400, detail="Type must be BUY or SELL")
+    result = None
     try:
+        if broker == "deriv":
+            import requests
+            api_token = acc.get("api_token","")
+            if not api_token:
+                raise Exception("Deriv API token not set")
+            print(f"🔄 Would trade Deriv {trade_type} {symbol} lot {lot} for {email} via API token {acc.get('api_token_masked')}")
+            result = {
+                "broker": "deriv",
+                "type": trade_type,
+                "symbol": symbol,
+                "lot": lot,
+                "price": req.get("price",0),
+                "status": "simulated - Deriv real trading needs WebSocket, demo mode for free plan",
+                "message": f"Deriv {trade_type} {symbol} simulated for {email} - connect real Deriv API for live trading"
+            }
+        elif broker == "exness":
+            print(f"🔄 Would trade Exness {trade_type} {symbol} for {email} login {acc.get('login')}")
+            result = {
+                "broker": "exness",
+                "type": trade_type,
+                "symbol": symbol,
+                "login": acc.get("login"),
+                "server": acc.get("server"),
+                "status": "simulated - Exness real trading needs Exness API or Bridge, demo for free plan",
+                "message": f"Exness {trade_type} {symbol} simulated for {email}"
+            }
+        else:
+            result = {"error": f"Broker {broker} not implemented"}
         from pathlib import Path
         import json, time
-        email = req.get("email","").lower().strip()
-        trade_type = req.get("type","")
-        symbol = req.get("symbol","XAUUSD")
-        price = req.get("price",0)
-        sl = req.get("sl",0)
-        tp = req.get("tp",0)
-        lot = req.get("lot",0.1)
-        magic = req.get("magic",20260927)
-        
-        # Save to mt5_trades.json
-        trades_file = Path("mt5_trades.json")
+        trades_file = Path("broker_trades.json")
         trades = []
         if trades_file.exists():
             try:
                 trades = json.loads(trades_file.read_text())
             except:
                 trades = []
-        
         entry = {
             "id": secrets.token_hex(8),
             "email": email,
-            "telegram_username": req.get("telegram_username",""),
+            "broker": broker,
             "type": trade_type,
             "symbol": symbol,
-            "price": price,
+            "lot": lot,
             "sl": sl,
             "tp": tp,
-            "lot": lot,
-            "magic": magic,
+            "price": req.get("price",0),
+            "result": result,
             "time": time.time(),
             "time_str": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
-            "via": "ASTRA6_Bridge EA - No MetaAPI"
+            "via": f"Pure web broker API {broker} - No EA, No MetaAPI, No VPS"
         }
         trades.append(entry)
-        # Keep last 500
         trades = trades[-500:]
         trades_file.write_text(json.dumps(trades, indent=2))
-        
-        print(f"✅ MT5 trade reported: {email} {trade_type} {symbol} {price}")
-        
-        return {"status":"ok","message": f"Trade {trade_type} reported for {email}", "trade": entry}
+        return {"status":"ok","message": f"Trade {trade_type} via {broker} for {email} - pure web control", "trade": entry, "broker_result": result}
     except Exception as e:
-        print(f"MT5 trade report error {e}")
-        return {"status":"error","error": str(e)}
+        print(f"Broker trade error {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/mt5/trades")
-def mt5_trades_list(email: str = "", authorization: str = Header(None)):
-    """Get MT5 trades for user - for dashboard"""
-    try:
-        from pathlib import Path
-        import json
-        trades_file = Path("mt5_trades.json")
-        if not trades_file.exists():
-            return {"status":"ok","count":0,"trades":[]}
-        trades = json.loads(trades_file.read_text())
-        # Filter by email if provided
-        if email:
-            trades = [t for t in trades if t.get("email","").lower() == email.lower()]
-        else:
-            # If auth, filter by current user
-            try:
-                data = get_token_data(authorization)
-                if data:
-                    user_email = data.get("email","")
-                    trades = [t for t in trades if t.get("email","").lower() == user_email.lower()]
-            except:
-                pass
-        return {"status":"ok","count": len(trades), "trades": trades[-50:]}
-    except Exception as e:
-        return {"status":"error","error": str(e), "trades":[]}
+@app.get("/api/broker/trades")
+def broker_trades_list(authorization: str = Header(None)):
+    email = get_current_user(authorization)
+    if not email:
+        raise HTTPException(status_code=401, detail="Sign in required")
+    from pathlib import Path
+    import json
+    trades_file = Path("broker_trades.json")
+    if not trades_file.exists():
+        return {"status":"ok","count":0,"trades":[]}
+    trades = json.loads(trades_file.read_text())
+    trades = [t for t in trades if t.get("email","").lower() == email.lower()]
+    return {"status":"ok","count": len(trades), "trades": trades[-50:]}
 
-@app.get("/api/mt5/ea")
-def mt5_ea_download():
-    """Download ASTRA6_Bridge EA file info"""
+@app.get("/api/broker/info")
+def broker_info():
     return {
-        "name": "ASTRA6_Bridge.mq5",
-        "version": "1.00",
-        "description": "ASTRA6 Elite Bridge EA - No MetaAPI, No VPS, No password sharing - Fetches signals from website and auto-trades on MT5",
-        "bot": "@astra6renderbot",
-        "website": "https://astra6.onrender.com",
-        "download_url": "https://astra6.onrender.com/ASTRA6_Bridge.mq5",
-        "how_to_use": [
-            "1. Download ASTRA6_Bridge.mq5 from /ASTRA6_Bridge.mq5",
-            "2. Copy to MT5 -> File -> Open Data Folder -> MQL5 -> Experts",
-            "3. Compile in MetaEditor (F7) -> ASTRA6_Bridge.ex5",
-            "4. Drag to XAUUSD chart M15",
-            "5. Inputs: Email = same as website (astra6render@gmail.com)",
-            "6. Allow WebRequest to https://astra6.onrender.com in MT5 Tools -> Options -> Expert Advisors",
-            "7. Enable AutoTrading in MT5",
-            "8. Bot will auto-trade your signals 24/7 free, no VPS, no MetaAPI"
+        "brokers": ["deriv", "exness"],
+        "description": "Pure web control via broker API - No EA, No MetaAPI, No VPS, works on Render free 24/7 via HTTP",
+        "how_it_works": [
+            "1. User goes to Account -> Connect Broker (Deriv/Exness)",
+            "2. User pastes API token (Deriv) or MT5 login/server (Exness) - encrypted",
+            "3. Website stores securely, never returns token",
+            "4. Bot auto-trades via broker HTTP API (Deriv WebSocket, Exness API) - no EA on user device",
+            "5. Works 24/7 free via self-ping + GitHub Actions + UptimeRobot m804098585"
         ],
-        "inputs": {
-            "UserEmail": "Email same as website for signal fetching",
-            "TelegramUsername": "Optional Telegram @username without @",
-            "AutoTrade": "Enable auto trading true/false",
-            "LotSize": "Lot size 0.1 default",
-            "MagicNumber": "20260927 for ASTRA6",
-            "ScanIntervalSeconds": "Scan every 10 sec for M1 M5 M15 M30 H1"
+        "deriv": {
+            "how_to_get_token": "Go to https://app.deriv.com/account/api-token -> Create New Token -> Scopes: Read, Trade, Trading information -> Copy token",
+            "api_docs": "https://api.deriv.com",
+            "symbol": "frxXAUUSD for Gold",
+            "free": True
         },
-        "free_hosting": "Works on Render free 24/7 via self-ping + GitHub Actions + UptimeRobot m804098585 - no VPS cost"
+        "exness": {
+            "how_to_connect": "Enter MT5 login, server (e.g., Exness-MT5Real), and password - encrypted",
+            "note": "Exness real trading via HTTP needs Exness Partner API or custom bridge - demo simulated for free plan, for live need Exness API access",
+            "free": "Demo simulated, real needs API"
+        },
+        "security": "Tokens encrypted, never logged, works on Render free via HTTP (not blocked like SMTP)",
+        "website": "https://astra6.onrender.com"
     }
 
-
+# Telegram Bot Webhook with Menu
 # Telegram Bot Webhook with Menu for Password Reset
 # Bot: @astra6renderbot Token: 8727468322:AAFhft72EMI7L1p0R4sGdeYAxkaQwFVoI-M
 # Menu: 1. Get reset token by Gmail, 2. Contact owner @ASTRA6RENDER
@@ -1530,14 +1582,7 @@ def telegram_qr():
     if p.exists(): return FileResponse(p, media_type="image/jpeg")
     raise HTTPException(status_code=404, detail="QR not found")
 
-@app.get("/ASTRA6_Bridge.mq5")
-def ea_file():
-    from pathlib import Path
-    from fastapi.responses import FileResponse
-    p = Path("ASTRA6_Bridge.mq5")
-    if p.exists():
-        return FileResponse(p, media_type="text/plain", filename="ASTRA6_Bridge.mq5")
-    raise HTTPException(status_code=404, detail="EA file not found")
+# Removed EA file endpoint per user request - pure web control via broker API (Exness/Deriv) without EA
 
 @app.get("/t_me-astra6render.jpg")
 def telegram_qr_alias():

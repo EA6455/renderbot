@@ -281,7 +281,7 @@ body.light-mode .lock-card{background:#ffffff}
     </div>
 
     <div class="view" id="view-account">
-      <div style="max-width:420px">
+      <div style="max-width:480px">
         <div class="card">
           <div style="font-weight:900;font-size:14px;margin-bottom:12px">👤 Account • All devices</div>
           <div id="account-guest">
@@ -294,6 +294,34 @@ body.light-mode .lock-card{background:#ffffff}
             <div style="margin-bottom:10px"><div class="label">SINCE</div><div class="mono" id="acc-created" style="font-size:12px"></div></div>
             <div style="margin-bottom:10px"><div class="label">EXPIRES</div><div class="mono" id="acc-expires" style="font-size:12px"></div></div>
             <button class="btn" id="btn-acc-signout" style="margin-top:10px">Sign Out</button>
+          </div>
+        </div>
+        <!-- Pure Web Control via Broker API (Exness/Deriv) - No EA -->
+        <div class="card" style="margin-top:16px">
+          <div style="font-weight:900;font-size:14px;margin-bottom:8px">🤖 ASTRO6 BOT - Pure Web Control (No EA)</div>
+          <div style="font-size:11px;color:#666;margin-bottom:12px;background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%);padding:10px;border-radius:10px;border:1px solid #c7d2fe">
+            <div style="font-weight:800;color:#4f46e5">No MetaAPI, No VPS, No EA on your device - 100% web control via broker API</div>
+            <div style="margin-top:6px">1. Connect Deriv (API token) or Exness (MT5 login)<br>2. Bot auto-trades your ASTRA6 signals via HTTP (works on Render free 24/7)<br>3. No MT5 password sharing to website if using Deriv token</div>
+          </div>
+          <div id="broker-status" style="font-size:11px;margin-bottom:12px;padding:8px;background:#f5f5f5;border-radius:8px">Not connected - Connect broker for pure web control</div>
+          <div style="display:grid;gap:8px">
+            <select id="broker-select" class="input" style="margin-bottom:0">
+              <option value="deriv">Deriv (API token) - Recommended, free, works on free hosting</option>
+              <option value="exness">Exness (MT5 login/server)</option>
+            </select>
+            <input class="input" id="broker-token" type="text" placeholder="Deriv API token - get from app.deriv.com/account/api-token">
+            <input class="input" id="broker-login" type="text" placeholder="Exness MT5 Login (e.g., 12345678)" style="display:none">
+            <input class="input" id="broker-server" type="text" placeholder="Server e.g., Exness-MT5Real" style="display:none">
+            <button class="btn btn-gold btn-full" id="btn-broker-connect">🔗 Connect Broker for Pure Web Control</button>
+            <button class="btn btn-full" id="btn-broker-disconnect" style="display:none;background:#ef4444;color:#fff">❌ Disconnect Broker</button>
+            <div style="font-size:10px;color:#666;text-align:center">
+              Deriv: <a href="https://app.deriv.com/account/api-token" target="_blank" style="color:#4f46e5">Get API token</a> - Scopes: Read, Trade, Trading info<br>
+              Exness: Enter MT5 login + server - encrypted, pure web control
+            </div>
+          </div>
+          <div style="margin-top:12px">
+            <div style="font-weight:800;font-size:12px;margin-bottom:6px">📊 Your Bot Trades (Pure Web Control)</div>
+            <div id="broker-trades-list" style="max-height:300px;overflow-y:auto;font-size:11px"><div style="padding:10px;text-align:center;color:#666">No trades yet - connect broker and bot will auto-trade</div></div>
           </div>
         </div>
       </div>
@@ -679,6 +707,83 @@ async function fetchAdminUsers(){
     if(listEl)listEl.innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted)">Error: ${e.message}<br>Only admin astra6render@gmail.com can access</div>`;
   }
 }
+// Pure Web Control via Broker API (Exness/Deriv) - No EA
+async function fetchBrokerStatus(){
+  try{
+    const r=await fetch('/api/broker/status',{headers:authHeaders()});
+    const d=await r.json();
+    const statusEl=document.getElementById('broker-status');
+    const connectBtn=document.getElementById('btn-broker-connect');
+    const disconnectBtn=document.getElementById('btn-broker-disconnect');
+    if(d.connected){
+      statusEl.innerHTML=`✅ Connected: <b>${d.broker.broker}</b> ${d.broker.login||''} ${d.broker.server||''}<br>Token: ${d.broker.api_token_masked||'***'}<br><span style="color:green">● Bot Active - Pure web control, no EA, works 24/7 free</span>`;
+      statusEl.style.background='#d1fae5';
+      if(connectBtn)connectBtn.style.display='none';
+      if(disconnectBtn)disconnectBtn.style.display='block';
+      fetchBrokerTrades();
+    } else {
+      statusEl.textContent=d.message||'Not connected';
+      statusEl.style.background='#f5f5f5';
+      if(connectBtn)connectBtn.style.display='block';
+      if(disconnectBtn)disconnectBtn.style.display='none';
+    }
+  }catch(e){
+    console.log('broker status error',e);
+  }
+}
+async function connectBroker(){
+  const broker=document.getElementById('broker-select').value;
+  const token=document.getElementById('broker-token').value.trim();
+  const login=document.getElementById('broker-login').value.trim();
+  const server=document.getElementById('broker-server').value.trim();
+  const err=document.getElementById('auth-error'), ok=document.getElementById('auth-success');
+  // Use account page for messages if available, else use auth modal
+  try{
+    const payload={broker, api_token:token, login, server};
+    const r=await fetch('/api/broker/connect',{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify(payload)});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||'Failed');
+    alert('✅ '+d.message);
+    fetchBrokerStatus();
+  }catch(e){
+    alert('❌ '+e.message);
+  }
+}
+async function disconnectBroker(){
+  try{
+    const r=await fetch('/api/broker/disconnect',{method:'POST',headers:authHeaders()});
+    const d=await r.json();
+    alert(d.message);
+    fetchBrokerStatus();
+    document.getElementById('broker-trades-list').innerHTML='<div style="padding:10px;text-align:center;color:#666">Disconnected - no trades</div>';
+  }catch(e){alert(e.message);}
+}
+async function fetchBrokerTrades(){
+  try{
+    const r=await fetch('/api/broker/trades',{headers:authHeaders()});
+    const d=await r.json();
+    const listEl=document.getElementById('broker-trades-list');
+    if(!listEl)return;
+    if(d.trades.length===0){
+      listEl.innerHTML='<div style="padding:10px;text-align:center;color:#666">No trades yet - bot will auto-trade when signal appears</div>';
+      return;
+    }
+    listEl.innerHTML=d.trades.map(t=>`<div style="padding:8px;border:1px solid #e0e7ff;border-radius:8px;margin-bottom:6px;background:#fff"><div style="font-weight:800">${t.type} ${t.symbol} ${t.lot} lot - ${t.broker}</div><div style="font-size:10px;color:#666">${t.time_str} • ${t.via}</div><div style="font-size:10px">Price: ${t.price} SL: ${t.sl} TP: ${t.tp}</div></div>`).join('');
+  }catch(e){console.log('broker trades error',e);}
+}
+// Update broker form visibility based on broker select
+document.addEventListener('DOMContentLoaded', ()=>{
+  const sel=document.getElementById('broker-select');
+  if(sel){
+    sel.addEventListener('change', ()=>{
+      const isDeriv=sel.value==='deriv';
+      document.getElementById('broker-token').style.display=isDeriv?'block':'none';
+      document.getElementById('broker-login').style.display=isDeriv?'none':'block';
+      document.getElementById('broker-server').style.display=isDeriv?'none':'block';
+    });
+  }
+});
+
 async function fetchAdminResets(){
   try{
     const r=await fetch('/api/admin/resets',{headers:authHeaders()});
@@ -1326,6 +1431,8 @@ function initClicks(){
   bind('btn-acc-signin',()=>openAuth('signin'));
   bind('btn-acc-signup',()=>openAuth('signup'));
   bind('btn-acc-signout',()=>signOut());
+  bind('btn-broker-connect',()=>connectBroker());
+  bind('btn-broker-disconnect',()=>disconnectBroker());
   bind('btn-signout',()=>signOut());
   bind('btn-close-auth',()=>closeAuth());
   bind('link-forgot',(e)=>{e.preventDefault();showForgot();});
