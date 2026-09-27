@@ -5,3 +5,4 @@ oandapyV20==0.7.2
 requests==2.32.3
 six==1.16.0
 websocket-client==1.8.0
+mt5linux==1.1.1
