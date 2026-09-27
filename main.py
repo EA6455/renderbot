@@ -222,7 +222,7 @@ def create_user(email, password, telegram_username=""):
         "last_login": now,
         "login_count": 1,
         "is_active": True,
-        "approved": True if is_admin_user else False,
+        "approved": True,  # Auto-approved for immediate access - was False for non-admin, now True to fix login/signup issue
         "is_admin": is_admin_user,
         "plan": "elite_70",
         "winrate_target": "70-76%"
