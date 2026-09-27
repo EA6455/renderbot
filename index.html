@@ -180,6 +180,9 @@ body.light-mode .lock-card{background:#ffffff}
       <div class="mobile-logo" style="display:flex;align-items:center;gap:10px"><img src="/logo.png" alt="ASTRA6 Best Logo" style="height:36px;width:auto;object-fit:contain"><div><div class="logo-text" style="font-size:16px;font-weight:900;color:#000">ASTRA6</div><div class="logo-sub" style="font-size:9px;color:#666">ELITE • 70%+</div></div></div>
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:relative">
+      <!-- Direct Sign In button - always visible, easy login, website not die hard to login -->
+      <button class="btn btn-gold" id="topbar-signin-btn" style="padding:8px 14px;font-weight:900;font-size:13px;display:flex" onclick="openAuth('signin')">🔐 Sign In</button>
+      <button class="btn" id="topbar-signup-btn" style="padding:8px 14px;font-weight:700;font-size:13px;background:#fff;border:2px solid #000;display:flex" onclick="openAuth('signup')">📝 Sign Up</button>
       <!-- Removed theme, refresh, sound buttons per user request - ☀️🔄🔔 removed -->
       <!-- Hamburger line button top right - click to show ladder -->
       <button class="btn" id="ladder-menu-btn" title="Menu" style="font-size:20px;padding:8px 14px;min-width:44px">☰</button>
@@ -414,6 +417,13 @@ function showView(v){
   console.log('showView',v);
   if(v==='signin'){openAuth('signin');return;}
   if(v==='signup'){openAuth('signup');return;}
+  if(v==='bot'){ 
+    console.log('BOT removed per user request - redirecting to dashboard');
+    v='dashboard'; 
+    // Show message
+    const status=document.getElementById('account-status');
+    if(status) status.textContent='BOT removed per request - Exness server login removed';
+  }
   currentView=v;
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
   const target=document.getElementById('view-'+v);
@@ -562,6 +572,8 @@ async function checkAuth(){
     if(guestBox)guestBox.style.display='block';
     const si=document.getElementById('nav-signin');if(si)si.style.display='flex';
     const su=document.getElementById('nav-signup');if(su)su.style.display='flex';
+    const topSi=document.getElementById('topbar-signin-btn');if(topSi)topSi.style.display='flex';
+    const topSu=document.getElementById('topbar-signup-btn');if(topSu)topSu.style.display='flex';
     return false;
   }
   try{
@@ -610,6 +622,8 @@ async function checkAuth(){
     if(dashLock)dashLock.style.display='none';
     const si=document.getElementById('nav-signin');if(si)si.style.display='none';
     const su=document.getElementById('nav-signup');if(su)su.style.display='none';
+    const topSi=document.getElementById('topbar-signin-btn');if(topSi)topSi.style.display='none';
+    const topSu=document.getElementById('topbar-signup-btn');if(topSu)topSu.style.display='none';
     // Store admin status
     localStorage.setItem('astra6_is_admin', isAdmin ? '1' : '0');
     localStorage.setItem('astra6_approved', isApproved ? '1' : '0');
@@ -629,6 +643,8 @@ async function checkAuth(){
     if(guestBox)guestBox.style.display='none';
     const si=document.getElementById('nav-signin');if(si)si.style.display='none';
     const su=document.getElementById('nav-signup');if(su)su.style.display='none';
+    const topSi=document.getElementById('topbar-signin-btn');if(topSi)topSi.style.display='none';
+    const topSu=document.getElementById('topbar-signup-btn');if(topSu)topSu.style.display='none';
     return true;
   }
 }
