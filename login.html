@@ -8,7 +8,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background:#ffffff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -32,7 +32,7 @@ body {
   width: 40px; height: 40px;
   background-color: rgba(255,255,255,0.15);
   bottom: -160px;
-  
+  animation: square 25s infinite;
   transition-timing-function: linear;
   border-radius: 8px;
 }
@@ -62,13 +62,13 @@ body {
 }
 
 .card {
-  background:#ffffff;
-  
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(20px);
   border-radius: 24px;
   padding: 32px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 20px 80px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2);
   transform-style: preserve-3d;
-  
+  animation: cardEnter 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   overflow: hidden;
 }
@@ -80,7 +80,7 @@ body {
   height: 4px;
   background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f59e0b);
   background-size: 200% 100%;
-  
+  animation: gradientShift 3s ease infinite;
 }
 
 @keyframes cardEnter {
@@ -97,7 +97,7 @@ body {
 .logo-section {
   text-align: center;
   margin-bottom: 28px;
-  
+  animation: logoEnter 0.8s ease 0.2s both;
 }
 
 @keyframes logoEnter {
@@ -110,7 +110,7 @@ body {
   width: auto;
   margin-bottom: 12px;
   filter: drop-shadow(0 4px 12px rgba(102,126,234,0.3));
-  
+  animation: logoFloat 3s ease-in-out infinite;
 }
 
 @keyframes logoFloat {
@@ -259,7 +259,7 @@ body {
   font-size: 13px;
   font-weight: 600;
   display: none;
-  
+  animation: statusEnter 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @keyframes statusEnter {
@@ -337,7 +337,10 @@ body {
 </head>
 <body>
 
-<!-- bubbles removed for performance per user request -->
+<ul class="bg-bubbles">
+  <li></li><li></li><li></li><li></li><li></li>
+  <li></li><li></li><li></li><li></li><li></li>
+</ul>
 
 <div class="login-container">
   <div class="card" id="login-card">

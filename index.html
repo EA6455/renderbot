@@ -21,115 +21,35 @@
 <link rel="apple-touch-icon" href="/logo.png">
 <style>
 :root{
-  --bg: #ffffff;
+  --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --bg-solid: #f8f9ff;
   --card: #ffffff;
   --card2: #f0f4ff;
   --border: #e0e7ff;
   --gold: #f59e0b;
   --gold-light: #fef3c7;
-  --gold-gradient: #f59e0b;
+  --gold-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
   --green: #10b981;
   --green-light: #d1fae5;
-  --green-gradient: #10b981;
+  --green-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
   --red: #ef4444;
   --red-light: #fee2e2;
-  --red-gradient: #ef4444;
+  --red-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
   --blue: #3b82f6;
   --blue-light: #dbeafe;
-  --blue-gradient: #3b82f6;
+  --blue-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
   --purple: #8b5cf6;
   --purple-light: #ede9fe;
-  --purple-gradient: #8b5cf6;
+  --purple-gradient: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
   --pink: #ec4899;
-  --pink-gradient: #ec4899;
+  --pink-gradient: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
   --text: #1f2937;
   --muted: #6b7280;
   --active: #e0e7ff;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:system-ui,-apple-system,Inter,sans-serif;background:#ffffff;color:var(--text);display:flex;min-height:100vh}
-/* gradientShift removed for performance */
 
-body.dark-mode{--bg:#070709;--card:#111113;--card2:#1a1a1e;--border:#222226;--gold:#f5c518;--green:#22c55e;--red:#ef4444;--text:#e6e6e6;--muted:#888;--active:#1e1e22}
-body.light-mode{--bg:#ffffff;--card:#ffffff;--card2:#f5f5f5;--border:#e0e0e0;--text:#000000;--muted:#666;--active:#f0f0f0}
-body.light-mode .sidebar{background:#ffffff;border-right-color:#e0e0e6}
-body.light-mode .topbar{background:#ffffff;border-bottom-color:#e0e0e6}
-body.light-mode .card{background:#ffffff;border-color:#e0e0e6}
-body.light-mode .terminal{background:#ffffff;border-color:#e0e0e6}
-body.light-mode .terminal-top{background:#f5f5f7}
-body.light-mode .info-bar{background:#f0f0f2}
-body.light-mode #oanda_chart{background:#ffffff}
-body.light-mode .auth-box{background:#ffffff}
-body.light-mode .lock-card{background:#ffffff}
-.mono{font-family:monospace}
-/* Clean hamburger menu - no sidebar staying on page, works all devices */
-.sidebar{display:none !important}
-.ladder{display:none !important}
-.side-top{display:none !important}
-.side-bottom{display:none !important}
-.main-wrap{flex:1;margin-left:0 !important;display:flex;flex-direction:column;min-height:100vh}
-.topbar{min-height:56px;background:#ffffff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;gap:12px;position:sticky;top:0;z-index:10}
-.price-main{font-size:22px;font-weight:900;min-width:90px;color:#111827}
-.price-main.up{color:var(--green);transform:scale(1.05)}
-.price-main.down{color:var(--red);transform:scale(0.95)}
-.price-main.flash{animation:priceFlash 0.6s ease}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
-@keyframes priceFlash{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
-.bidask{font-size:11px;background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.2);padding:5px 12px;border-radius:20px;color:var(--gold);font-family:monospace;transition:all 0.3s}
-.time-smooth{font-variant-numeric:tabular-nums;letter-spacing:0.5px}
-.content{flex:1;padding:16px;max-width:1200px;width:100%;margin:0 auto;background:#ffffff;border-radius:12px;margin-top:16px;margin-bottom:16px;border:1px solid #e5e7eb}
-.view{display:none}
-.view.active{display:block}
-.card{background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:18px;color:#1f2937;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
-/* card::before removed for performance */
-
-.signal-card{border-radius:12px;padding:24px;border:1px solid #e5e7eb;text-align:center;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
-/* hover removed for performance */
-
-.terminal{background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden}
-.terminal-top{background:#f9fafb;color:#111827;border-bottom:1px solid #e5e7eb;padding:16px;font-weight:700}
-.signal-card{border-radius:18px;padding:24px;border:1px solid var(--border);text-align:center}
-.signal-card.buy{background:#d1fae5;border-color:#10b981}
-.signal-card.sell{background:#fee2e2;border-color:#ef4444}
-.signal-card.hold{background:var(--card)}
-.signal-type{font-size:44px;font-weight:900}
-.signal-type.buy{color:var(--green)}
-.signal-type.sell{color:var(--red)}
-.signal-type.hold{color:var(--muted)}
-.elite-badge{display:inline-flex;padding:6px 14px;border-radius:20px;font-size:10px;font-weight:800;background:#f59e0b;color:#fff;border:none}
-.sltp-row{display:flex;justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap}
-.sltp-box{padding:8px 14px;border-radius:10px;background:var(--card2);border:1px solid var(--border);min-width:80px}
-.alert-item{display:flex;align-items:center;gap:12px;padding:14px;border-radius:10px;border:1px solid #e5e7eb;background:#ffffff;margin-bottom:10px}
-.alert-badge{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;min-width:56px;text-align:center}
-.alert-badge.buy{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
-.alert-badge.sell{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
-.tf-btn{padding:8px 12px;font-size:11px;border-radius:8px;min-width:44px;min-height:44px;cursor:pointer;border:1px solid var(--border);background:var(--card2);color:var(--text)}
-.tf-btn.active{background:#f59e0b;color:#fff;border-color:#f59e0b;font-weight:800}
-.terminal{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:relative}
-.terminal-top{padding:14px 16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
-#oanda_chart{height:50vh;min-height:350px;width:100%;background:var(--card)}
-.info-bar{padding:10px 16px;background:#0f0f10;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:monospace}
-.lock-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.95);display:none;align-items:center;justify-content:center;z-index:5;padding:20px;text-align:center}
-.lock-card{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:360px;width:100%}
-.qr-img{width:260px;height:260px;max-width:80vw;max-height:80vw;border-radius:20px;background:#fff;padding:12px;border:2px solid var(--border);margin:16px auto;display:block}
-.auth-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:20000;padding:20px}
-.auth-modal.active{display:flex}
-.auth-box{background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:24px;width:100%;max-width:360px;box-shadow:0 4px 12px rgba(0,0,0,0.1);position:relative;overflow:hidden}.auth-box::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background: #f59e0b}
-.auth-tabs{display:flex;gap:8px;margin-bottom:20px}
-.tab{flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;text-align:center;min-height:44px}
-.tab.active{background:var(--gold);color:#000;border-color:var(--gold)}
-.input{width:100%;padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:14px;outline:none;margin-bottom:10px}
-.label{font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase}
-.error{color:var(--red);font-size:11px;margin-bottom:12px;display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);padding:8px;border-radius:8px}
-.success{color:var(--green);font-size:11px;margin-bottom:12px;display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:8px;border-radius:8px}
-.mobile-logo{display:flex;align-items:center;gap:8px}
-@media(max-width:900px){
- .sidebar{display:none !important}
- .main-wrap{margin-left:0 !important}
- .content{padding:12px}
- #ladder-dropdown{right:8px;min-width:220px}
-}
 @media(max-width:640px){
  body{flex-direction:column}
  .sidebar{display:none !important}
@@ -143,18 +63,18 @@ body.light-mode .lock-card{background:#ffffff}
 }
 
 /* MORE COLOR - Vibrant ASTRA6 */
-.btn-gold{background:#f59e0b !important;color:#fff !important;border:none !important;font-weight:800 !important}
+.btn-gold{background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%) !important;color:#fff !important;border:none !important;box-shadow: 0 4px 15px rgba(245,158,11,0.4) !important;font-weight:800 !important}
 .btn-gold:hover{transform: translateY(-2px);box-shadow: 0 6px 20px rgba(245,158,11,0.6) !important}
-.btn{background:#111827;color:#fff;border:none;transition: all 0.2s}
+.btn{background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;border:none;box-shadow: 0 4px 12px rgba(102,126,234,0.3);transition: all 0.3s}
 .btn:hover{transform: translateY(-1px);box-shadow: 0 6px 20px rgba(102,126,234,0.5)}
 #oanda_chart{border-radius:12px;overflow:hidden}
-.info-bar{background: #f9fafb !important;color:#4f46e5 !important;font-weight:600}
-.sltp-box{background: #ffffff !important;border:1px solid #e0e7ff !important;box-shadow: 0 1px 3px rgba(0,0,0,0.1)}
+.info-bar{background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%) !important;color:#4f46e5 !important;font-weight:600}
+.sltp-box{background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%) !important;border:1px solid #e0e7ff !important;box-shadow: 0 2px 8px rgba(102,126,234,0.1)}
 .signal-type{filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1))}
-.view h2, .view h3{color:#111827;font-weight:900}
-#ladder-dropdown{background: #ffffff !important;border:2px solid #e0e7ff !important;box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;z-index:9999 !important;position:fixed !important}
-.nav-item:hover{background: #f3f4f6 !important;color:#4f46e5 !important}
-.qr-img{border:3px solid transparent !important;background: #ffffff !important;border:1px solid #e5e7eb !important;box-shadow: 0 2px 8px rgba(0,0,0,0.1)}
+.view h2, .view h3{background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);-webkit-background-clip: text;-webkit-text-fill-color: transparent;background-clip: text;font-weight:900}
+#ladder-dropdown{background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%) !important;border:2px solid #e0e7ff !important;box-shadow: 0 20px 60px rgba(102,126,234,0.2) !important}
+.nav-item:hover{background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%) !important;color:#4f46e5 !important}
+.qr-img{border:3px solid transparent !important;background: linear-gradient(white, white) padding-box, linear-gradient(135deg, #667eea, #764ba2, #f093fb) border-box !important;box-shadow: 0 8px 32px rgba(102,126,234,0.2)}
 
 </style>
 </head>
@@ -179,7 +99,7 @@ body.light-mode .lock-card{background:#ffffff}
     <div style="display:flex;align-items:center;gap:12px">
       <div class="mobile-logo" style="display:flex;align-items:center;gap:10px"><img src="/logo.png" alt="ASTRA6 Best Logo" style="height:36px;width:auto;object-fit:contain"><div><div class="logo-text" style="font-size:16px;font-weight:900;color:#000">ASTRA6</div><div class="logo-sub" style="font-size:9px;color:#666">ELITE • 70%+</div></div></div>
     </div>
-    <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px">
       <div style="display:flex;flex-direction:column;align-items:flex-end">
         <div class="mono" id="price" style="font-size:18px;font-weight:900;color:#111827">$--</div>
         <div class="mono" id="bidask" style="font-size:10px;color:#666">BID -- / ASK --</div>
@@ -189,11 +109,11 @@ body.light-mode .lock-card{background:#ffffff}
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:relative">
       <!-- Direct Sign In button - always visible, easy login, website not die hard to login -->
-      <button class="btn btn-gold" id="topbar-signin-btn" style="display:none !important" style="padding:8px 14px;font-weight:900;font-size:13px;display:flex" onclick="openAuth('signin')">🔐 Sign In</button>
-      <button class="btn" id="topbar-signup-btn" style="display:none !important" style="padding:8px 14px;font-weight:700;font-size:13px;background:#fff;border:2px solid #000;display:flex" onclick="openAuth('signup')">📝 Sign Up</button>
+      <button class="btn btn-gold" id="topbar-signin-btn" style="padding:8px 14px;font-weight:900;font-size:13px;display:flex" onclick="openAuth('signin')">🔐 Sign In</button>
+      <button class="btn" id="topbar-signup-btn" style="padding:8px 14px;font-weight:700;font-size:13px;background:#fff;border:2px solid #000;display:flex" onclick="openAuth('signup')">📝 Sign Up</button>
       <!-- Removed theme, refresh, sound buttons per user request - ☀️🔄🔔 removed -->
       <!-- Hamburger line button top right - click to show ladder -->
-      <button class="btn" id="ladder-menu-btn" title="Menu" style="font-size:20px;padding:8px 14px;min-width:44px" onclick="(function(){const dd=document.getElementById('ladder-dropdown');if(dd){const h=dd.style.display==='none'||dd.style.display==='';dd.style.display=h?'flex':'none';if(h)dd.style.flexDirection='column';}})()">☰</button>
+      <button class="btn" id="ladder-menu-btn" title="Menu" style="font-size:20px;padding:8px 14px;min-width:44px">☰</button>
       <!-- Ladder dropdown top right - dashboard chart account sign in sign up contact - clean, dont stay -->
       <div id="ladder-dropdown" style="display:none;position:absolute;top:56px;right:10px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px;min-width:200px;z-index:10000;flex-direction:column;gap:8px;box-shadow:0 20px 40px rgba(0,0,0,0.6)">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px 8px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
@@ -236,10 +156,37 @@ body.light-mode .lock-card{background:#ffffff}
       <div class="card">
         <div style="font-weight:900;font-size:14px;margin-bottom:12px">🚨 Alerts</div>
         <div id="alerts-list" style="max-height:500px;overflow-y:auto">
-          <div style="font-size:12px;color:var(--muted);padding:20px;text-align:center">Loading signals... Free access, no login needed<br></div>
+          <div style="font-size:12px;color:var(--muted);padding:20px;text-align:center">Sign in to view<br><button class="btn btn-gold" style="margin-top:10px" id="btn-signin-alert">Sign In</button></div>
         </div>
       </div>
+      <div class="lock-overlay" id="dash-lock" style="background: linear-gradient(135deg, rgba(102,126,234,0.95) 0%, rgba(118,75,162,0.95) 50%, rgba(240,147,251,0.95) 100%);backdrop-filter: blur(20px)">
+        <div class="lock-card" style="background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);border:3px solid transparent;background-clip: padding-box;border-radius:24px;padding:32px;max-width:420px;box-shadow: 0 20px 80px rgba(0,0,0,0.3);position:relative;overflow:hidden">
+          
+          <div style="text-align:center;margin-bottom:20px">
+            <img src="/logo.png" alt="ASTRA6" style="height:64px;width:auto;margin-bottom:12px;filter: drop-shadow(0 4px 12px rgba(102,126,234,0.3))">
+            <div style="font-size:32px;font-weight:900;background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);-webkit-background-clip: text;-webkit-text-fill-color: transparent;background-clip: text;letter-spacing:1px">ASTRA6</div>
           </div>
+          <div style="font-size:28px;font-weight:900;text-align:center;margin-bottom:20px;background: linear-gradient(135deg, #1f2937 0%, #4f46e5 100%);-webkit-background-clip: text;-webkit-text-fill-color: transparent">Welcome to ASTRA6</div>
+          <!-- Direct login form - appears immediately, no modal needed - FIX for user report -->
+          <div style="background:#fff;border:2px solid #667eea;border-radius:14px;padding:16px;margin-bottom:16px">
+            <div style="font-weight:800;font-size:13px;margin-bottom:10px;color:#4f46e5">🔐 Direct Login - Type Email & Password Here</div>
+            <input class="input" id="dash-email" type="email" placeholder="Email: astra6render@gmail.com" style="margin-bottom:8px;padding:12px;border:2px solid #000;border-radius:10px;font-size:14px">
+            <input class="input" id="dash-password" type="password" placeholder="Password: admin123" style="margin-bottom:8px;padding:12px;border:2px solid #000;border-radius:10px;font-size:14px">
+            <button class="btn btn-gold" id="btn-dash-direct-signin" style="width:100%;padding:14px;font-weight:900;font-size:15px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;border:none;border-radius:12px" onclick="directDashSignIn()">🔐 Sign In - Direct (Works All Devices)</button>
+            <div id="dash-login-status" style="font-size:12px;margin-top:8px"></div>
+            <div style="font-size:10px;color:#666;margin-top:6px">If modal fails, use this direct form. Also try <a href="/login.html" style="color:#4f46e5;font-weight:800">/login.html</a> or <a href="/simple-login.html" style="color:#dc2626;font-weight:800">/simple-login.html</a></div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:10px">
+            <button class="btn" style="flex:1;padding:12px;font-size:13px;font-weight:700;background:#fff;color:#4f46e5;border:2px solid #e0e7ff;border-radius:10px" id="btn-dash-signin">🔑 Log In (Modal)</button>
+            <button class="btn btn-gold" style="flex:1;padding:12px;font-size:13px;font-weight:700" id="btn-dash-signup">📝 Sign Up (Modal)</button>
+          </div>
+          <div style="text-align:center;margin-top:14px;font-size:10px;color:#9ca3af">
+            <div>Contact: <a href="https://t.me/ASTRA6RENDER" target="_blank" style="color:#4f46e5;font-weight:700">@ASTRA6RENDER</a> • <a href="https://t.me/astra6renderbot" target="_blank" style="color:#0088cc;font-weight:700">@astra6renderbot</a></div>
+            <div style="margin-top:4px">Admin: astra6render@gmail.com</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="view" id="view-signals">
       <div class="terminal" id="terminal">
@@ -259,9 +206,17 @@ body.light-mode .lock-card{background:#ffffff}
           </div>
           <div class="mono" style="font-size:10px;color:var(--muted)" id="chart-tf-label">M15 • Live</div>
         </div>
-        <div id="oanda_chart" style="display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Loading chart • Free access</div>
+        <div id="oanda_chart" style="display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Chart loads after sign in • All devices</div>
         <div class="info-bar"><span>ASTRA6 CHART • <span id="chart-info-tf">M15</span> • Easy • All devices</span><span class="mono" id="chart-candle-count">--</span></div>
-              </div>
+        <div class="lock-overlay" id="lock-overlay" style="background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%);backdrop-filter: blur(15px)">
+          <div class="lock-card">
+            <div style="font-size:32px;margin-bottom:10px">🔒</div>
+            <div style="font-weight:900;font-size:18px;margin-bottom:6px">Sign in to view chart</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Dashboard has easy signals. Chart for confirmation. All devices.</div>
+            <div style="display:flex;gap:8px"><button class="btn" style="flex:1" id="btn-chart-signin">Sign In</button><button class="btn btn-gold" style="flex:1" id="btn-chart-signup">Sign Up</button></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="view" id="view-contact">
@@ -450,7 +405,7 @@ function showView(v){
   if(v==='account')loadAccount();
   
   if(v==='dashboard')fetchDashboard();
-  if(v==='signals'){initChart();fetchChart(currentTF);}
+  if(v==='signals' && getToken()){initChart();fetchChart(currentTF);}
   window.scrollTo(0,0);
 }
 
@@ -504,9 +459,7 @@ async function submitAuth(){
     ok.style.display='block';
     const accStatus=document.getElementById('acc-login-status');
     if(accStatus) accStatus.innerHTML='<span style="color:green">✅ '+d.message+'</span>';
-    setTimeout(()=>{closeAuth();checkAuth();
-// Free access: load dashboard immediately
-setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800);showView('dashboard');btn.textContent=orig;btn.disabled=false;},600);
+    setTimeout(()=>{closeAuth();checkAuth();showView('dashboard');btn.textContent=orig;btn.disabled=false;},600);
   }catch(e){
     console.error('Signin error',e);
     err.innerHTML=e.message+'<br><br>Try <a href="/login.html" style="color:red;font-weight:900">/login.html simple login</a> or Account tab direct form - works all devices';
@@ -590,14 +543,7 @@ async function resetPassword(){
 }
 
 async function checkAuth(){
-  // Free access - no auth required per user request, always show dashboard
-  // Keep token logic for those who still login, but don't block
   const token=getToken();
-  // Always show dashboard as active, no lock
-  const dashLock=document.getElementById('dash-lock');
-  if(dashLock) dashLock.style.display='none';
-  const lockOverlay=document.getElementById('lock-overlay');
-  if(lockOverlay) lockOverlay.style.display='none';
   const lock=document.getElementById('lock-overlay');
   const dashLock=document.getElementById('dash-lock');
   const userBox=document.getElementById('user-box'), guestBox=document.getElementById('guest-box');
@@ -705,16 +651,12 @@ async function directAccountSignIn(){
     setToken(d.token,d.email);
     statusEl.innerHTML=`<span style="color:green">✅ Signed in as ${d.email} - token saved, works all devices</span>`;
     emailEl.value=''; passEl.value='';
-    setTimeout(()=>{ checkAuth();
-// Free access: load dashboard immediately
-setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800); showView('dashboard'); }, 800);
+    setTimeout(()=>{ checkAuth(); showView('dashboard'); }, 800);
   }catch(e){
     statusEl.innerHTML=`<span style="color:red">❌ ${e.message} - try astra6render@gmail.com / admin123</span>`;
   }
 }
-async function signOut(){try{await fetch('/api/auth/signout',{method:'POST',headers:authHeaders()});}catch(e){}setToken(null);checkAuth();
-// Free access: load dashboard immediately
-setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800);showView('dashboard');}
+async function signOut(){try{await fetch('/api/auth/signout',{method:'POST',headers:authHeaders()});}catch(e){}setToken(null);checkAuth();showView('dashboard');}
 
 async function loadAccount(){
   const token=getToken();
@@ -1025,9 +967,7 @@ async function directDashSignIn(){
     if(!r.ok) throw new Error(d.detail||'Failed');
     setToken(d.token,d.email);
     if(status) status.innerHTML='<span style="color:green">✅ Signed in as '+d.email+' - redirecting...</span>';
-    setTimeout(()=>{ checkAuth();
-// Free access: load dashboard immediately
-setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800); showView('dashboard'); }, 800);
+    setTimeout(()=>{ checkAuth(); showView('dashboard'); }, 800);
   }catch(e){
     console.error('Direct dash signin error',e);
     if(status) status.innerHTML='<span style="color:red">❌ '+e.message+'<br>Try /login.html or /simple-login.html</span>';
@@ -1066,20 +1006,18 @@ function initTheme(){
 }
 
 async function fetchDashboard(){
-  // Free access - no token required per user request to remove sign in
+  if(!getToken())return;
   const btn=document.getElementById('refresh-btn');if(btn)btn.textContent='⏳';
   try{
     const [curR, alertsR, winrateR] = await Promise.all([
-      fetch('/api/signals/current'),
-      fetch('/api/signals/alerts?limit=15'),
-      fetch('/api/signals/winrate').catch(()=>null)
+      fetch('/api/signals/current',{headers:authHeaders()}),
+      fetch('/api/signals/alerts?limit=15',{headers:authHeaders()}),
+      fetch('/api/signals/winrate',{headers:authHeaders()}).catch(()=>null)
     ]);
-    const cur=await curR.json();console.log('cur', cur);
-    const alerts=await alertsR.json();console.log('alerts', alerts);
-    if(cur.status==='ok' && cur.signal)renderCurrent(cur.signal);
-    else {console.log('cur failed', cur); renderCurrent({type:'HOLD',price:4284.97,confidence:56,winrate_est:50,timestamp:Date.now()/1000,preview:true});}
+    if(curR.status===401){checkAuth();return;}
+    const cur=await curR.json();const alerts=await alertsR.json();
+    if(cur.status==='ok')renderCurrent(cur.signal);
     if(alerts.status==='ok')renderAlerts(alerts.alerts);
-    else {console.log('alerts failed', alerts);}
     if(winrateR && winrateR.ok){
       const wr=await winrateR.json();
       if(wr.status==='ok'){
@@ -1107,9 +1045,7 @@ async function runBacktest(){
       fetch('/api/signals/backtest?lookback=200&forward_bars=20',{headers:authHeaders()}),
       fetch('/api/signals/backtest?lookback=500&forward_bars=20',{headers:authHeaders()})
     ]);
-    if(r200.status===401||r500.status===401){checkAuth();
-// Free access: load dashboard immediately
-setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800);return;}
+    if(r200.status===401||r500.status===401){checkAuth();return;}
     const d200=await r200.json();
     const d500=await r500.json();
     // Prefer d500 for chart but show both stats
@@ -1388,16 +1324,10 @@ function renderCurrent(s){
   typeEl.textContent=s.type;
   typeEl.className='signal-type '+s.type.toLowerCase();
   card.className='signal-card '+s.type.toLowerCase();
-  const sp=document.getElementById('sig-price');if(sp)sp.textContent='$'+(s.price||0).toFixed(2);
-  const sc=document.getElementById('sig-conf');if(sc)sc.textContent=(s.confidence||0)+'%';
-  const sw=document.getElementById('sig-winrate');if(sw)sw.textContent=(s.winrate_est||50)+'% WIN';
-  const sl=document.getElementById('stat-last');if(sl){
-    try{
-      sl.textContent=s.type+' • '+new Date((s.timestamp||Date.now()/1000)*1000).toLocaleTimeString()+(s.preview?' • PREVIEW':'');
-    }catch(e){ sl.textContent=s.type; }
-  }
-  console.log('Signal rendered', s.type, s.price, 'preview:', s.preview);
-
+  const sp=document.getElementById('sig-price');if(sp)sp.textContent='$'+s.price.toFixed(2);
+  const sc=document.getElementById('sig-conf');if(sc)sc.textContent=s.confidence+'%';
+  const sw=document.getElementById('sig-winrate');if(sw)sw.textContent=s.winrate_est+'% WIN';
+  const sl=document.getElementById('stat-last');if(sl)sl.textContent=s.type+' • '+new Date(s.timestamp*1000).toLocaleTimeString();
 
 
 function renderAlerts(alerts){
@@ -1426,23 +1356,12 @@ function initChart(){
     const c=document.getElementById('oanda_chart');
     if(!c)return;
     if(typeof LightweightCharts==='undefined'){
-      console.log('Chart lib not loaded, trying CDN...');
-      c.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">📈 Loading chart...<br><span style="font-size:10px">If chart fails, data still works in Dashboard<br>Live price: <span id="chart-price-fallback">$--</span></span></div>';
-      // try load chart lib async with fallback
+      c.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">Chart library loading...<br><button class="btn btn-gold" style="margin-top:12px" onclick="location.reload()">Reload</button><br><br>Or view on: https://astra6.onrender.com<br>Works on all devices</div>';
+      // try load chart lib async
       const s=document.createElement('script');
       s.src='https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js';
-      s.onload=()=>{console.log('chart lib loaded'); createChart(); fetchChart(currentTF);};
-      s.onerror=()=>{console.log('chart CDN failed, showing data table'); c.innerHTML='<div style="padding:20px;text-align:center">Chart CDN blocked in preview iframe (normal)<br>But data works! Check Dashboard<br>Live price updates every 0.8s<br><br><div style="font-size:12px;background:#f9fafb;padding:10px;border-radius:8px">Preview shows mock data<br>Real data on https://astra6.onrender.com<br>Price: $4284.97 BUY 85%</div></div>';};
+      s.onload=()=>{console.log('chart lib loaded'); createChart();};
       document.head.appendChild(s);
-      // Also try alternative CDN
-      setTimeout(()=>{
-        if(typeof LightweightCharts==='undefined'){
-          const s2=document.createElement('script');
-          s2.src='https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js';
-          s2.onload=()=>{console.log('chart lib loaded via jsdelivr'); createChart(); fetchChart(currentTF);};
-          document.head.appendChild(s2);
-        }
-      }, 2000);
       return;
     }
     createChart();
@@ -1474,31 +1393,17 @@ function setTimeframe(tf){
 }
 
 async function fetchChart(tf){
-  // Free access - no token required
+  if(!getToken())return;
   tf=tf||currentTF;
   try{
-    const r=await fetch(`/api/xauusd/history?granularity=${tf}&count=100`);
-
+    const r=await fetch(`/api/xauusd/history?granularity=${tf}&count=100`,{headers:authHeaders()});
+    if(r.status===401){checkAuth();return;}
     const d=await r.json();
-    if(d.status==='ok' && d.candles && d.candles.length>0){
+    if(d.status==='ok'){
       if(candleSeries){
-        const data=d.candles.map(c=>{
-          let t;
-          if(typeof c.time === 'number'){
-            t = Math.floor(c.time);
-            if(t > 1e12) t = Math.floor(t/1000); // ms to s
-            // if time is like 1790... it's seconds already? Check
-            if(t < 1000000000) t = Math.floor(Date.now()/1000) - 1000 + Math.random()*100;
-          } else {
-            t = Math.floor(new Date(c.time).getTime()/1000);
-          }
-          return {time:t,open:c.open,high:c.high,low:c.low,close:c.close};
-        }).sort((a,b)=>a.time-b.time);
-        try{
-          candleSeries.setData(data);
-          lastCandles=data;
-          console.log('Chart updated', data.length, 'candles, preview:', d.preview);
-        }catch(e){console.log('chart setData err', e, data[0]);}
+        const data=d.candles.map(c=>({time:Math.floor(new Date(c.time).getTime()/1000),open:c.open,high:c.high,low:c.low,close:c.close}));
+        candleSeries.setData(data);
+        lastCandles=data;
       }
       const cc=document.getElementById('chart-candle-count');
       if(cc)cc.textContent=`${d.candles.length} candles • ${tf} • ${d.from.substring(0,10)} → ${d.to.substring(0,10)} • Smooth • All devices`;
@@ -1509,32 +1414,25 @@ async function fetchChart(tf){
 let lastPrice=0;
 let priceUpdateCount=0;
 async function fetchFastPrice(){
-  // Free access - no token
+  if(!getToken())return;
   try{
     const r=await fetch('/api/xauusd/price',{headers:authHeaders()});
-    if(r.status===401){checkAuth();
-// Free access: load dashboard immediately
-setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800);return;}
+    if(r.status===401){checkAuth();return;}
     const d=await r.json();
     if(d.status==='ok'){
       const priceEl=document.getElementById('price');
-      const sigPriceEl=document.getElementById('sig-price');
       const newPrice=d.price;
       if(priceEl){
         if(lastPrice!==0 && Math.abs(newPrice-lastPrice)>0.01){
           if(newPrice>lastPrice){
-            priceEl.style.color='#22c55e';
-            setTimeout(()=>{if(priceEl)priceEl.style.color='#111827';},400);
+            priceEl.className='price-main up flash';
+            setTimeout(()=>{if(priceEl)priceEl.className='price-main';},400);
           } else if(newPrice<lastPrice){
-            priceEl.style.color='#ef4444';
-            setTimeout(()=>{if(priceEl)priceEl.style.color='#111827';},400);
+            priceEl.className='price-main down flash';
+            setTimeout(()=>{if(priceEl)priceEl.className='price-main';},400);
           }
         }
         priceEl.textContent='$'+newPrice.toFixed(2);
-      }
-      // Also update signal price if no signal yet
-      if(sigPriceEl && sigPriceEl.textContent==='$--'){
-        sigPriceEl.textContent='$'+newPrice.toFixed(2);
       }
       lastPrice=newPrice;
       priceUpdateCount++;
@@ -1550,11 +1448,10 @@ setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPric
   }catch(e){console.log('fast price err',e);}
 }
 async function fetchLive(){
-  // Free access - no token required
+  if(!getToken())return;
   try{
-    const r=await fetch('/api/xauusd/live').catch(()=>null);
-    if(!r) return;
-
+    const r=await fetch('/api/xauusd/live',{headers:authHeaders()});
+    if(r.status===401){checkAuth();return;}
     const d=await r.json();
     if(d.status==='ok'){
       // Only update if fast price not running
@@ -1686,20 +1583,14 @@ function initClicks(){
   bind('btn-replay-next',()=>replayNext());
   bind('btn-replay-reset',()=>replayReset());
   // Hamburger line button top right - ladder menu toggle - clean, dont stay, all devices
-  window.toggleLadder=()=>{
+  const toggleLadder=()=>{
     const dd=document.getElementById('ladder-dropdown');
     if(!dd)return;
     const isHidden=dd.style.display==='none' || dd.style.display==='';
     dd.style.display=isHidden?'flex':'none';
     if(isHidden) dd.style.flexDirection='column';
   };
-  bind('ladder-menu-btn',()=>window.toggleLadder());
-  // Also direct binding as fallback
-  const menuBtn=document.getElementById('ladder-menu-btn');
-  if(menuBtn){
-    menuBtn.addEventListener('click', (e)=>{e.preventDefault(); window.toggleLadder();});
-    menuBtn.addEventListener('touchend', (e)=>{e.preventDefault(); window.toggleLadder();}, {passive:false});
-  }
+  bind('ladder-menu-btn',toggleLadder);
   bind('ladder-close-btn',()=>{
     const dd=document.getElementById('ladder-dropdown');
     if(dd)dd.style.display='none';
@@ -1736,19 +1627,17 @@ setTimeout(initClicks,1500);
 soundOn=localStorage.getItem('astra6_sound')!=='0';
 const sb=document.getElementById('sound-btn');if(sb)sb.textContent=soundOn?'🔔':'🔕';
 checkAuth();
-// Free access: load dashboard immediately
-setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800);
 // Smooth time every 0.5 second - ultra smooth, no delay
 setInterval(updateTimeSmooth,500);
 updateTimeSmooth();
 // Ultra-fast price every 0.8 seconds - zero delay
-setInterval(()=>{fetchFastPrice();},800);
+setInterval(()=>{if(getToken())fetchFastPrice();},800);
 // Full live data every 5 sec for candles
-setInterval(()=>{fetchLive();},5000);
-setInterval(()=>{if(currentView==='dashboard')fetchDashboard();},8000);
+setInterval(()=>{if(getToken())fetchLive();},5000);
+setInterval(()=>{if(getToken()&&currentView==='dashboard')fetchDashboard();},8000);
 setInterval(()=>{fetch('/health').catch(()=>{});},240000);
 // Initial fast price
-setTimeout(()=>{fetchFastPrice();},500);
+setTimeout(()=>{if(getToken())fetchFastPrice();},500);
 
 console.log('ASTRA6 JS loaded - all devices - price & time ultra smooth 0.8s');
 </script>
