@@ -1,8 +1,7 @@
 fastapi==0.115.0
-metaapi-cloud-sdk==9.1.0
-oandapyV20==0.7.2
+uvicorn==0.34.0
 python-dotenv==1.0.1
+oandapyV20==0.7.2
 requests==2.32.3
 six==1.16.0
-uvicorn==0.34.0
 websocket-client==1.8.0
