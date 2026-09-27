@@ -303,17 +303,26 @@ body.light-mode .lock-card{background:#ffffff}
     <div style="text-align:center;margin-top:12px">
       <a href="#" id="link-forgot" style="font-size:12px;color:#000;text-decoration:underline">Forgot password?</a>
     </div>
-    <!-- Forgot Password Section - NOW TELEGRAM USERNAME -->
+    <!-- Forgot Password Section - TELEGRAM BOT WITH MENU -->
     <div id="forgot-section" style="display:none;margin-top:16px;border-top:2px solid #000;padding-top:16px">
-      <div style="font-weight:900;font-size:14px;margin-bottom:8px">Reset Password via Telegram</div>
-      <div style="font-size:11px;color:#666;margin-bottom:8px">Contact: <a href="https://t.me/ASTRA6RENDER" target="_blank" style="color:#000;font-weight:900">@ASTRA6RENDER</a> on Telegram - token sent via Telegram bot</div>
-      <div style="background:#f0f8ff;border:1px solid #000;border-radius:8px;padding:8px;margin-bottom:8px;font-size:11px">
-        <div style="font-weight:700">📱 Telegram Username (without @)</div>
-        <div style="color:#666">Enter your Telegram username - e.g., if your Telegram is @john123, enter john123</div>
+      <div style="font-weight:900;font-size:14px;margin-bottom:8px">Reset Password via Telegram Bot</div>
+      <div style="background:#0088cc;color:#fff;border-radius:8px;padding:10px;margin-bottom:10px;text-align:center">
+        <div style="font-weight:900;font-size:13px">🤖 Bot: @astra6renderbot</div>
+        <div style="font-size:11px;margin:4px 0">Click below to open bot - has menu:</div>
+        <div style="font-size:11px;text-align:left;background:rgba(255,255,255,0.2);padding:6px;border-radius:6px;margin:6px 0">
+          1️⃣ <b>Get Reset Token</b> - Give same Gmail as website, bot sends token<br>
+          2️⃣ <b>Contact Owner</b> - @ASTRA6RENDER
+        </div>
+        <a href="https://t.me/astra6renderbot" target="_blank" style="display:inline-block;background:#fff;color:#0088cc;padding:8px 16px;border-radius:8px;font-weight:900;text-decoration:none;margin-top:6px">📱 Open @astra6renderbot</a>
       </div>
-      <input class="input" id="forgot-email" type="text" placeholder="Telegram username e.g. john123">
+      <div style="font-size:11px;color:#666;margin-bottom:8px;text-align:center">OR enter Telegram username / Gmail directly below (works on Render free via HTTP, not blocked like Gmail SMTP):</div>
+      <div style="background:#f0f8ff;border:1px solid #000;border-radius:8px;padding:8px;margin-bottom:8px;font-size:11px">
+        <div style="font-weight:700">📱 Telegram Username or Gmail</div>
+        <div style="color:#666">Enter Telegram username (john123) OR Gmail (same as website)</div>
+      </div>
+      <input class="input" id="forgot-email" type="text" placeholder="Telegram username or Gmail">
       <button class="btn btn-full" id="btn-forgot-send" style="background:#0088cc;color:#fff;margin-bottom:10px">📱 Send Reset via Telegram</button>
-      <div style="font-size:10px;color:#666;margin-bottom:8px;text-align:center">Or enter email if you signed up with email - both work</div>
+      <div style="font-size:10px;color:#666;margin-bottom:8px;text-align:center">Bot menu: 1️⃣ Token via Gmail 2️⃣ Contact @ASTRA6RENDER owner</div>
       <div style="font-size:11px;color:#666;margin:8px 0">Already have token?</div>
       <input class="input" id="reset-token" type="text" placeholder="Paste reset token">
       <input class="input" id="reset-new-password" type="password" placeholder="New password (min 6 chars)">

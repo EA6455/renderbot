@@ -1005,6 +1005,250 @@ def debug_smtp_test():
         result["587"] = "TIMEOUT after 12s - Render free likely blocks port 587"
     return result
 
+
+# Telegram Bot Webhook with Menu for Password Reset
+# Bot: @astra6renderbot Token: 8727468322:AAFhft72EMI7L1p0R4sGdeYAxkaQwFVoI-M
+# Menu: 1. Get reset token by Gmail, 2. Contact owner @ASTRA6RENDER
+
+TELEGRAM_BOT_TOKEN_GLOBAL = None
+
+def get_telegram_bot_token():
+    import os
+    return os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("BOT_TOKEN") or "8727468322:AAFhft72EMI7L1p0R4sGdeYAxkaQwFVoI-M"
+
+def telegram_api_call(method, payload):
+    import os, requests
+    token = get_telegram_bot_token()
+    url = f"https://api.telegram.org/bot{token}/{method}"
+    try:
+        r = requests.post(url, json=payload, timeout=10)
+        print(f"TG API {method} status {r.status_code} {r.text[:200]}")
+        return r.json()
+    except Exception as e:
+        print(f"TG API {method} error {e}")
+        return {"ok": False, "error": str(e)}
+
+def send_telegram_menu(chat_id):
+    text = (
+        "🔐 <b>ASTRA6 Password Reset Bot</b>\n\n"
+        "Welcome to ASTRA6 Elite - Best Gold Trading Signals 70%+ Winrate\n\n"
+        "Choose an option:\n\n"
+        "1️⃣ <b>Get Reset Token</b> - Send your Gmail (same as website) and I'll send reset token\n"
+        "2️⃣ <b>Contact Owner</b> - Get owner Telegram @ASTRA6RENDER\n\n"
+        "Website: https://astra6.onrender.com\n"
+        "Logo: Same white & black design as website"
+    )
+    keyboard = {
+        "inline_keyboard": [
+            [{"text": "1️⃣ Get Reset Token via Gmail", "callback_data": "get_token"}],
+            [{"text": "2️⃣ Contact Owner @ASTRA6RENDER", "callback_data": "contact_owner"}],
+            [{"text": "🌐 Open Website", "url": "https://astra6.onrender.com"}]
+        ]
+    }
+    telegram_api_call("sendMessage", {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML",
+        "reply_markup": keyboard
+    })
+
+def handle_telegram_update(update):
+    import time, secrets
+    # Handle callback queries (menu buttons)
+    if "callback_query" in update:
+        cb = update["callback_query"]
+        chat_id = cb["message"]["chat"]["id"]
+        data = cb.get("data","")
+        cb_id = cb["id"]
+        # Answer callback
+        telegram_api_call("answerCallbackQuery", {"callback_query_id": cb_id})
+        
+        if data == "get_token":
+            telegram_api_call("sendMessage", {
+                "chat_id": chat_id,
+                "text": "📧 <b>Enter your Gmail (same as website)</b>\n\nPlease send your Gmail address that you used to sign up on https://astra6.onrender.com\n\nExample: yourname@gmail.com\n\nI'll verify and send reset token via this bot (works on Render free via HTTP, not blocked like Gmail SMTP).",
+                "parse_mode": "HTML"
+            })
+            # Set state - store that this chat is waiting for email
+            try:
+                from pathlib import Path
+                import json
+                state_file = Path("telegram_states.json")
+                states = {}
+                if state_file.exists():
+                    states = json.loads(state_file.read_text())
+                states[str(chat_id)] = {"state": "waiting_email", "time": time.time()}
+                state_file.write_text(json.dumps(states))
+            except Exception as e:
+                print(f"State save error {e}")
+        elif data == "contact_owner":
+            telegram_api_call("sendMessage", {
+                "chat_id": chat_id,
+                "text": "📞 <b>Contact Owner</b>\n\nOwner Telegram: @ASTRA6RENDER\nOwner Gmail: astra6render@gmail.com\nWebsite: https://astra6.onrender.com\n\nQR Code: https://astra6.onrender.com/telegram-qr.jpg\n\nClick to contact: https://t.me/ASTRA6RENDER",
+                "parse_mode": "HTML",
+                "reply_markup": {
+                    "inline_keyboard": [
+                        [{"text": "📱 Contact @ASTRA6RENDER", "url": "https://t.me/ASTRA6RENDER"}],
+                        [{"text": "🔙 Back to Menu", "callback_data": "menu"}]
+                    ]
+                }
+            })
+        elif data == "menu":
+            send_telegram_menu(chat_id)
+        return
+    
+    # Handle messages
+    if "message" in update:
+        msg = update["message"]
+        chat_id = msg["chat"]["id"]
+        text = msg.get("text","").strip()
+        username = msg["from"].get("username","")
+        
+        if text.startswith("/start"):
+            send_telegram_menu(chat_id)
+            return
+        if text.startswith("/menu"):
+            send_telegram_menu(chat_id)
+            return
+        if text.startswith("/contact"):
+            telegram_api_call("sendMessage", {
+                "chat_id": chat_id,
+                "text": "📞 Owner: @ASTRA6RENDER\nGmail: astra6render@gmail.com\nWebsite: https://astra6.onrender.com",
+                "parse_mode": "HTML"
+            })
+            return
+        
+        # Check if user is in waiting_email state
+        try:
+            from pathlib import Path
+            import json, time, secrets
+            state_file = Path("telegram_states.json")
+            states = {}
+            if state_file.exists():
+                states = json.loads(state_file.read_text())
+            chat_state = states.get(str(chat_id), {})
+            
+            # If text looks like email, treat as reset request
+            if "@" in text and "." in text and len(text) < 100:
+                email = text.lower().strip()
+                users = load_users()
+                if email not in users:
+                    telegram_api_call("sendMessage", {
+                        "chat_id": chat_id,
+                        "text": f"❌ Email <b>{email}</b> not found on website.\n\nPlease check:\n- Same Gmail as website https://astra6.onrender.com\n- Or Sign Up first\n\nTry again or contact @ASTRA6RENDER",
+                        "parse_mode": "HTML",
+                        "reply_markup": {
+                            "inline_keyboard": [
+                                [{"text": "🔙 Back to Menu", "callback_data": "menu"}],
+                                [{"text": "📱 Contact Owner", "callback_data": "contact_owner"}]
+                            ]
+                        }
+                    })
+                    return
+                
+                # Generate reset token
+                reset_token = secrets.token_urlsafe(32)
+                resets = load_resets()
+                now = time.time()
+                expired = [k for k,v in resets.items() if v.get("expires",0) < now]
+                for k in expired:
+                    del resets[k]
+                resets[reset_token] = {"email": email, "telegram_username": username, "created": now, "expires": now + 3600, "used": False, "via": "telegram_bot"}
+                save_resets(resets)
+                reset_link = f"https://astra6.onrender.com/?reset={reset_token}"
+                
+                # Send token via Telegram with same logo style
+                html_msg = (
+                    f"✅ <b>Reset Token for {email}</b>\n\n"
+                    f"🔗 <b>Reset Link (expires 1h):</b>\n{reset_link}\n\n"
+                    f"🔑 <b>Token:</b>\n<code>{reset_token}</code>\n\n"
+                    f"📋 <b>How to use:</b>\n"
+                    f"1. Go to https://astra6.onrender.com\n"
+                    f"2. Click Sign In → Forgot password?\n"
+                    f"3. Paste token: <code>{reset_token}</code>\n"
+                    f"4. Enter new password → Change Password\n\n"
+                    f"From: ASTRA6 @ASTRA6RENDER\n"
+                    f"Logo: Same white & black design as website"
+                )
+                telegram_api_call("sendMessage", {
+                    "chat_id": chat_id,
+                    "text": html_msg,
+                    "parse_mode": "HTML",
+                    "reply_markup": {
+                        "inline_keyboard": [
+                            [{"text": "🌐 Open Website & Paste Token", "url": reset_link}],
+                            [{"text": "🔙 Back to Menu", "callback_data": "menu"}]
+                        ]
+                    }
+                })
+                # Clear state
+                if str(chat_id) in states:
+                    del states[str(chat_id)]
+                    state_file.write_text(json.dumps(states))
+                print(f"✅ Telegram bot sent reset token to @{username} chat {chat_id} for {email}")
+                return
+            
+            # If not email and in waiting state, ask again
+            if chat_state.get("state") == "waiting_email":
+                telegram_api_call("sendMessage", {
+                    "chat_id": chat_id,
+                    "text": "❌ Please send valid Gmail address.\n\nExample: yourname@gmail.com",
+                    "parse_mode": "HTML"
+                })
+                return
+        except Exception as e:
+            print(f"Telegram handle error {e}")
+            import traceback
+            traceback.print_exc()
+        
+        # Default - show menu
+        send_telegram_menu(chat_id)
+
+@app.post("/api/telegram/webhook")
+async def telegram_webhook(request: Request):
+    try:
+        data = await request.json()
+        print(f"TG webhook received: {data}")
+        handle_telegram_update(data)
+        return {"ok": True}
+    except Exception as e:
+        print(f"TG webhook error {e}")
+        return {"ok": False, "error": str(e)}
+
+@app.get("/api/telegram/webhook")
+def telegram_webhook_info():
+    return {
+        "status": "ok",
+        "bot": "@astra6renderbot",
+        "username": "ASTRA6",
+        "webhook_url": "https://astra6.onrender.com/api/telegram/webhook",
+        "menu": ["1️⃣ Get Reset Token via Gmail", "2️⃣ Contact Owner @ASTRA6RENDER"],
+        "how_to_set_webhook": "GET https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://astra6.onrender.com/api/telegram/webhook"
+    }
+
+@app.get("/api/telegram/set-webhook")
+def set_telegram_webhook():
+    import requests, os
+    token = get_telegram_bot_token()
+    webhook_url = "https://astra6.onrender.com/api/telegram/webhook"
+    url = f"https://api.telegram.org/bot{token}/setWebhook?url={webhook_url}"
+    try:
+        r = requests.get(url, timeout=10)
+        return r.json()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+@app.get("/api/telegram/bot-info")
+def telegram_bot_info():
+    import requests
+    token = get_telegram_bot_token()
+    try:
+        r = requests.get(f"https://api.telegram.org/bot{token}/getMe", timeout=10)
+        return r.json()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "name": "ASTRA6", "uptime": "24/7", "timestamp": time.time(), "message": "Elite 70%+ alive"}
