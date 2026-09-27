@@ -294,11 +294,28 @@ body.light-mode .lock-card{background:#ffffff}
 
 <div class="view" id="view-account">
       <div class="card">
-        <div style="font-weight:900;font-size:14px;margin-bottom:12px">👤 Account • All devices</div>
+        <div style="font-weight:900;font-size:14px;margin-bottom:12px">👤 Account • All devices - Login works all devices</div>
         
-        <div id="account-status" style="font-size:11px;margin-bottom:12px;padding:8px;background:#f5f5f5;border-radius:8px">Not signed in</div>
+        <div id="account-status" style="font-size:11px;margin-bottom:12px;padding:8px;background:#f5f5f5;border-radius:8px">Not signed in - use form below, works all devices</div>
+        
+        <!-- Direct login form - works all devices, no modal needed -->
+        <div id="account-login-form" style="background:#f0f8ff;border:2px solid #3b82f6;border-radius:12px;padding:14px;margin-bottom:12px">
+          <div style="font-weight:900;font-size:12px;margin-bottom:8px;color:#1e40af">🔐 Direct Login - Works All Devices</div>
+          <input class="input" id="acc-email" type="email" placeholder="Email: astra6render@gmail.com" style="margin-bottom:8px">
+          <input class="input" id="acc-password" type="password" placeholder="Password: admin123" style="margin-bottom:8px">
+          <button class="btn btn-gold btn-full" id="btn-acc-direct-signin" style="padding:12px;font-weight:900">🔐 Sign In - All Devices</button>
+          <div id="acc-login-status" style="font-size:11px;margin-top:8px"></div>
+          <div style="font-size:10px;color:#666;margin-top:8px">If modal login fails on your device, use this direct form. Works on mobile, desktop, all browsers. API: /api/auth/signin</div>
+        </div>
+        
         <button class="btn btn-full" id="btn-signout" style="display:none;background:#ef4444;color:white">Sign Out</button>
-        <div style="margin-top:12px;font-size:11px;color:#666">Bot removed</div>
+        <div style="margin-top:12px;font-size:11px;color:#666">Bot removed per request - Exness server login removed from web</div>
+        <div style="margin-top:8px;background:#fff3cd;border:1px solid #f59e0b;border-radius:8px;padding:8px;font-size:11px">
+          <div style="font-weight:800;color:#92400e">ℹ️ Login Info:</div>
+          <div>Website login: Email + Password (e.g. astra6render@gmail.com / admin123)</div>
+          <div>Exness server login (BOT) removed per your request</div>
+          <div>If you need Exness server login back for REAL exact balance, let me know</div>
+        </div>
       </div>
     </div>
 
@@ -608,6 +625,26 @@ async function checkAuth(){
   }
 }
 
+async function directAccountSignIn(){
+  const emailEl=document.getElementById('acc-email');
+  const passEl=document.getElementById('acc-password');
+  const statusEl=document.getElementById('acc-login-status');
+  const email=emailEl?.value?.trim()||'';
+  const pass=passEl?.value||'';
+  if(!email||!pass){ statusEl.innerHTML='<span style="color:red">❌ Email and password required</span>'; return; }
+  statusEl.innerHTML='⏳ Signing in...';
+  try{
+    const r=await fetch('/api/auth/signin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Failed');
+    setToken(d.token,d.email);
+    statusEl.innerHTML=`<span style="color:green">✅ Signed in as ${d.email} - token saved, works all devices</span>`;
+    emailEl.value=''; passEl.value='';
+    setTimeout(()=>{ checkAuth(); showView('dashboard'); }, 800);
+  }catch(e){
+    statusEl.innerHTML=`<span style="color:red">❌ ${e.message} - try astra6render@gmail.com / admin123</span>`;
+  }
+}
 async function signOut(){try{await fetch('/api/auth/signout',{method:'POST',headers:authHeaders()});}catch(e){}setToken(null);checkAuth();showView('dashboard');}
 
 async function loadAccount(){
@@ -1478,6 +1515,7 @@ function initClicks(){
   bind('btn-acc-signin',()=>openAuth('signin'));
   bind('btn-acc-signup',()=>openAuth('signup'));
   bind('btn-acc-signout',()=>signOut());
+  bind('btn-acc-direct-signin',()=>directAccountSignIn());
   bind('btn-broker-connect',()=>connectBroker());
   bind('btn-set-real-balance',()=>setRealBalance());
   bind('btn-broker-disconnect',()=>disconnectBroker());
