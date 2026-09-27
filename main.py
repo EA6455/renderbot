@@ -14,6 +14,46 @@ load_dotenv()
 
 app = FastAPI(title="ASTRA6 Elite")
 
+# Keepalive for free plan 24/7 hosting - prevents sleep after 15 min
+import threading
+import time as time_module
+
+def keep_alive_ping():
+    """Background thread that pings self every 10 min to keep free plan alive 24/7"""
+    time_module.sleep(30)
+    print("🔄 Keepalive thread started - pinging every 10 min to keep free plan 24/7")
+    while True:
+        try:
+            time_module.sleep(600)  # 10 minutes
+            import requests
+            urls = [
+                "https://astra6.onrender.com/health",
+                "https://astra6.onrender.com/api/status"
+            ]
+            for url in urls:
+                try:
+                    r = requests.get(url, timeout=10)
+                    print(f"🔄 Keepalive ping {url} {r.status_code}")
+                except Exception as e:
+                    print(f"Keepalive ping {url} fail {e}")
+        except Exception as e:
+            print(f"Keepalive error {e}")
+            time_module.sleep(60)
+
+try:
+    t = threading.Thread(target=keep_alive_ping, daemon=True)
+    t.start()
+    print("✅ Keepalive launched for free 24/7")
+except Exception as e:
+    print(f"Keepalive launch error {e}")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -1248,6 +1288,11 @@ def telegram_bot_info():
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
+
+@app.get("/api/keepalive")
+def keepalive():
+    import time
+    return {"status":"ok","message":"Keepalive for free plan 24/7 hosting","timestamp": time.time(), "uptime": "24/7 via self-ping every 10 min + UptimeRobot"}
 
 @app.get("/health")
 def health():
