@@ -937,10 +937,10 @@ def backtest_elite(m15_candles, h1_candles=None, lookback=500, forward_bars=20):
 # Routes
 @app.get("/api/debug/smtp")
 def debug_smtp():
-    import os, smtplib
+    import os
     smtp_pass = os.getenv("SMTP_PASS")
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
-    smtp_user = os.getenv("SMTP_USER", OWNER_EMAIL)
+    smtp_user = os.getenv("SMTP_USER", "astra6render@gmail.com")
     smtp_port = os.getenv("SMTP_PORT", "587")
     info = {
         "smtp_host": smtp_host,
@@ -949,23 +949,43 @@ def debug_smtp():
         "smtp_pass_set": bool(smtp_pass),
         "smtp_pass_len": len(smtp_pass) if smtp_pass else 0,
         "smtp_pass_has_spaces": " " in smtp_pass if smtp_pass else False,
-        "owner_email": OWNER_EMAIL
+        "smtp_pass_first3": (smtp_pass[:3] + "***") if smtp_pass else None,
+        "owner_email": OWNER_EMAIL,
+        "note": "If smtp_pass_set false, set SMTP_PASS=dvlgqfnumbhinqvi (no spaces) in Render Dashboard Environment then Save & Redeploy. If true but Gmail not sending, Render free may block SMTP ports 465/587 - need paid plan or HTTP email API"
     }
-    # Try to connect and login (no send)
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as s:
-            s.login(OWNER_EMAIL, smtp_pass)
-        info["ssl_465_login"] = "OK"
-    except Exception as e:
-        info["ssl_465_login"] = f"FAIL: {e}"
-    try:
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as s:
-            s.starttls(timeout=10)
-            s.login(OWNER_EMAIL, smtp_pass)
-        info["tls_587_login"] = "OK"
-    except Exception as e:
-        info["tls_587_login"] = f"FAIL: {e}"
     return info
+
+@app.get("/api/debug/smtp-test")
+def debug_smtp_test():
+    import os, smtplib, threading
+    smtp_pass = os.getenv("SMTP_PASS")
+    if not smtp_pass:
+        return {"error": "SMTP_PASS not set", "fix": "Set SMTP_PASS=dvlgqfnumbhinqvi in Render Dashboard"}
+    result = {}
+    def test_465():
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=8) as s:
+                s.login(OWNER_EMAIL, smtp_pass)
+            result["465"] = "OK login success - port not blocked"
+        except Exception as e:
+            result["465"] = f"FAIL: {e} - may be blocked or wrong password"
+    def test_587():
+        try:
+            with smtplib.SMTP("smtp.gmail.com", 587, timeout=8) as s:
+                s.starttls(timeout=8)
+                s.login(OWNER_EMAIL, smtp_pass)
+            result["587"] = "OK login success - port not blocked"
+        except Exception as e:
+            result["587"] = f"FAIL: {e} - may be blocked or wrong password"
+    t1 = threading.Thread(target=test_465)
+    t2 = threading.Thread(target=test_587)
+    t1.start(); t2.start()
+    t1.join(timeout=12); t2.join(timeout=12)
+    if "465" not in result:
+        result["465"] = "TIMEOUT after 12s - Render free likely blocks port 465 (needs paid plan or HTTP API)"
+    if "587" not in result:
+        result["587"] = "TIMEOUT after 12s - Render free likely blocks port 587"
+    return result
 
 @app.get("/health")
 def health():
