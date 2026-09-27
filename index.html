@@ -1405,10 +1405,20 @@ function renderCurrent(s){
         const rsi=ind.indicators.rsi_14||'-';
         const macd=ind.indicators.macd_line||'-';
         const ema21=ind.indicators.ema_21||'-';
-        html+=`<span style="font-size:10px;color:#666">RSI:${rsi} MACD:${macd} EMA21:${ema21} BB:${ind.indicators.bb_position||'-'} Vol:${ind.indicators.vol_ratio||'-'}x • Pine:${pine.overall||'-'} ${pine.confidence||0}% • <a href="#" onclick="fetchTradingViewStatus();return false" style="color:#ea580c">TradingView</a></span>`;
+        html+=`<span style="font-size:10px;color:#666">RSI:${rsi} MACD:${macd} EMA21:${ema21} BB:${ind.indicators.bb_position||'-'} Vol:${ind.indicators.vol_ratio||'-'}x • Pine:${pine.overall||'-'} ${pine.confidence||0}% • <a href="#" onclick="fetchTradingViewStatus();return false" style="color:#ea580c">TradingView</a> </span>`;
       }
     } else {
-      html+=`📈 TradingView: RSI, MACD, EMA, BB, Pine engulfing/pin bar • <a href="#" onclick="fetchTradingViewStatus();return false" style="color:#ea580c">Check TradingView</a>`;
+      html+=`📈 TradingView: RSI, MACD, EMA, BB, Pine engulfing/pin bar • <a href="#" onclick="fetchTradingViewStatus();return false" style="color:#ea580c">Check TradingView</a><br>`;
+    }
+    if(s.vibe_trading_signal){
+      const vibe=s.vibe_trading_signal;
+      const shadow=vibe.shadow||{};
+      const qlib=vibe.qlib||{};
+      const limits=vibe.limits||{};
+      html+=`🔥 Vibe-Trading: <b>${vibe.type}</b> ${vibe.confidence}% • Buy:${vibe.buy_score} Sell:${vibe.sell_score}<br>`;
+      html+=`<span style="font-size:10px;color:#666">Shadow RSI:${shadow.entry_rsi14||'-'} Prior5d:${shadow.prior_5d_return||'-'}% ${shadow.signal||'-'} • Qlib ${qlib.overall||'-'} ${qlib.confidence||0}% WVMA:${Object.keys(qlib.wvma||{}).length} • Limits ${limits.can_trade?'OK':'HALT'} ${limits.exposure_limit*100||0}% • <a href="#" onclick="fetchVibeTradingStatus();return false" style="color:#dc2626">Vibe-Trading</a></span>`;
+    } else {
+      html+=`🔥 Vibe-Trading: Shadow Account + Qlib158 WVMA + Limits • <a href="#" onclick="fetchVibeTradingStatus();return false" style="color:#dc2626">Check Vibe-Trading</a>`;
     }
     aiEl.style.display='block';
     aiEl.innerHTML=html;

@@ -27,6 +27,14 @@ except Exception as e:
     print(f"TradingView not available: {e}")
     TRADINGVIEW_AVAILABLE = False
 
+try:
+    from vibe_trading_analysis import get_vibe_trading_combined_signal, analyze_shadow_account, analyze_qlib158_indicators, analyze_trading_limits
+    VIBE_TRADING_AVAILABLE = True
+    print("✅ Vibe-Trading Analysis loaded from HKUDS/Vibe-Trading (Shadow Account + Qlib158)")
+except Exception as e:
+    print(f"Vibe-Trading not available: {e}")
+    VIBE_TRADING_AVAILABLE = False
+
 from fastapi import FastAPI, Header, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
@@ -841,6 +849,42 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
                         reasons_sell.append(f"📈 TradingView STRONG SELL {tv_conf}% - indicators + Pine patterns")
         except Exception as e:
             print(f"TradingView boost error: {e}")
+    
+    # 11. VIBE-TRADING BOOST from HKUDS/Vibe-Trading (Shadow Account + Qlib158 WVMA + Trading Limits)
+    vibe_signal = None
+    if VIBE_TRADING_AVAILABLE:
+        try:
+            # Get live price for limits
+            live_p = live_price if 'live_price' in locals() else None
+            vibe_signal = get_vibe_trading_combined_signal(m15_candles, live_p, balance=10000)
+            if vibe_signal:
+                vibe_type = vibe_signal.get('type')
+                vibe_conf = vibe_signal.get('confidence',0)
+                vibe_buy = vibe_signal.get('buy_score',0)
+                vibe_sell = vibe_signal.get('sell_score',0)
+                print(f"🔥 Vibe-Trading Signal: {vibe_type} {vibe_conf}% Buy:{vibe_buy} Sell:{vibe_sell}")
+                if vibe_type == "BUY" and vibe_conf >= 65:
+                    buy_score += 2.0
+                    reasons_buy.append(f"🔥 Vibe-Trading BUY {vibe_conf}% (Shadow RSI {vibe_signal.get('shadow',{}).get('entry_rsi14')} + Qlib WVMA + Limits) - from HKUDS/Vibe-Trading")
+                    filters_buy += 1
+                    if vibe_conf >= 80:
+                        buy_score += 1.0
+                        reasons_buy.append(f"🔥 Vibe-Trading STRONG BUY {vibe_conf}% - Shadow Account + Qlib158")
+                elif vibe_type == "SELL" and vibe_conf >= 65:
+                    sell_score += 2.0
+                    reasons_sell.append(f"🔥 Vibe-Trading SELL {vibe_conf}% (Shadow RSI {vibe_signal.get('shadow',{}).get('entry_rsi14')} + Qlib WVMA + Limits) - from HKUDS/Vibe-Trading")
+                    filters_sell += 1
+                    if vibe_conf >= 80:
+                        sell_score += 1.0
+                        reasons_sell.append(f"🔥 Vibe-Trading STRONG SELL {vibe_conf}% - Shadow Account + Qlib158")
+                # If cannot trade due to limits, reduce scores
+                if not vibe_signal.get('limits',{}).get('can_trade',True):
+                    buy_score *= 0.1
+                    sell_score *= 0.1
+                    reasons_buy.append(f"🔥 Vibe-Trading HOLD - {vibe_signal.get('limits',{}).get('reason','exposure limit')}")
+                    reasons_sell.append(f"🔥 Vibe-Trading HOLD - {vibe_signal.get('limits',{}).get('reason','exposure limit')}")
+        except Exception as e:
+            print(f"Vibe-Trading boost error: {e}")
     # --- HUMAN DECISION - perfect entries only, like people + AI ---
     signal_type = "HOLD"
     confidence = 50
@@ -973,6 +1017,7 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
         "ai_signal": ai_signal if 'ai_signal' in locals() else None,
         "finance_web_signal": finance_web_signal if 'finance_web_signal' in locals() else None,
         "tradingview_signal": tradingview_signal if 'tradingview_signal' in locals() else None,
+        "vibe_trading_signal": vibe_signal if 'vibe_signal' in locals() else None,
         "rsi": round(rsi_val,1) if isinstance(rsi_val,(int,float)) else 50,
         "sma20": round(ema21_val,2) if isinstance(ema21_val,(int,float)) else round(price,2),
         "sma50": round(ema50_val,2) if isinstance(ema50_val,(int,float)) else round(price,2),
@@ -3132,6 +3177,37 @@ def tradingview_status(email: str = Depends(require_approved_auth)):
             "pine_patterns": PINE_SCRIPT_PATTERNS,
             "source": "TradingView MCP Bridge - 84 tools (chart.js, indicator.js, pine.js, drawing.js)",
             "strategy": "TradingView indicators (RSI, MACD, EMA, BB, Stochastic, Volume) + Pine Script patterns (engulfing, pin bar, inside bar, order blocks)",
+            "user": email
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status":"error","error":str(e)}
+
+@app.get("/api/signals/vibe-trading")
+def vibe_trading_status(email: str = Depends(require_approved_auth)):
+    """Vibe-Trading analysis - Shadow Account + Qlib158 + Trading Limits"""
+    try:
+        from vibe_trading_analysis import get_vibe_trading_combined_signal, analyze_shadow_account, analyze_qlib158_indicators, analyze_trading_limits, VIBE_TRADING_FEATURES, QLIB158_FACTORS
+        m15_result = fetch_candles("M15", 100)
+        m15_candles = m15_result[0] if m15_result else []
+        live = fetch_fast_price()
+        shadow = analyze_shadow_account(m15_candles, live)
+        qlib = analyze_qlib158_indicators(m15_candles)
+        price = live['mid'] if live else (m15_candles[-1]['close'] if m15_candles else 2000)
+        limits = analyze_trading_limits(price, 10000, 0.1)
+        combined = get_vibe_trading_combined_signal(m15_candles, live, 10000)
+        return {
+            "status": "ok",
+            "vibe_trading_available": VIBE_TRADING_AVAILABLE if 'VIBE_TRADING_AVAILABLE' in globals() else False,
+            "shadow": shadow,
+            "qlib": qlib,
+            "limits": limits,
+            "combined": combined,
+            "features": VIBE_TRADING_FEATURES,
+            "qlib_factors": QLIB158_FACTORS,
+            "source": "HKUDS/Vibe-Trading - FastAPI + React 19 + MCP + Shadow Account + Qlib158 WVMA + Benford",
+            "strategy": "Shadow Account conditional entry (RSI/prior-return) + Qlib158 WVMA 5 windows + Trading Limits + Backtest Validation",
             "user": email
         }
     except Exception as e:
