@@ -71,5 +71,20 @@
     "is_admin": false,
     "plan": "elite_70",
     "winrate_target": "70-76%"
+  },
+  "fixtest123@gmail.com": {
+    "email": "fixtest123@gmail.com",
+    "salt": "cf4699e76e8602c699ee726cb3bc9118",
+    "hash": "8301f50eba073fbd279fb5256999e6bd2da6bf82b18573761cf4653372441e3a",
+    "telegram_username": "",
+    "created": 1790475680.6895208,
+    "created_str": "2026-09-27 02:21:20 UTC",
+    "last_login": 1790475680.6895208,
+    "login_count": 1,
+    "is_active": true,
+    "approved": true,
+    "is_admin": false,
+    "plan": "elite_70",
+    "winrate_target": "70-76%"
   }
 }
