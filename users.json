@@ -5,11 +5,7 @@
     "created": 1790468907.384453,
     "approved": true,
     "is_admin": false,
-    "salt": "ecacb2e00dd9ff25014fde4a44f6e203",
-    "hash": "e9c94a4caaa9821508fe43e40c29c12eafcdee370bbc8243d058ff9e9bec44f0",
-    "last_password_change": 1790469453.806402,
-    "last_login": 1790469473.4969609,
-    "login_count": 1
+    "is_active": true
   },
   "testreset@gmail.com": {
     "email": "testreset@gmail.com",
