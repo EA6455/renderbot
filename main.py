@@ -1060,6 +1060,115 @@ def save_broker_accounts(data):
     save_json_file(BROKER_FILE, data)
 
 @app.post("/api/broker/connect")
+
+async def fetch_real_balance_metaapi(login: str, password: str, server: str, metaapi_token: str = None):
+    """Fetch REAL Exness balance via MetaApi cloud - works on Linux free without MT5 terminal"""
+    try:
+        import os
+        token = metaapi_token or os.getenv("META_API_TOKEN") or os.getenv("METAAPI_TOKEN")
+        if not token:
+            print("MetaApi token not available - cannot auto-fetch REAL balance")
+            return None
+        
+        from metaapi_cloud_sdk import MetaApi
+        api = MetaApi(token)
+        
+        # Try to find existing account or create new one
+        accounts = await api.metatrader_account_api.get_accounts()
+        target_account = None
+        for acc in accounts:
+            if str(acc.login) == str(login) and acc.server == server:
+                target_account = acc
+                break
+        
+        if not target_account:
+            # Need provisioning profile - try to get existing or create
+            profiles = await api.provisioning_profile_api.get_provisioning_profiles()
+            exness_profile = None
+            for p in profiles:
+                if 'exness' in p.name.lower() or 'Exness' in p.name:
+                    exness_profile = p
+                    break
+            
+            if not exness_profile:
+                # Create provisioning profile for Exness
+                # For MT5, we need servers.dat - but MetaApi may auto-handle for known brokers
+                try:
+                    exness_profile = await api.provisioning_profile_api.create_provisioning_profile({
+                        'name': f'Exness {server}',
+                        'version': 5,
+                        'brokerTimezone': 'EET',
+                        'brokerDSTSwitchTimezone': 'EET'
+                    })
+                    print(f"Created provisioning profile {exness_profile.id}")
+                except Exception as e:
+                    print(f"Failed to create provisioning profile: {e}")
+                    return None
+            
+            # Create account
+            try:
+                target_account = await api.metatrader_account_api.create_account({
+                    'name': f'Exness {login}',
+                    'type': 'cloud',
+                    'login': str(login),
+                    'password': password,
+                    'server': server,
+                    'provisioningProfileId': exness_profile.id,
+                    'application': 'MetaApi',
+                    'magic': 1000,
+                })
+                print(f"Created MetaApi account {target_account.id}")
+            except Exception as e:
+                print(f"Failed to create MetaApi account: {e}")
+                return None
+        
+        # Deploy account if not deployed
+        if target_account.state != 'DEPLOYED':
+            await target_account.deploy()
+            print(f"Deploying account {target_account.id}")
+        
+        # Wait for deployment
+        await target_account.wait_deployed()
+        print(f"Account deployed {target_account.id}")
+        
+        # Connect to RPC
+        connection = await target_account.connect()
+        await connection.wait_synchronized(timeout=60)
+        
+        # Get account information
+        account_info = await connection.get_account_information()
+        print(f"REAL balance via MetaApi: {account_info}")
+        
+        balance = account_info.get('balance') if isinstance(account_info, dict) else getattr(account_info, 'balance', None)
+        equity = account_info.get('equity') if isinstance(account_info, dict) else getattr(account_info, 'equity', None)
+        currency = account_info.get('currency') if isinstance(account_info, dict) else getattr(account_info, 'currency', 'USD')
+        
+        return {
+            'balance': float(balance) if balance else None,
+            'equity': float(equity) if equity else None,
+            'currency': currency,
+            'source': 'auto - MetaApi cloud'
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"MetaApi REAL fetch failed: {e}")
+        return None
+
+def fetch_real_balance_metaapi_sync(login: str, password: str, server: str, metaapi_token: str = None):
+    """Sync wrapper for MetaApi REAL balance fetch"""
+    try:
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(fetch_real_balance_metaapi(login, password, server, metaapi_token))
+        loop.close()
+        return result
+    except Exception as e:
+        print(f"MetaApi sync fetch failed: {e}")
+        return None
+
+
 def broker_connect(req: dict, authorization: str = Header(None)):
     """User connects broker account (Exness/Deriv) for pure web control - no EA needed"""
     email = get_current_user(authorization)
@@ -1115,6 +1224,7 @@ def broker_connect(req: dict, authorization: str = Header(None)):
         acc_data["real_balance_updated"] = existing.get("real_balance_updated")
     else:
         # Try auto-fetch REAL balance via MT5 if available (Windows)
+        auto_fetched = False
         try:
             import MetaTrader5 as mt5
             if password and login and server:
@@ -1131,9 +1241,24 @@ def broker_connect(req: dict, authorization: str = Header(None)):
                         acc_data["real_balance_currency"] = getattr(info, 'currency', 'USD')
                         acc_data["real_balance_source"] = "auto - MT5 terminal"
                         acc_data["real_balance_updated"] = time.time()
+                        auto_fetched = True
                     mt5.shutdown()
         except Exception as e:
             print(f"MT5 auto REAL fetch not available (Linux free): {e}")
+        
+        # Try MetaApi cloud for REAL balance (works on Linux free, free tier 1 account)
+        if not auto_fetched:
+            try:
+                metaapi_result = fetch_real_balance_metaapi_sync(login, password, server, req.get("metaapi_token"))
+                if metaapi_result and metaapi_result.get("balance"):
+                    acc_data["real_balance"] = metaapi_result["balance"]
+                    acc_data["real_balance_currency"] = metaapi_result.get("currency","USD")
+                    acc_data["real_balance_source"] = metaapi_result.get("source","auto - MetaApi cloud")
+                    acc_data["real_balance_updated"] = time.time()
+                    auto_fetched = True
+                    print(f"✅ REAL balance auto-fetched via MetaApi: {metaapi_result['balance']}")
+            except Exception as e:
+                print(f"MetaApi REAL fetch not available: {e}")
     
     accounts[email] = acc_data
     save_broker_accounts(accounts)
