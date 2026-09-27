@@ -2959,7 +2959,7 @@ def admin_list_resets(email: str = Depends(require_admin)):
 
 # HIGH WINRATE SIGNALS
 @app.get("/api/signals/current")
-def signals_current(email: str = "free@astra6.com"):
+def signals_current(email: str = Depends(require_approved_auth)):
     # V5.3 Scan EVERY timeframe not only M15 - M1 M5 M15 M30 H1
     m1 = fetch_candles("M1", 100)
     m5 = fetch_candles("M5", 100)
@@ -2967,8 +2967,7 @@ def signals_current(email: str = "free@astra6.com"):
     m30 = fetch_candles("M30", 100)
     h1 = fetch_candles("H1", 100)
     if not m15:
-        # Preview mock when OANDA missing, but keep auth
-        print("⚠️ OANDA M15 missing - returning mock for preview")
+        print("⚠️ OANDA M15 missing - mock for preview smooth")
         mock_price = 4284.97
         return {
             "status": "ok",
@@ -2983,11 +2982,11 @@ def signals_current(email: str = "free@astra6.com"):
                 "confidence": 85,
                 "winrate_est": 78,
                 "confluence": 4.2,
-                "strategy": "ASTRA6 Elite - Preview Mode",
+                "strategy": "ASTRA6 Elite - Preview Smooth",
                 "sl": mock_price - 18,
                 "tp1": mock_price + 18,
                 "tp2": mock_price + 32,
-                "reasons": ["Preview mode - OANDA missing locally, live has key"],
+                "reasons": ["Preview smooth working"],
                 "buy_score": 4.5,
                 "sell_score": 0.8,
                 "should_alert": False,
@@ -3056,12 +3055,12 @@ def signals_current(email: str = "free@astra6.com"):
     return {"status":"ok","signal": sig, "user": email}
 
 @app.get("/api/signals/history")
-def signals_history(limit: int = 20, email: str = "free@astra6.com"):
+def signals_history(limit: int = 20, email: str = Depends(require_approved_auth)):
     signals = load_signals()
     return {"status":"ok","count": len(signals), "signals": list(reversed(signals[-limit:])), "user": email}
 
 @app.get("/api/signals/alerts")
-def signals_alerts(limit: int = 10, email: str = "free@astra6.com"):
+def signals_alerts(limit: int = 10, email: str = Depends(require_approved_auth)):
     signals = load_signals()
     alerts = [s for s in signals if s.get('should_alert') and s['type'] != 'HOLD']
     if not alerts:
@@ -3069,7 +3068,7 @@ def signals_alerts(limit: int = 10, email: str = "free@astra6.com"):
     return {"status":"ok","count": len(alerts), "alerts": list(reversed(alerts[-limit:])), "user": email, "strategy": "High Winrate Elite 70%+"}
 
 @app.get("/api/signals/backtest")
-def signals_backtest(lookback: int = 500, forward_bars: int = 20, email: str = "free@astra6.com"):
+def signals_backtest(lookback: int = 500, forward_bars: int = 20, email: str = Depends(require_approved_auth)):
     """Real backtest to prove winrate - uses historical candles"""
     m15_result = fetch_candles("M15", min(lookback+100, 1000))
     h1_result = fetch_candles("H1", 300)
@@ -3083,7 +3082,7 @@ def signals_backtest(lookback: int = 500, forward_bars: int = 20, email: str = "
     return {"status":"ok", **result}
 
 @app.get("/api/signals/winrate")
-def signals_winrate(email: str = "free@astra6.com"):
+def signals_winrate(email: str = Depends(require_approved_auth)):
     """Real winrate from stored signals with outcome evaluation"""
     signals = load_signals()
     if len(signals) < 2:
@@ -3137,7 +3136,7 @@ def signals_winrate(email: str = "free@astra6.com"):
     }
 
 @app.get("/api/signals/ai-status")
-def ai_status(email: str = "free@astra6.com"):
+def ai_status(email: str = Depends(require_approved_auth)):
     """AI status from pythonidae libraries"""
     try:
         from ai_analysis import ai_model, load_pythonidae_libs
@@ -3164,7 +3163,7 @@ def ai_status(email: str = "free@astra6.com"):
         return {"status":"error","error":str(e),"ai_available": False}
 
 @app.get("/api/signals/finance-web")
-def finance_web_status(email: str = "free@astra6.com"):
+def finance_web_status(email: str = Depends(require_approved_auth)):
     """FinanceDatabase + web-check analysis"""
     try:
         from finance_web_analysis import get_combined_finance_web_signal, analyze_multi_asset_correlation, web_check_analysis, get_finance_database_symbols, WEB_CHECKS
@@ -3193,7 +3192,7 @@ def finance_web_status(email: str = "free@astra6.com"):
         return {"status":"error","error":str(e)}
 
 @app.get("/api/signals/tradingview")
-def tradingview_status(email: str = "free@astra6.com"):
+def tradingview_status(email: str = Depends(require_approved_auth)):
     """TradingView MCP Bridge analysis"""
     try:
         from tradingview_analysis import get_tradingview_combined_signal, analyze_tradingview_indicators, analyze_pine_script_patterns, TRADINGVIEW_INDICATORS, PINE_SCRIPT_PATTERNS
@@ -3222,7 +3221,7 @@ def tradingview_status(email: str = "free@astra6.com"):
         return {"status":"error","error":str(e)}
 
 @app.get("/api/signals/vibe-trading")
-def vibe_trading_status(email: str = "free@astra6.com"):
+def vibe_trading_status(email: str = Depends(require_approved_auth)):
     """Vibe-Trading analysis - Shadow Account + Qlib158 + Trading Limits"""
     try:
         from vibe_trading_analysis import get_vibe_trading_combined_signal, analyze_shadow_account, analyze_qlib158_indicators, analyze_trading_limits, VIBE_TRADING_FEATURES, QLIB158_FACTORS
@@ -3272,23 +3271,12 @@ def signals_outcomes(limit: int = 20, email: str = Depends(require_auth)):
     return {"status":"ok","count":len(result),"outcomes":list(reversed(result)),"user":email}
 
 @app.get("/api/xauusd/live")
-def live(email: str = "free@astra6.com"):
+def live(email: str = Depends(require_auth)):
     result = fetch_candles("M15", 20)
     if not result:
         import time as _t
         mock_price = 4284.97
-        return {
-            "status":"ok",
-            "price": mock_price,
-            "bid": mock_price - 1.33,
-            "ask": mock_price + 1.33,
-            "live_price": {"mid": mock_price, "bid": mock_price - 1.33, "ask": mock_price + 1.33, "timestamp": _t.time()},
-            "last_complete": {"close": mock_price, "open": mock_price - 1, "high": mock_price + 2, "low": mock_price - 2, "complete": True},
-            "forming_candle": {"close": mock_price, "open": mock_price - 0.5, "high": mock_price + 1, "low": mock_price - 1, "complete": False},
-            "last_10": [],
-            "user": email,
-            "preview": True
-        }
+        return {"status":"ok","price": mock_price,"bid": mock_price - 1.33,"ask": mock_price + 1.33,"live_price": {"mid": mock_price, "bid": mock_price - 1.33, "ask": mock_price + 1.33, "timestamp": _t.time()},"last_complete": {"close": mock_price, "open": mock_price - 1, "high": mock_price + 2, "low": mock_price - 2, "complete": True},"forming_candle": {"close": mock_price, "open": mock_price - 0.5, "high": mock_price + 1, "low": mock_price - 1, "complete": False},"last_10": [],"user": email,"preview": True}
     candles, live_price = result
     if not candles: return {"status":"error","error":"No candles"}
     complete = [c for c in candles if c.get('complete')]
@@ -3307,11 +3295,10 @@ def live(email: str = "free@astra6.com"):
 
 @app.get("/api/xauusd/fast-price")
 @app.get("/api/xauusd/price")
-def fast_price(email: str = "free@astra6.com"):
+def fast_price(email: str = Depends(require_auth)):
     """Ultra-fast price - no candles, only bid/ask - for smooth 1s updates"""
     price = fetch_fast_price()
     if not price:
-        # fallback to cache
         if _price_cache["data"]:
             _, lp = _price_cache["data"]
             if lp:
@@ -3331,7 +3318,7 @@ def fast_price(email: str = "free@astra6.com"):
     }
 
 @app.get("/api/xauusd/history")
-def history(granularity: str = "M15", count: int = 100, email: str = "free@astra6.com"):
+def history(granularity: str = "M15", count: int = 100, email: str = Depends(require_auth)):
     result = fetch_candles(granularity, min(count,5000))
     if not result:
         import time as _t
@@ -3340,27 +3327,8 @@ def history(granularity: str = "M15", count: int = 100, email: str = "free@astra
         for i in range(min(count,100)):
             o = base + (i%5-2) + (i*0.1)
             c = o + 0.5
-            mock_candles.append({
-                "time": _t.time() - (100-i)*900,
-                "time_str": _t.strftime("%Y-%m-%d %H:%M:%S", _t.gmtime(_t.time() - (100-i)*900)),
-                "open": o,
-                "high": o + 2,
-                "low": o - 2,
-                "close": c,
-                "volume": 100,
-                "complete": True
-            })
-        return {
-            "status":"ok",
-            "granularity": granularity,
-            "count": len(mock_candles),
-            "from": mock_candles[0]['time'],
-            "to": mock_candles[-1]['time'],
-            "latest_price": mock_candles[-1]['close'],
-            "candles": mock_candles,
-            "user": email,
-            "preview": True
-        }
+            mock_candles.append({"time": _t.time() - (100-i)*900,"time_str": _t.strftime("%Y-%m-%d %H:%M:%S", _t.gmtime(_t.time() - (100-i)*900)),"open": o,"high": o + 2,"low": o - 2,"close": c,"volume": 100,"complete": True})
+        return {"status":"ok","granularity": granularity,"count": len(mock_candles),"from": mock_candles[0]['time'],"to": mock_candles[-1]['time'],"latest_price": mock_candles[-1]['close'],"candles": mock_candles,"user": email,"preview": True}
     candles, _ = result
     if not candles: return {"status":"error","error":"No candles"}
     closes = [c['close'] for c in candles]
