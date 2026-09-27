@@ -152,7 +152,7 @@ body.light-mode .lock-card{background:#ffffff}
 .sltp-box{background: #ffffff !important;border:1px solid #e0e7ff !important;box-shadow: 0 1px 3px rgba(0,0,0,0.1)}
 .signal-type{filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1))}
 .view h2, .view h3{color:#111827;font-weight:900}
-#ladder-dropdown{background: #ffffff !important;border:2px solid #e0e7ff !important;box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important}
+#ladder-dropdown{background: #ffffff !important;border:2px solid #e0e7ff !important;box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;z-index:9999 !important;position:fixed !important}
 .nav-item:hover{background: #f3f4f6 !important;color:#4f46e5 !important}
 .qr-img{border:3px solid transparent !important;background: #ffffff !important;border:1px solid #e5e7eb !important;box-shadow: 0 2px 8px rgba(0,0,0,0.1)}
 
@@ -1505,7 +1505,8 @@ setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPric
 async function fetchLive(){
   // Free access - no token required
   try{
-    const r=await fetch('/api/xauusd/live');
+    const r=await fetch('/api/xauusd/live').catch(()=>null);
+    if(!r) return;
 
     const d=await r.json();
     if(d.status==='ok'){
@@ -1638,14 +1639,20 @@ function initClicks(){
   bind('btn-replay-next',()=>replayNext());
   bind('btn-replay-reset',()=>replayReset());
   // Hamburger line button top right - ladder menu toggle - clean, dont stay, all devices
-  const toggleLadder=()=>{
+  window.toggleLadder=()=>{
     const dd=document.getElementById('ladder-dropdown');
     if(!dd)return;
     const isHidden=dd.style.display==='none' || dd.style.display==='';
     dd.style.display=isHidden?'flex':'none';
     if(isHidden) dd.style.flexDirection='column';
   };
-  bind('ladder-menu-btn',toggleLadder);
+  bind('ladder-menu-btn',()=>window.toggleLadder());
+  // Also direct binding as fallback
+  const menuBtn=document.getElementById('ladder-menu-btn');
+  if(menuBtn){
+    menuBtn.addEventListener('click', (e)=>{e.preventDefault(); window.toggleLadder();});
+    menuBtn.addEventListener('touchend', (e)=>{e.preventDefault(); window.toggleLadder();}, {passive:false});
+  }
   bind('ladder-close-btn',()=>{
     const dd=document.getElementById('ladder-dropdown');
     if(dd)dd.style.display='none';

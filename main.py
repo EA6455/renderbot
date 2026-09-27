@@ -3274,7 +3274,22 @@ def signals_outcomes(limit: int = 20, email: str = Depends(require_auth)):
 @app.get("/api/xauusd/live")
 def live(email: str = "free@astra6.com"):
     result = fetch_candles("M15", 20)
-    if not result: return {"status":"error","error":"OANDA key missing"}
+    if not result:
+        # Preview mock
+        import time as _t
+        mock_price = 4284.97
+        return {
+            "status":"ok",
+            "price": mock_price,
+            "bid": mock_price - 1.33,
+            "ask": mock_price + 1.33,
+            "live_price": {"mid": mock_price, "bid": mock_price - 1.33, "ask": mock_price + 1.33, "timestamp": _t.time()},
+            "last_complete": {"close": mock_price, "open": mock_price - 1, "high": mock_price + 2, "low": mock_price - 2, "complete": True},
+            "forming_candle": {"close": mock_price, "open": mock_price - 0.5, "high": mock_price + 1, "low": mock_price - 1, "complete": False},
+            "last_10": [],
+            "user": email,
+            "preview": True
+        }
     candles, live_price = result
     if not candles: return {"status":"error","error":"No candles"}
     complete = [c for c in candles if c.get('complete')]
@@ -3291,6 +3306,7 @@ def live(email: str = "free@astra6.com"):
         "user": email
     }
 
+@app.get("/api/xauusd/fast-price")
 @app.get("/api/xauusd/price")
 def fast_price(email: str = "free@astra6.com"):
     """Ultra-fast price - no candles, only bid/ask - for smooth 1s updates"""
@@ -3301,7 +3317,10 @@ def fast_price(email: str = "free@astra6.com"):
             _, lp = _price_cache["data"]
             if lp:
                 return {"status":"ok","price":lp['mid'],"bid":lp['bid'],"ask":lp['ask'],"live_price":lp,"timestamp":time.time(),"cached":True,"user":email}
-        return {"status":"error","error":"No price"}
+        # Preview mock price
+        import time as _t
+        mock_price = 4284.97
+        return {"status":"ok","price":mock_price,"bid":mock_price-1.33,"ask":mock_price+1.33,"live_price":{"mid":mock_price,"bid":mock_price-1.33,"ask":mock_price+1.33,"timestamp":_t.time()},"timestamp":_t.time(),"cached":False,"user":email,"preview":True}
     return {
         "status":"ok",
         "price": price['mid'],
@@ -3316,7 +3335,35 @@ def fast_price(email: str = "free@astra6.com"):
 @app.get("/api/xauusd/history")
 def history(granularity: str = "M15", count: int = 100, email: str = "free@astra6.com"):
     result = fetch_candles(granularity, min(count,5000))
-    if not result: return {"status":"error","error":"OANDA key missing"}
+    if not result:
+        # Preview mock candles
+        import time as _t
+        mock_candles = []
+        base = 4284.97
+        for i in range(min(count,100)):
+            o = base + (i%5-2) + (i*0.1)
+            c = o + 0.5
+            mock_candles.append({
+                "time": _t.time() - (100-i)*900,
+                "time_str": _t.strftime("%Y-%m-%d %H:%M:%S", _t.gmtime(_t.time() - (100-i)*900)),
+                "open": o,
+                "high": o + 2,
+                "low": o - 2,
+                "close": c,
+                "volume": 100,
+                "complete": True
+            })
+        return {
+            "status":"ok",
+            "granularity": granularity,
+            "count": len(mock_candles),
+            "from": mock_candles[0]['time'],
+            "to": mock_candles[-1]['time'],
+            "latest_price": mock_candles[-1]['close'],
+            "candles": mock_candles,
+            "user": email,
+            "preview": True
+        }
     candles, _ = result
     if not candles: return {"status":"error","error":"No candles"}
     closes = [c['close'] for c in candles]
