@@ -293,7 +293,7 @@ def require_approved_auth(authorization: str = Header(None)):
 class AuthRequest(BaseModel):
     email: str
     password: str
-    telegram_username: str = 
+    telegram_username: str = ""
 class ContactRequest(BaseModel):
     email: str
     subject: str = ""
