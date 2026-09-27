@@ -1021,90 +1021,55 @@ def forgot_password(req: dict):
         raise HTTPException(status_code=400, detail="Email required")
     users = load_users()
     if email not in users:
-        # Don't reveal if user exists - but for UX return ok
         return {"status":"ok","message": f"If {email} exists, reset link sent to email via {OWNER_EMAIL}"}
-    # Generate reset token
     reset_token = secrets.token_urlsafe(32)
     resets = load_resets()
-    # Clean expired
     now = time.time()
     expired = [k for k,v in resets.items() if v.get("expires",0) < now]
     for k in expired:
         del resets[k]
     resets[reset_token] = {"email": email, "created": now, "expires": now + 3600, "used": False}
     save_resets(resets)
-    # Send reset link via Gmail astra6render@gmail.com - NOT showing on website, only via Gmail
     reset_link = f"https://astra6.onrender.com/?reset={reset_token}"
+    logo_url = "https://astra6.onrender.com/logo.png"
     try:
         import os, smtplib
         from email.mime.text import MIMEText
         from email.mime.multipart import MIMEMultipart
-        smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
-        smtp_user = os.getenv("SMTP_USER", OWNER_EMAIL)
         smtp_pass = os.getenv("SMTP_PASS")
-        smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        
         if smtp_pass:
-            # Same logo as website - white & black A6
-            logo_url = "https://astra6.onrender.com/logo.png"
-            html_content = f"""
-            <html>
-            <body style="font-family:Arial,sans-serif;background:#ffffff;color:#000000;padding:20px;margin:0">
-              <div style="max-width:500px;margin:0 auto;border:2px solid #000000;border-radius:14px;padding:0;overflow:hidden;background:#ffffff">
-                <div style="background:#ffffff;padding:20px;text-align:center;border-bottom:2px solid #000000">
-                  <img src="{logo_url}" alt="ASTRA6 Best Logo" style="height:60px;width:auto;max-width:200px;margin-bottom:8px">
-                  <h2 style="margin:8px 0 0 0;font-weight:900;font-size:22px;letter-spacing:1px;color:#000000">ASTRA6</h2>
-                  <p style="margin:4px 0;color:#666666;font-size:11px;letter-spacing:0.5px">BEST GOLD TRADING SIGNALS • ELITE 70%+</p>
-                </div>
-                <div style="padding:24px;background:#ffffff">
-                  <h3 style="margin:0 0 12px 0;font-size:16px;font-weight:900">Password Reset</h3>
-                  <p style="margin:0 0 8px 0;font-size:14px">Hi {email},</p>
-                  <p style="margin:0 0 16px 0;font-size:14px">You requested password reset for ASTRA6.</p>
-                  
-                  <p style="margin:0 0 6px 0;font-size:12px;font-weight:700">Reset Link (expires 1 hour):</p>
-                  <div style="background:#f5f5f5;border:1px solid #000000;padding:12px;border-radius:10px;margin-bottom:16px;word-break:break-all">
-                    <a href="{reset_link}" style="color:#000000;font-weight:900;text-decoration:none;font-size:13px">{reset_link}</a>
-                  </div>
-                  
-                  <p style="margin:0 0 6px 0;font-size:12px;font-weight:700">Or copy token and paste to website:</p>
-                  <div style="background:#000000;color:#ffffff;padding:12px;border-radius:10px;margin-bottom:16px;word-break:break-all;font-family:monospace;font-size:12px">{reset_token}</div>
-                  
-                  <div style="background:#ffffff;border:2px solid #000000;border-radius:10px;padding:12px;margin-bottom:16px;text-align:center">
-                    <p style="margin:0 0 8px 0;font-size:12px">Go to website and paste token:</p>
-                    <p style="margin:0;font-size:12px"><strong>https://astra6.onrender.com</strong> → Sign In → Forgot password? → Paste token + new password</p>
-                  </div>
-                  
-                  <p style="font-size:11px;color:#666666;margin:0">If you didn't request, ignore this email.</p>
-                </div>
-                <div style="background:#000000;color:#ffffff;padding:12px;text-align:center;font-size:10px">
-                  <div>From: {OWNER_EMAIL} - ASTRA6 Owner</div>
-                  <div style="margin-top:4px;opacity:0.7">White & Black Design • Best Logo • All Devices</div>
-                </div>
-              </div>
-            </body>
-            </html>
-            """
-            text_content = f"ASTRA6 Password Reset\n\nEmail: {email}\n\nReset Link (expires 1h): {reset_link}\n\nToken: {reset_token}\n\nGo to https://astra6.onrender.com → Sign In → Forgot password? → Paste token + new password\n\nIf you didn't request, ignore.\nFrom {OWNER_EMAIL}"
-            
+            html = f"<html><body style='font-family:Arial;background:#fff;color:#000;padding:20px'><div style='max-width:500px;margin:0 auto;border:2px solid #000;border-radius:14px;overflow:hidden'><div style='background:#fff;padding:20px;text-align:center;border-bottom:2px solid #000'><img src='{logo_url}' alt='ASTRA6' style='height:60px'><h2 style='margin:8px 0 0 0;font-weight:900'>ASTRA6</h2><p style='color:#666;font-size:11px'>BEST GOLD SIGNALS</p></div><div style='padding:24px'><h3>Password Reset</h3><p>Hi {email},</p><p>Link (1h):</p><div style='background:#f5f5f5;border:1px solid #000;padding:12px;border-radius:10px;word-break:break-all'><a href='{reset_link}' style='color:#000;font-weight:900'>{reset_link}</a></div><p>Token:</p><div style='background:#000;color:#fff;padding:12px;border-radius:10px;word-break:break-all;font-family:monospace'>{reset_token}</div><p>Go to https://astra6.onrender.com -> Sign In -> Forgot password? -> Paste token</p></div><div style='background:#000;color:#fff;padding:12px;text-align:center;font-size:10px'>From: {OWNER_EMAIL}</div></div></body></html>"
+            text = f"ASTRA6 Reset\nEmail: {email}\nLink: {reset_link}\nToken: {reset_token}"
             msg = MIMEMultipart('alternative')
             msg['Subject'] = 'ASTRA6 - Password Reset Link'
             msg['From'] = OWNER_EMAIL
             msg['To'] = email
-            msg.attach(MIMEText(text_content, 'plain'))
-            msg.attach(MIMEText(html_content, 'html'))
-            
-            with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
-                server.starttls()
-                server.login(smtp_user, smtp_pass)
-                server.send_message(msg)
-            print(f"✅ Reset email sent to {email} via Gmail {OWNER_EMAIL}")
+            msg.attach(MIMEText(text, 'plain'))
+            msg.attach(MIMEText(html, 'html'))
+            sent = False
+            try:
+                with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as s:
+                    s.login(OWNER_EMAIL, smtp_pass)
+                    s.send_message(msg)
+                print(f"SSL 465 sent to {email}")
+                sent = True
+            except Exception as e1:
+                print(f"SSL fail {e1}, trying 587")
+                try:
+                    with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as s:
+                        s.starttls(timeout=10)
+                        s.login(OWNER_EMAIL, smtp_pass)
+                        s.send_message(msg)
+                    print(f"TLS 587 sent to {email}")
+                    sent = True
+                except Exception as e2:
+                    print(f"Both fail {e1} {e2}")
+                    raise e2
         else:
-            print(f"⚠️ SMTP_PASS not set - Cannot send Gmail. Token for {email}: {reset_token} - Set SMTP_PASS env on Render")
-            print(f"📧 Would send to {email} from {OWNER_EMAIL} link {reset_link}")
+            print(f"SMTP_PASS not set token {reset_token} for {email}")
     except Exception as e:
-        print(f"❌ Email send error {e}, token {reset_token} for {email}")
-    # NEVER return token on website - only via Gmail inbox
-    return {"status":"ok","message": f"Reset link sent to {email} via Gmail {OWNER_EMAIL} - check your Gmail inbox (expires 1h). If not received within 2 min, contact owner {OWNER_EMAIL} or check Admin panel. Link: {reset_link}", "email": email, "reset_link": reset_link}
+        print(f"Email error {e} token {reset_token}")
+    return {"status":"ok","message": f"Reset link sent to {email} via Gmail {OWNER_EMAIL} - check inbox (expires 1h). If not received, contact owner. Link: {reset_link}", "email": email, "reset_link": reset_link}
 
 @app.post("/api/auth/reset-password")
 def reset_password(req: dict):
