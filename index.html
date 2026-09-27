@@ -315,7 +315,7 @@ body.light-mode .lock-card{background:#ffffff}
       <div style="max-width:800px">
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-            <div style="font-weight:900;font-size:16px">👑 Admin - User Control • theoksovanrathanak@gmail.com</div>
+            <div style="font-weight:900;font-size:16px">👑 Admin - User Control • astra6render@gmail.com</div>
             <button class="btn" id="btn-admin-refresh">🔄 Refresh Users</button>
           </div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Only you can see all users. Approve new signups to let them access signals.</div>
@@ -571,8 +571,8 @@ async function checkAuth(){
     if(!r.ok)throw new Error('network');
     const d=await r.json();
     const ue=document.getElementById('user-email');if(ue)ue.textContent=d.email;
-    // Admin check - theoksovanrathanak@gmail.com
-    const isAdmin = d.is_admin || d.email.toLowerCase() === 'theoksovanrathanak@gmail.com';
+    // Admin check - astra6render@gmail.com
+    const isAdmin = d.is_admin || d.email.toLowerCase() === 'astra6render@gmail.com';
     const isApproved = d.approved !== false;
     // Show admin button only for admin
     const adminBtn=document.getElementById('sw-admin');
@@ -583,7 +583,7 @@ async function checkAuth(){
     if(!isApproved && !isAdmin){
       if(lock){
         lock.style.display='flex';
-        lock.innerHTML=`<div class="lock-card"><div style="font-size:32px;margin-bottom:10px">⏳</div><div style="font-weight:900;font-size:16px;margin-bottom:6px">Pending Approval</div><div style="font-size:12px;color:var(--muted);margin-bottom:12px">Your account is pending admin approval.<br>Contact admin: theoksovanrathanak@gmail.com</div><button class="btn" onclick="signOut()">Sign Out</button></div>`;
+        lock.innerHTML=`<div class="lock-card"><div style="font-size:32px;margin-bottom:10px">⏳</div><div style="font-weight:900;font-size:16px;margin-bottom:6px">Pending Approval</div><div style="font-size:12px;color:var(--muted);margin-bottom:12px">Your account is pending admin approval.<br>Contact admin: astra6render@gmail.com</div><button class="btn" onclick="signOut()">Sign Out</button></div>`;
       }
       return false;
     }
@@ -631,7 +631,7 @@ async function loadAccount(){
   }catch(e){if(guest)guest.style.display='block';if(user)user.style.display='none';}
 }
 
-// ADMIN - only theoksovanrathanak@gmail.com can see all users
+// ADMIN - only astra6render@gmail.com can see all users
 async function fetchAdminUsers(){
   try{
     const r=await fetch('/api/admin/users',{headers:authHeaders()});
@@ -654,7 +654,7 @@ async function fetchAdminUsers(){
       listEl.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">No users yet</div>';
     } else {
       listEl.innerHTML=d.users.map(u=>{
-        const isAdminUser=u.is_admin || u.email.toLowerCase()==='theoksovanrathanak@gmail.com';
+        const isAdminUser=u.is_admin || u.email.toLowerCase()==='astra6render@gmail.com';
         const status = !u.is_active ? '❌ DISABLED' : u.approved ? '✅ APPROVED' : '⏳ PENDING';
         const bg = !u.is_active ? '#fee' : u.approved ? '#efe' : '#ffe';
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #000;border-radius:10px;margin-bottom:8px;background:${bg};flex-wrap:wrap;gap:8px">
@@ -676,7 +676,7 @@ async function fetchAdminUsers(){
   }catch(e){
     console.log('admin fetch error',e);
     const listEl=document.getElementById('admin-users-list');
-    if(listEl)listEl.innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted)">Error: ${e.message}<br>Only admin theoksovanrathanak@gmail.com can access</div>`;
+    if(listEl)listEl.innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted)">Error: ${e.message}<br>Only admin astra6render@gmail.com can access</div>`;
   }
 }
 async function fetchAdminResets(){
