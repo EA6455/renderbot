@@ -9,9 +9,9 @@
     "connected_at": 1790487628.6448276,
     "connected_str": "2026-09-27 05:40:28 UTC",
     "status": "connected",
-    "real_balance": 123.45,
+    "real_balance": 47.32,
     "real_balance_currency": "USD",
     "real_balance_source": "manual - set by user from Exness app",
-    "real_balance_updated": 1790487628.6448393
+    "real_balance_updated": 1790487866.2253962
   }
 }
