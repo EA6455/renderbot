@@ -324,11 +324,7 @@ body.light-mode .lock-card{background:#ffffff}
             <div style="background:#fff;border:2px solid #000;padding:12px;border-radius:10px;text-align:center"><div class="label">Approved</div><div class="mono" id="admin-approved" style="font-size:20px;font-weight:900">0</div></div>
             <div style="background:#fff;border:2px solid #000;padding:12px;border-radius:10px;text-align:center"><div class="label">Pending</div><div class="mono" id="admin-pending" style="font-size:20px;font-weight:900">0</div></div>
           </div>
-          <div id="admin-smtp-status" style="padding:10px;border:2px solid #000;border-radius:10px;margin-bottom:14px;background:#ffe;font-size:11px">
-            <div style="font-weight:900">📧 Gmail SMTP Status</div>
-            <div id="admin-smtp-text" class="mono">Checking...</div>
-            <div style="margin-top:8px;font-size:10px">To enable: Render Dashboard → Environment → SMTP_PASS=dvlgqfnumbhinqvi (no spaces) + SMTP_HOST=smtp.gmail.com + SMTP_USER=astra6render@gmail.com + SMTP_PORT=587 → Save</div>
-          </div>
+          <!-- Removed Gmail SMTP Status per user request - now using Telegram bot @astra6renderbot for reset, not Gmail SMTP (blocked on Render free) -->
           <div id="admin-users-list" style="max-height:400px;overflow-y:auto;margin-bottom:20px">
             <div style="padding:20px;text-align:center;color:var(--muted)">Loading users...</div>
           </div>
@@ -688,12 +684,7 @@ async function fetchAdminResets(){
     const r=await fetch('/api/admin/resets',{headers:authHeaders()});
     if(!r.ok)throw new Error('Failed');
     const d=await r.json();
-    const smtpEl=document.getElementById('admin-smtp-text');
-    if(smtpEl){
-      smtpEl.textContent = d.smtp_configured ? '✅ SMTP configured - Gmail sending via astra6render@gmail.com works' : '❌ SMTP NOT configured - Set SMTP_PASS env var on Render Dashboard to enable Gmail sending';
-      smtpEl.style.color = d.smtp_configured ? 'green' : 'red';
-      smtpEl.style.fontWeight = '900';
-    }
+    // Removed Gmail SMTP Status per user request - now using Telegram bot @astra6renderbot
     const listEl=document.getElementById('admin-resets-list');
     if(!listEl)return;
     if(d.resets.length===0){
