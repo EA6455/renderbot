@@ -4,7 +4,10 @@
     "password_hash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
     "created": 1790468907.384453,
     "approved": true,
-    "is_admin": true
+    "is_admin": true,
+    "salt": "283009621144fb1b2fc1b372a6ac3e64",
+    "hash": "ec86c3ec790026319746b5672b38d4fdd104428021dce37e362f507d6f71da73",
+    "last_password_change": 1790469114.766666
   },
   "testreset@gmail.com": {
     "email": "testreset@gmail.com",
