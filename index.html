@@ -407,7 +407,16 @@ async function sendForgot(){
   try{
     const r=await fetch('/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||'Failed');
-    ok.textContent=d.message + (d.reset_token ? ` Token: ${d.reset_token} (copy this, no SMTP)` : ' Check your email');
+    // New API returns reset_link + Gmail in background
+    let htmlMsg = d.message;
+    if(d.reset_link){
+      const tokenFromLink = d.reset_link.split('reset=')[1] || '';
+      if(tokenFromLink) document.getElementById('reset-token').value=tokenFromLink;
+      htmlMsg = `✅ Reset link ready!<br><br><strong>Gmail:</strong> Check ${d.email} inbox via ${'astra6render@gmail.com'} (same logo)<br><br><strong>Copy link for paste:</strong><br><div style='background:#000;color:#fff;padding:10px;border-radius:8px;word-break:break-all;font-family:monospace;font-size:12px;margin:8px 0'>${d.reset_link}</div><button onclick="navigator.clipboard.writeText('${d.reset_link}');this.textContent='Copied!'" style='background:#fff;color:#000;border:2px solid #000;padding:6px 12px;border-radius:6px;font-weight:900;cursor:pointer'>📋 Copy Link</button> <button onclick="navigator.clipboard.writeText('${tokenFromLink}');this.textContent='Copied token!'" style='background:#000;color:#fff;border:2px solid #000;padding:6px 12px;border-radius:6px;font-weight:900;cursor:pointer'>📋 Copy Token</button><br><br><small>Token auto-filled below - enter new password and click Change Password. Gmail also sent in background.</small>`;
+      ok.innerHTML=htmlMsg;
+    } else {
+      ok.textContent=d.message;
+    }
     ok.style.display='block';
     if(d.reset_token){
       document.getElementById('reset-token').value=d.reset_token;
