@@ -1402,6 +1402,37 @@ def broker_trades_list(authorization: str = Header(None)):
 
 
 
+@app.post("/api/broker/balance/set")
+def broker_balance_set(req: dict, email: str = Depends(require_approved_auth)):
+    """Set REAL Exness balance manually - for when MT5 terminal not available on free plan, user can set exact real balance from Exness app"""
+    try:
+        balance = float(req.get("balance",0))
+        currency = req.get("currency","USD")
+        if balance <= 0:
+            raise HTTPException(400, "Balance must be > 0")
+        
+        # Save real balance in broker_accounts
+        accs = load_broker_accounts()
+        acc = accs.get(email, {})
+        acc["real_balance"] = balance
+        acc["real_balance_currency"] = currency
+        acc["real_balance_updated"] = time.time()
+        acc["real_balance_source"] = "manual - set by user from Exness app"
+        accs[email] = acc
+        save_broker_accounts(accs)
+        
+        return {
+            "status": "ok",
+            "balance": balance,
+            "currency": currency,
+            "real": True,
+            "message": f"✅ REAL Exness balance set for {email}: {balance} {currency} (manual from Exness app)"
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(500, f"Failed to set balance: {e}")
+
 @app.get("/api/broker/balance")
 def broker_balance(email: str = Depends(require_approved_auth)):
     try:
@@ -1411,6 +1442,21 @@ def broker_balance(email: str = Depends(require_approved_auth)):
             return {"status": "ok", "connected": False, "balance": 0, "message": " - connect Deriv/Exness for REAL balance"}
         
         broker = acc.get("broker")
+        
+        # Check for manually set REAL balance first (for Exness when MT5 terminal not available on free)
+        if acc.get("real_balance") and acc.get("real_balance") > 0:
+            real_balance = float(acc.get("real_balance"))
+            currency = acc.get("real_balance_currency","USD")
+            return {
+                "status": "ok",
+                "connected": True,
+                "broker": broker,
+                "balance": round(real_balance, 2),
+                "currency": currency,
+                "real": True,
+                "source": acc.get("real_balance_source","manual"),
+                "message": f"✅ REAL Exness balance for {email}: {real_balance} {currency} ({acc.get('real_balance_source','manual')})"
+            }
         
         # REAL balance from broker API
         if broker == "deriv":
