@@ -1084,10 +1084,30 @@ def forgot_password(req: dict):
     save_resets(resets)
     reset_link = f"https://astra6.onrender.com/?reset={reset_token}"
     logo_url = "https://astra6.onrender.com/logo.png"
-    # Send Gmail in background thread so request returns immediately (no timeout)
+    # Send Gmail in background thread - with HTTP webhook fallback for Render free which blocks SMTP
     try:
         import threading, os
         def send_email_bg():
+            # Try HTTP webhook first (works on Render free - uses HTTP not SMTP)
+            webhook_url = os.getenv("EMAIL_WEBHOOK_URL") or os.getenv("GMAIL_WEBHOOK_URL")
+            if webhook_url:
+                try:
+                    import requests
+                    payload = {
+                        "to": email,
+                        "from": OWNER_EMAIL,
+                        "subject": "ASTRA6 - Password Reset Link",
+                        "reset_link": reset_link,
+                        "reset_token": reset_token,
+                        "logo_url": logo_url,
+                        "email": email
+                    }
+                    r = requests.post(webhook_url, json=payload, timeout=15)
+                    print(f"✅ Webhook email sent to {email} status {r.status_code} {r.text[:100]}")
+                    return
+                except Exception as e:
+                    print(f"Webhook fail {e}, trying SMTP")
+            # Try SMTP (works on paid Render or local, but blocked on free)
             try:
                 import smtplib
                 from email.mime.text import MIMEText
@@ -1105,19 +1125,19 @@ def forgot_password(req: dict):
                 msg.attach(MIMEText(text, 'plain'))
                 msg.attach(MIMEText(html, 'html'))
                 try:
-                    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as s:
+                    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as s:
                         s.login(OWNER_EMAIL, smtp_pass)
                         s.send_message(msg)
                     print(f"✅ BG SSL 465 sent to {email}")
                 except Exception as e1:
                     print(f"BG SSL fail {e1}, trying 587")
-                    with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as s:
-                        s.starttls(timeout=15)
+                    with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as s:
+                        s.starttls(timeout=10)
                         s.login(OWNER_EMAIL, smtp_pass)
                         s.send_message(msg)
                     print(f"✅ BG TLS 587 sent to {email}")
             except Exception as e:
-                print(f"❌ BG Email error {e} token {reset_token} for {email}")
+                print(f"❌ BG Email error {e} token {reset_token} for {email} - Render free blocks SMTP, use EMAIL_WEBHOOK_URL or upgrade to paid plan")
         threading.Thread(target=send_email_bg, daemon=True).start()
     except Exception as e:
         print(f"BG thread error {e}")
