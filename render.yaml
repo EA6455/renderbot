@@ -14,3 +14,11 @@ services:
         sync: false
       - key: OANDA_ENVIRONMENT
         value: practice
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_USER
+        value: astra6render@gmail.com
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_PORT
+        value: 587
