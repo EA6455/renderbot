@@ -442,7 +442,7 @@ function switchTab(tab){
 async function submitAuth(){
   const email=document.getElementById('email').value.trim();
   const pass=document.getElementById('password').value;
-  const tgUsername=(document.getElementById('telegram-username')?.value || '').trim().lstrip('@');
+  const tgUsername=(document.getElementById('telegram-username')?.value || '').trim().replace(/^@+/, '');
   const err=document.getElementById('auth-error'), ok=document.getElementById('auth-success');
   err.style.display='none';ok.style.display='none';
   if(!email||!pass){err.textContent='Email and password required';err.style.display='block';return;}
