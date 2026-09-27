@@ -32,5 +32,20 @@
     "salt": "c4bd07436d901ec5da53ffb6d0c7624b",
     "hash": "af76bd60056349c13533aa3bff985c6b3d94924fb842a711b1f5b51bde731314",
     "last_password_change": 1790474632.848544
+  },
+  "testphone@gmail.com": {
+    "email": "testphone@gmail.com",
+    "salt": "fed04a298155ee59ad4da37f6c4f01ad",
+    "hash": "dbabee12950ddfb32e7fd762464eb6bf080c949d482c69c755d809f369769694",
+    "telegram_username": "testphone",
+    "created": 1790474887.496421,
+    "created_str": "2026-09-27 02:08:07 UTC",
+    "last_login": 1790474887.496421,
+    "login_count": 1,
+    "is_active": true,
+    "approved": false,
+    "is_admin": false,
+    "plan": "elite_70",
+    "winrate_target": "70-76%"
   }
 }
