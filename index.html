@@ -296,32 +296,57 @@ body.light-mode .lock-card{background:#ffffff}
             <button class="btn" id="btn-acc-signout" style="margin-top:10px">Sign Out</button>
           </div>
         </div>
-        <!-- Pure Web Control via Broker API (Exness/Deriv) - No EA -->
+        <!-- Pure Web Control via Broker API (Exness/Deriv) - No EA + Balance + Total Trades + Calendar -->
         <div class="card" style="margin-top:16px">
           <div style="font-weight:900;font-size:14px;margin-bottom:8px">🤖 ASTRO6 BOT - Pure Web Control (No EA)</div>
           <div style="font-size:11px;color:#666;margin-bottom:12px;background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%);padding:10px;border-radius:10px;border:1px solid #c7d2fe">
-            <div style="font-weight:800;color:#4f46e5">No MetaAPI, No VPS, No EA on your device - 100% web control via broker API</div>
-            <div style="margin-top:6px">1. Connect Deriv (API token) or Exness (MT5 login)<br>2. Bot auto-trades your ASTRA6 signals via HTTP (works on Render free 24/7)<br>3. No MT5 password sharing to website if using Deriv token</div>
+            <div style="font-weight:800;color:#4f46e5">No MetaAPI, No VPS, No EA - 100% web control via broker API</div>
+            <div style="margin-top:6px">1. Connect Deriv/Exness<br>2. Bot auto-trades ASTRA6 signals via HTTP (Render free 24/7)<br>3. Shows Balance, Total Trades, Calendar</div>
           </div>
-          <div id="broker-status" style="font-size:11px;margin-bottom:12px;padding:8px;background:#f5f5f5;border-radius:8px">Not connected - Connect broker for pure web control</div>
-          <div style="display:grid;gap:8px">
-            <select id="broker-select" class="input" style="margin-bottom:0">
-              <option value="deriv">Deriv (API token) - Recommended, free, works on free hosting</option>
-              <option value="exness">Exness (MT5 login/server)</option>
-            </select>
-            <input class="input" id="broker-token" type="text" placeholder="Deriv API token - get from app.deriv.com/account/api-token">
-            <input class="input" id="broker-login" type="text" placeholder="Exness MT5 Login (e.g., 12345678)" style="display:none">
-            <input class="input" id="broker-server" type="text" placeholder="Server e.g., Exness-MT5Real" style="display:none">
-            <button class="btn btn-gold btn-full" id="btn-broker-connect">🔗 Connect Broker for Pure Web Control</button>
-            <button class="btn btn-full" id="btn-broker-disconnect" style="display:none;background:#ef4444;color:#fff">❌ Disconnect Broker</button>
-            <div style="font-size:10px;color:#666;text-align:center">
-              Deriv: <a href="https://app.deriv.com/account/api-token" target="_blank" style="color:#4f46e5">Get API token</a> - Scopes: Read, Trade, Trading info<br>
-              Exness: Enter MT5 login + server - encrypted, pure web control
+          <div id="broker-status" style="font-size:11px;margin-bottom:12px;padding:8px;background:#f5f5f5;border-radius:8px">Not connected</div>
+          <!-- Balance + Total Trades + Winrate Stats -->
+          <div id="broker-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+            <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);padding:12px;border-radius:12px;text-align:center;border:1px solid #10b981">
+              <div style="font-size:10px;color:#065f46;font-weight:700">BALANCE</div>
+              <div style="font-size:18px;font-weight:900;color:#065f46" id="broker-balance">$0.00</div>
+              <div style="font-size:9px;color:#047857" id="broker-balance-pnl">+ $0.00 PnL</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);padding:12px;border-radius:12px;text-align:center;border:1px solid #3b82f6">
+              <div style="font-size:10px;color:#1e40af;font-weight:700">TOTAL TRADES</div>
+              <div style="font-size:18px;font-weight:900;color:#1e40af" id="broker-total-trades">0</div>
+              <div style="font-size:9px;color:#1d4ed8"><span id="broker-buys">0</span> BUY / <span id="broker-sells">0</span> SELL</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);padding:12px;border-radius:12px;text-align:center;border:1px solid #f59e0b">
+              <div style="font-size:10px;color:#92400e;font-weight:700">WINRATE</div>
+              <div style="font-size:18px;font-weight:900;color:#92400e" id="broker-winrate">0%</div>
+              <div style="font-size:9px;color:#b45309"><span id="broker-wins">0</span>W / <span id="broker-losses">0</span>L</div>
             </div>
           </div>
+          <div style="display:grid;gap:8px">
+            <select id="broker-select" class="input" style="margin-bottom:0">
+              <option value="deriv">Deriv (API token) - Recommended</option>
+              <option value="exness">Exness (MT5 login/server)</option>
+            </select>
+            <input class="input" id="broker-token" type="text" placeholder="Deriv API token - app.deriv.com/account/api-token">
+            <input class="input" id="broker-login" type="text" placeholder="Exness MT5 Login e.g., 12345678" style="display:none">
+            <input class="input" id="broker-server" type="text" placeholder="Server e.g., Exness-MT5Real" style="display:none">
+            <button class="btn btn-gold btn-full" id="btn-broker-connect">🔗 Connect Broker</button>
+            <button class="btn btn-full" id="btn-broker-disconnect" style="display:none;background:#ef4444;color:#fff">❌ Disconnect</button>
+          </div>
+          <!-- Calendar Trade View -->
+          <div style="margin-top:16px">
+            <div style="font-weight:800;font-size:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+              <span>📅 Calendar Trades</span>
+              <button class="btn" id="btn-calendar-refresh" style="font-size:10px;padding:4px 8px">🔄 Refresh</button>
+            </div>
+            <div id="broker-calendar" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:9px;margin-bottom:12px">
+              <div style="font-weight:800;text-align:center;padding:4px">Sun</div><div style="font-weight:800;text-align:center;padding:4px">Mon</div><div style="font-weight:800;text-align:center;padding:4px">Tue</div><div style="font-weight:800;text-align:center;padding:4px">Wed</div><div style="font-weight:800;text-align:center;padding:4px">Thu</div><div style="font-weight:800;text-align:center;padding:4px">Fri</div><div style="font-weight:800;text-align:center;padding:4px">Sat</div>
+            </div>
+            <div id="broker-calendar-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px"></div>
+          </div>
           <div style="margin-top:12px">
-            <div style="font-weight:800;font-size:12px;margin-bottom:6px">📊 Your Bot Trades (Pure Web Control)</div>
-            <div id="broker-trades-list" style="max-height:300px;overflow-y:auto;font-size:11px"><div style="padding:10px;text-align:center;color:#666">No trades yet - connect broker and bot will auto-trade</div></div>
+            <div style="font-weight:800;font-size:12px;margin-bottom:6px">📊 Recent Trades</div>
+            <div id="broker-trades-list" style="max-height:300px;overflow-y:auto;font-size:11px"><div style="padding:10px;text-align:center;color:#666">No trades yet</div></div>
           </div>
         </div>
       </div>
@@ -707,7 +732,7 @@ async function fetchAdminUsers(){
     if(listEl)listEl.innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted)">Error: ${e.message}<br>Only admin astra6render@gmail.com can access</div>`;
   }
 }
-// Pure Web Control via Broker API (Exness/Deriv) - No EA
+// Pure Web Control via Broker API + Balance + Total Trades + Calendar
 async function fetchBrokerStatus(){
   try{
     const r=await fetch('/api/broker/status',{headers:authHeaders()});
@@ -716,20 +741,84 @@ async function fetchBrokerStatus(){
     const connectBtn=document.getElementById('btn-broker-connect');
     const disconnectBtn=document.getElementById('btn-broker-disconnect');
     if(d.connected){
-      statusEl.innerHTML=`✅ Connected: <b>${d.broker.broker}</b> ${d.broker.login||''} ${d.broker.server||''}<br>Token: ${d.broker.api_token_masked||'***'}<br><span style="color:green">● Bot Active - Pure web control, no EA, works 24/7 free</span>`;
+      statusEl.innerHTML=`✅ Connected: <b>${d.broker.broker}</b> ${d.broker.login||''} ${d.broker.server||''}<br>Token: ${d.broker.api_token_masked||'***'}<br><span style="color:green">● Bot Active - Pure web control, no EA, 24/7 free</span>`;
       statusEl.style.background='#d1fae5';
       if(connectBtn)connectBtn.style.display='none';
       if(disconnectBtn)disconnectBtn.style.display='block';
+      fetchBrokerStats();
       fetchBrokerTrades();
+      fetchBrokerCalendar();
     } else {
-      statusEl.textContent=d.message||'Not connected';
+      statusEl.textContent=d.message||'Not connected - Connect Deriv/Exness for pure web control + balance, total trades, calendar';
       statusEl.style.background='#f5f5f5';
       if(connectBtn)connectBtn.style.display='block';
       if(disconnectBtn)disconnectBtn.style.display='none';
+      // Reset stats
+      document.getElementById('broker-balance').textContent='$0.00';
+      document.getElementById('broker-total-trades').textContent='0';
+      document.getElementById('broker-winrate').textContent='0%';
     }
   }catch(e){
     console.log('broker status error',e);
   }
+}
+async function fetchBrokerStats(){
+  try{
+    const r=await fetch('/api/broker/stats',{headers:authHeaders()});
+    const d=await r.json();
+    if(d.status==='ok'){
+      document.getElementById('broker-balance').textContent=`$${d.balance.toFixed(2)}`;
+      document.getElementById('broker-balance-pnl').textContent=`${d.total_pnl>=0?'+':''} $${d.total_pnl.toFixed(2)} PnL`;
+      document.getElementById('broker-balance-pnl').style.color=d.total_pnl>=0?'#065f46':'#991b1b';
+      document.getElementById('broker-total-trades').textContent=d.total_trades;
+      document.getElementById('broker-buys').textContent=d.buys;
+      document.getElementById('broker-sells').textContent=d.sells;
+      document.getElementById('broker-winrate').textContent=`${d.winrate}%`;
+      document.getElementById('broker-wins').textContent=d.wins;
+      document.getElementById('broker-losses').textContent=d.losses;
+    }
+  }catch(e){console.log('stats error',e);}
+}
+async function fetchBrokerCalendar(){
+  try{
+    const r=await fetch('/api/broker/calendar',{headers:authHeaders()});
+    const d=await r.json();
+    const container=document.getElementById('broker-calendar-days');
+    if(!container)return;
+    if(!d.calendar || Object.keys(d.calendar).length===0){
+      container.innerHTML='<div style="grid-column:1/8;padding:20px;text-align:center;color:#666">No trades yet - calendar will show daily trades</div>';
+      return;
+    }
+    // Build calendar for current month
+    const now=new Date();
+    const year=now.getFullYear(), month=now.getMonth();
+    const firstDay=new Date(year, month, 1).getDay();
+    const daysInMonth=new Date(year, month+1, 0).getDate();
+    let html='';
+    // Empty cells before first day
+    for(let i=0;i<firstDay;i++) html+=`<div style="padding:8px"></div>`;
+    // Days
+    for(let day=1; day<=daysInMonth; day++){
+      const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const dayData=d.calendar[dateStr];
+      if(dayData){
+        const pnlColor=dayData.pnl>=0?'#065f46':'#991b1b';
+        const bg=dayData.pnl>=0?'#d1fae5':'#fee2e2';
+        html+=`<div style="background:${bg};border:1px solid ${dayData.pnl>=0?'#10b981':'#ef4444'};border-radius:8px;padding:6px;text-align:center;cursor:pointer" title="${dateStr}: ${dayData.total} trades, PnL $${dayData.pnl}">
+          <div style="font-weight:800;font-size:11px">${day}</div>
+          <div style="font-size:8px;color:${pnlColor}">${dayData.total} trades</div>
+          <div style="font-size:8px;font-weight:700;color:${pnlColor}">${dayData.pnl>=0?'+':''}$${dayData.pnl}</div>
+        </div>`;
+      } else {
+        const isToday=day===now.getDate();
+        html+=`<div style="background:${isToday?'#e0e7ff':'#fff'};border:1px solid ${isToday?'#6366f1':'#e5e7eb'};border-radius:8px;padding:6px;text-align:center">
+          <div style="font-size:11px;font-weight:${isToday?'800':'400'};color:${isToday?'#4f46e5':'#666'}">${day}</div>
+          <div style="font-size:7px;color:#999">-</div>
+        </div>`;
+      }
+    }
+    container.innerHTML=html;
+  }catch(e){console.log('calendar error',e);}
 }
 async function connectBroker(){
   const broker=document.getElementById('broker-select').value;
