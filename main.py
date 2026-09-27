@@ -254,7 +254,7 @@ def get_current_user(authorization: str = Header(None)):
     d = get_token_data(authorization)
     return d["email"] if d else None
 
-ADMIN_EMAIL = "theoksovanrathanak@gmail.com"
+ADMIN_EMAIL = "astra6render@gmail.com"  # Changed from theoksovanrathanak@gmail.com to astra6render@gmail.com per user request
 
 def is_admin(email):
     return email and email.lower().strip() == ADMIN_EMAIL.lower()
@@ -267,7 +267,7 @@ def require_auth(authorization: str = Header(None)):
 def require_admin(authorization: str = Header(None)):
     email = get_current_user(authorization)
     if not email: raise HTTPException(status_code=401, detail="Sign in required")
-    if not is_admin(email): raise HTTPException(status_code=403, detail="Admin only - theoksovanrathanak@gmail.com")
+    if not is_admin(email): raise HTTPException(status_code=403, detail="Admin only - astra6render@gmail.com")
     return email
 
 def require_approved_auth(authorization: str = Header(None)):
@@ -1318,7 +1318,7 @@ def signup(req: AuthRequest):
     token, tdata = create_token(user["email"])
     approved = user.get("approved", False)
     is_admin_user = is_admin(user["email"])
-    msg = "Account created - Admin access" if is_admin_user else ("Account created - Approved, access signals" if approved else "Account created - Pending admin approval, contact admin theoksovanrathanak@gmail.com")
+    msg = "Account created - Admin access" if is_admin_user else ("Account created - Approved, access signals" if approved else "Account created - Pending admin approval, contact admin astra6render@gmail.com")
     return {"status":"ok","email": user["email"], "token": token, "message": msg, "created": user["created"], "expires": tdata["expires"], "approved": approved, "is_admin": is_admin_user}
 
 @app.post("/api/auth/signin")
@@ -1610,7 +1610,7 @@ def list_contacts(authorization: str = Header(None)):
     contacts = load_contacts()
     return {"status":"ok","count": len(contacts), "contacts": contacts[-20:]}
 
-# ADMIN - only theoksovanrathanak@gmail.com
+# ADMIN - only astra6render@gmail.com (changed from theoksovanrathanak@gmail.com)
 @app.get("/api/admin/users")
 def admin_list_users(email: str = Depends(require_admin)):
     users = load_users()
