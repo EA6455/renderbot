@@ -1290,62 +1290,7 @@ def auto_trade_all_brokers(signal_type, symbol, price, sl, tp, lot=0.01):
                 continue
             broker = acc.get("broker")
             try:
-                if broker == "deriv":
-                    import websocket
-                    import json as js
-                    api_token = acc.get("api_token","")
-                    if not api_token:
-                        continue
-                    ws_url = "wss://ws.binaryws.com/websockets/v3?app_id=1089"
-                    ws = websocket.create_connection(ws_url, timeout=10)
-                    ws.send(js.dumps({"authorize": api_token}))
-                    auth_resp = js.loads(ws.recv())
-                    if auth_resp.get("error"):
-                        print(f"Deriv auth failed for {email}: {auth_resp['error']}")
-                        ws.close()
-                        continue
-                    deriv_symbol = "frxXAUUSD" if "XAU" in symbol else symbol
-                    proposal = {
-                        "proposal": 1,
-                        "amount": float(lot) * 10,
-                        "basis": "stake",
-                        "contract_type": "CALL" if signal_type == "BUY" else "PUT",
-                        "currency": "USD",
-                        "duration": 5,
-                        "duration_unit": "m",
-                        "symbol": deriv_symbol
-                    }
-                    ws.send(js.dumps(proposal))
-                    prop_resp = js.loads(ws.recv())
-                    if "proposal" in prop_resp:
-                        buy_req = {"buy": prop_resp["proposal"]["id"], "price": prop_resp["proposal"]["ask_price"]}
-                        ws.send(js.dumps(buy_req))
-                        buy_resp = js.loads(ws.recv())
-                        print(f"✅ Auto Deriv {signal_type} for {email}: {buy_resp}")
-                        trades_file = Path(BROKER_TRADES_FILE)
-                        trades = []
-                        if trades_file.exists():
-                            try:
-                                trades = json.loads(trades_file.read_text())
-                            except:
-                                pass
-                        entry = {
-                            "id": buy_resp.get("buy",{}).get("contract_id", str(time.time())),
-                            "email": email,
-                            "broker": "deriv",
-                            "type": signal_type,
-                            "symbol": deriv_symbol,
-                            "lot": lot,
-                            "price": price,
-                            "result": buy_resp,
-                            "time": time.time(),
-                            "time_str": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                            "via": "Auto ASTRA6 via Deriv WebSocket"
-                        }
-                        trades.append(entry)
-                        trades_file.write_text(json.dumps(trades[-500:], indent=2))
-                    ws.close()
-                elif broker == "exness":
+                if broker == "exness":  # Exness-only
                     login = acc.get("login","")
                     server = acc.get("server","")
                     password = acc.get("password","")
@@ -1966,24 +1911,17 @@ def deriv_oauth_callback(request: Request):
 def broker_info():
 
     return {
-        "brokers": ["deriv", "exness"],
-        "description": "Pure web control via broker API - REAL trading, No EA, No MetaAPI, No VPS, works on Render free 24/7 via HTTP/WSS",
+        "brokers": ["exness"],
+        "description": "ASTRA6 BOT - Exness MT5 only - User gives Server/Login/Password, bot auto-trades via MT5 Direct, No EA, No MetaAPI, No VPS, 24/7 free",
         "how_it_works": [
-            "1. User goes to Account -> Connect Broker (Deriv/Exness)",
-            "2. Deriv: Click 'Get Deriv Token via OAuth' button OR paste token from app.deriv.com/account/api-token (if blocked, use OAuth) | Exness: login + server + MT5 password",
-            "3. Website stores encrypted, never returns token/password",
-            "4. Bot auto-trades REAL via Deriv WebSocket wss://ws.binaryws.com or Exness MT5 Direct via MetaTrader5 library",
-            "5. Works 24/7 free via self-ping + GitHub Actions + UptimeRobot m804098585",
-            "6. Shows REAL balance, total trades, calendar with daily PnL"
+            "1. User goes to 🤖 ASTRA6 BOT tab in hamburger menu (☰)",
+            "2. User gives Exness MT5 Server, Login, Password - encrypted, for auto trading",
+            "3. Website stores encrypted, never returns password",
+            "4. Bot auto-trades REAL via Exness MT5 Direct: mt5.initialize(login, server, password) + order_send()",
+            "5. Works 24/7 free via self-ping + GitHub Actions + UptimeRobot",
+            "6. Shows REAL balance via account_info().balance, total trades, calendar with daily PnL"
         ],
-        "deriv_alternatives": [
-            "If https://app.deriv.com/account/api-token blocked:",
-            "1. Use OAuth button in ASTRA6 Account page - auto gets token via Deriv OAuth",
-            "2. Try https://app.deriv.com/account/security/api-token",
-            "3. Try https://deriv.com -> Login -> Account Settings -> Security -> API Token",
-            "4. Use Deriv mobile app -> Account -> Security -> API Token",
-            "5. Go to https://developers.deriv.com -> Create app -> Get token"
-        ],
+        "exness_only": True,
         "deriv": {
             "how_to_get_token": "Go to https://app.deriv.com/account/api-token -> Create New Token -> Scopes: Read, Trade, Trading information -> Copy token",
             "api_docs": "https://api.deriv.com",

@@ -321,11 +321,15 @@ body.light-mode .lock-card{background:#ffffff}
               <option value="exness">Exness (MT5 login/server)</option>
             </select>
             <input class="input" id="broker-token" type="text" placeholder="Deriv API token - app.deriv.com/account/api-token">
-            <input class="input" id="broker-login" type="text" placeholder="Exness MT5 Login e.g., 12345678" style="display:none">
-            <input class="input" id="broker-server" type="text" placeholder="Server e.g., Exness-MT5Real5" style="display:none">
-            <input class="input" id="broker-password" type="password" placeholder="Exness MT5 Password (for REAL trading - encrypted)" style="display:none">
-            <div id="exness-real-note" style="display:none;font-size:10px;color:#666;margin:2px 0">🔒 REAL Exness via MT5 Direct mt5.initialize + order_send - Deriv REAL works now free via WebSocket</div>
-            <button class="btn btn-gold btn-full" id="btn-broker-connect">🔗 Connect Broker</button>
+            <div style="background:linear-gradient(135deg,#dbeafe,#ede9fe);padding:10px;border-radius:10px;margin:5px 0;border:1px solid #c7d2fe">
+              <div style="font-weight:800;color:#4f46e5;font-size:12px">🔒 Exness MT5 - Server/Login/Password for Auto Trading</div>
+              <div style="font-size:10px;color:#666;margin-top:4px">User gives Server, Login, Password → ASTRA6 BOT automatically trades via MT5 Direct</div>
+            </div>
+            <input class="input" id="broker-server" type="text" placeholder="Server: Exness-MT5Real5 (check MT5 → File → Login → Server)" style="display:block">
+            <input class="input" id="broker-login" type="text" placeholder="Login: 463980664 (MT5 trading account)" style="display:block">
+            <input class="input" id="broker-password" type="password" placeholder="Password: MT5 trading password (encrypted)" style="display:block">
+            <div id="exness-real-note" style="display:block;font-size:10px;color:#065f46;margin:4px 0;background:#d1fae5;padding:6px;border-radius:6px">✅ REAL Exness via MT5 Direct - auto trading, REAL balance, total trades, calendar</div>
+            <button class="btn btn-gold btn-full" id="btn-broker-connect">🔗 Connect Exness MT5</button>
             <button class="btn btn-full" id="btn-broker-disconnect" style="display:none;background:#ef4444;color:#fff">❌ Disconnect</button>
           </div>
           <!-- Calendar Trade View -->
@@ -829,8 +833,8 @@ async function fetchBrokerCalendar(){
   }catch(e){console.log('calendar error',e);}
 }
 async function connectBroker(){
-  const broker=document.getElementById('broker-select').value;
-  const token=document.getElementById('broker-token').value.trim();
+  const broker='exness';
+  const token='';
   const login=document.getElementById('broker-login').value.trim();
   const server=document.getElementById('broker-server').value.trim();
   const password=document.getElementById('broker-password')?.value?.trim()||'';
