@@ -21,28 +21,28 @@
 <link rel="apple-touch-icon" href="/logo.png">
 <style>
 :root{
-  --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --bg: #ffffff;
   --bg-solid: #f8f9ff;
   --card: #ffffff;
   --card2: #f0f4ff;
   --border: #e0e7ff;
   --gold: #f59e0b;
   --gold-light: #fef3c7;
-  --gold-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  --gold-gradient: #f59e0b;
   --green: #10b981;
   --green-light: #d1fae5;
-  --green-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  --green-gradient: #10b981;
   --red: #ef4444;
   --red-light: #fee2e2;
-  --red-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+  --red-gradient: #ef4444;
   --blue: #3b82f6;
   --blue-light: #dbeafe;
-  --blue-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  --blue-gradient: #3b82f6;
   --purple: #8b5cf6;
   --purple-light: #ede9fe;
-  --purple-gradient: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  --purple-gradient: #8b5cf6;
   --pink: #ec4899;
-  --pink-gradient: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+  --pink-gradient: #ec4899;
   --text: #1f2937;
   --muted: #6b7280;
   --active: #e0e7ff;
@@ -115,7 +115,7 @@ body.light-mode .lock-card{background:#ffffff}
 .qr-img{width:260px;height:260px;max-width:80vw;max-height:80vw;border-radius:20px;background:#fff;padding:12px;border:2px solid var(--border);margin:16px auto;display:block}
 .auth-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:20000;padding:20px}
 .auth-modal.active{display:flex}
-.auth-box{background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:24px;width:100%;max-width:360px;box-shadow:0 4px 12px rgba(0,0,0,0.1);position:relative;overflow:hidden}.auth-box::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c)}
+.auth-box{background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:24px;width:100%;max-width:360px;box-shadow:0 4px 12px rgba(0,0,0,0.1);position:relative;overflow:hidden}.auth-box::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background: #f59e0b}
 .auth-tabs{display:flex;gap:8px;margin-bottom:20px}
 .tab{flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;text-align:center;min-height:44px}
 .tab.active{background:var(--gold);color:#000;border-color:var(--gold)}
@@ -148,13 +148,13 @@ body.light-mode .lock-card{background:#ffffff}
 .btn{background:#111827;color:#fff;border:none;transition: all 0.2s}
 .btn:hover{transform: translateY(-1px);box-shadow: 0 6px 20px rgba(102,126,234,0.5)}
 #oanda_chart{border-radius:12px;overflow:hidden}
-.info-bar{background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%) !important;color:#4f46e5 !important;font-weight:600}
-.sltp-box{background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%) !important;border:1px solid #e0e7ff !important;box-shadow: 0 2px 8px rgba(102,126,234,0.1)}
+.info-bar{background: #f9fafb !important;color:#4f46e5 !important;font-weight:600}
+.sltp-box{background: #ffffff !important;border:1px solid #e0e7ff !important;box-shadow: 0 1px 3px rgba(0,0,0,0.1)}
 .signal-type{filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1))}
-.view h2, .view h3{background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);-webkit-background-clip: text;-webkit-text-fill-color: transparent;background-clip: text;font-weight:900}
-#ladder-dropdown{background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%) !important;border:2px solid #e0e7ff !important;box-shadow: 0 20px 60px rgba(102,126,234,0.2) !important}
-.nav-item:hover{background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%) !important;color:#4f46e5 !important}
-.qr-img{border:3px solid transparent !important;background: linear-gradient(white, white) padding-box, linear-gradient(135deg, #667eea, #764ba2, #f093fb) border-box !important;box-shadow: 0 8px 32px rgba(102,126,234,0.2)}
+.view h2, .view h3{color:#111827;font-weight:900}
+#ladder-dropdown{background: #ffffff !important;border:2px solid #e0e7ff !important;box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important}
+.nav-item:hover{background: #f3f4f6 !important;color:#4f46e5 !important}
+.qr-img{border:3px solid transparent !important;background: #ffffff !important;border:1px solid #e5e7eb !important;box-shadow: 0 2px 8px rgba(0,0,0,0.1)}
 
 </style>
 </head>
@@ -181,8 +181,8 @@ body.light-mode .lock-card{background:#ffffff}
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:relative">
       <!-- Direct Sign In button - always visible, easy login, website not die hard to login -->
-      <button class="btn btn-gold" id="topbar-signin-btn" style="display:none" style="padding:8px 14px;font-weight:900;font-size:13px;display:flex" onclick="openAuth('signin')">🔐 Sign In</button>
-      <button class="btn" id="topbar-signup-btn" style="display:none" style="padding:8px 14px;font-weight:700;font-size:13px;background:#fff;border:2px solid #000;display:flex" onclick="openAuth('signup')">📝 Sign Up</button>
+      <button class="btn btn-gold" id="topbar-signin-btn" style="display:none !important" style="padding:8px 14px;font-weight:900;font-size:13px;display:flex" onclick="openAuth('signin')">🔐 Sign In</button>
+      <button class="btn" id="topbar-signup-btn" style="display:none !important" style="padding:8px 14px;font-weight:700;font-size:13px;background:#fff;border:2px solid #000;display:flex" onclick="openAuth('signup')">📝 Sign Up</button>
       <!-- Removed theme, refresh, sound buttons per user request - ☀️🔄🔔 removed -->
       <!-- Hamburger line button top right - click to show ladder -->
       <button class="btn" id="ladder-menu-btn" title="Menu" style="font-size:20px;padding:8px 14px;min-width:44px">☰</button>
@@ -228,7 +228,7 @@ body.light-mode .lock-card{background:#ffffff}
       <div class="card">
         <div style="font-weight:900;font-size:14px;margin-bottom:12px">🚨 Alerts</div>
         <div id="alerts-list" style="max-height:500px;overflow-y:auto">
-          <div style="font-size:12px;color:var(--muted);padding:20px;text-align:center">Loading signals... Free access, no login needed<br><button class="btn btn-gold" style="margin-top:10px" id="btn-signin-alert">Sign In</button></div>
+          <div style="font-size:12px;color:var(--muted);padding:20px;text-align:center">Loading signals... Free access, no login needed<br></div>
         </div>
       </div>
           </div>
@@ -251,7 +251,7 @@ body.light-mode .lock-card{background:#ffffff}
           </div>
           <div class="mono" style="font-size:10px;color:var(--muted)" id="chart-tf-label">M15 • Live</div>
         </div>
-        <div id="oanda_chart" style="display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Chart loads after sign in • All devices</div>
+        <div id="oanda_chart" style="display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Loading chart • Free access</div>
         <div class="info-bar"><span>ASTRA6 CHART • <span id="chart-info-tf">M15</span> • Easy • All devices</span><span class="mono" id="chart-candle-count">--</span></div>
               </div>
     </div>
