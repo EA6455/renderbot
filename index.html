@@ -239,9 +239,18 @@ body.light-mode .lock-card{background:#ffffff}
             <div style="font-size:32px;font-weight:900;background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);-webkit-background-clip: text;-webkit-text-fill-color: transparent;background-clip: text;letter-spacing:1px">ASTRA6</div>
           </div>
           <div style="font-size:28px;font-weight:900;text-align:center;margin-bottom:20px;background: linear-gradient(135deg, #1f2937 0%, #4f46e5 100%);-webkit-background-clip: text;-webkit-text-fill-color: transparent">Welcome to ASTRA6</div>
-          <div style="display:flex;gap:12px;margin-top:20px">
-            <button class="btn" style="flex:1;padding:14px;font-size:15px;font-weight:800;background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);color:#4f46e5;border:2px solid #e0e7ff;border-radius:12px;box-shadow: 0 4px 12px rgba(102,126,234,0.15)" id="btn-dash-signin">🔑 Log In</button>
-            <button class="btn btn-gold" style="flex:1;padding:14px;font-size:15px;font-weight:800;background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);color:#fff;border:none;border-radius:12px;box-shadow: 0 6px 20px rgba(245,158,11,0.4)" id="btn-dash-signup">📝 Sign Up</button>
+          <!-- Direct login form - appears immediately, no modal needed - FIX for user report -->
+          <div style="background:#fff;border:2px solid #667eea;border-radius:14px;padding:16px;margin-bottom:16px">
+            <div style="font-weight:800;font-size:13px;margin-bottom:10px;color:#4f46e5">🔐 Direct Login - Type Email & Password Here</div>
+            <input class="input" id="dash-email" type="email" placeholder="Email: astra6render@gmail.com" style="margin-bottom:8px;padding:12px;border:2px solid #000;border-radius:10px;font-size:14px">
+            <input class="input" id="dash-password" type="password" placeholder="Password: admin123" style="margin-bottom:8px;padding:12px;border:2px solid #000;border-radius:10px;font-size:14px">
+            <button class="btn btn-gold" id="btn-dash-direct-signin" style="width:100%;padding:14px;font-weight:900;font-size:15px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;border:none;border-radius:12px" onclick="directDashSignIn()">🔐 Sign In - Direct (Works All Devices)</button>
+            <div id="dash-login-status" style="font-size:12px;margin-top:8px"></div>
+            <div style="font-size:10px;color:#666;margin-top:6px">If modal fails, use this direct form. Also try <a href="/login.html" style="color:#4f46e5;font-weight:800">/login.html</a> or <a href="/simple-login.html" style="color:#dc2626;font-weight:800">/simple-login.html</a></div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:10px">
+            <button class="btn" style="flex:1;padding:12px;font-size:13px;font-weight:700;background:#fff;color:#4f46e5;border:2px solid #e0e7ff;border-radius:10px" id="btn-dash-signin">🔑 Log In (Modal)</button>
+            <button class="btn btn-gold" style="flex:1;padding:12px;font-size:13px;font-weight:700" id="btn-dash-signup">📝 Sign Up (Modal)</button>
           </div>
           <div style="text-align:center;margin-top:14px;font-size:10px;color:#9ca3af">
             <div>Contact: <a href="https://t.me/ASTRA6RENDER" target="_blank" style="color:#4f46e5;font-weight:700">@ASTRA6RENDER</a> • <a href="https://t.me/astra6renderbot" target="_blank" style="color:#0088cc;font-weight:700">@astra6renderbot</a></div>
@@ -360,9 +369,9 @@ body.light-mode .lock-card{background:#ffffff}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-weight:900;font-size:16px" id="auth-title">Sign In</div><button class="btn" id="btn-close-auth" style="padding:6px 12px">✕</button></div>
     <div class="auth-tabs"><div class="tab active" id="tab-signin">Sign In</div><div class="tab" id="tab-signup">Sign Up</div></div>
     
-    <input class="input" id="email" type="email" placeholder="Email">
+    <input class="input" id="email" type="email" placeholder="Email: astra6render@gmail.com" value="astra6render@gmail.com">
     <input class="input" id="telegram-username" type="text" placeholder="Telegram username (optional, for reset via Telegram)" style="display:none">
-    <input class="input" id="password" type="password" placeholder="Password (min 6 chars)">
+    <input class="input" id="password" type="password" placeholder="Password: admin123" value="admin123">
     <button class="btn btn-gold btn-full" id="auth-submit" style="padding:13px;margin-top:4px">Sign In</button>
     <div id="telegram-hint" style="display:none;font-size:10px;color:#666;margin-top:6px">For password reset via Telegram @ASTRA6RENDER - works even when Gmail blocked on Render free</div>
     <div style="text-align:center;margin-top:12px">
@@ -1007,6 +1016,36 @@ async function adminEnable(email){
     fetchAdminUsers();
   }catch(e){alert('Error: '+e.message);}
 }
+
+
+async function directDashSignIn(){
+  const email=document.getElementById('dash-email')?.value.trim() || '';
+  const pass=document.getElementById('dash-password')?.value || '';
+  const status=document.getElementById('dash-login-status');
+  if(!email||!pass){ if(status) status.innerHTML='<span style="color:red">❌ Enter email and password</span>'; return; }
+  if(status) status.innerHTML='⏳ Signing in...';
+  try{
+    console.log('Direct dash signin',email);
+    const r=await fetch('/api/auth/signin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    console.log('Dash signin response',r.status);
+    let d;
+    try{
+      const txt=await r.text();
+      console.log('Dash response text',txt.substring(0,500));
+      d=JSON.parse(txt);
+    }catch(e){
+      throw new Error('Server non-JSON (Cloudflare?) - try /login.html');
+    }
+    if(!r.ok) throw new Error(d.detail||'Failed');
+    setToken(d.token,d.email);
+    if(status) status.innerHTML='<span style="color:green">✅ Signed in as '+d.email+' - redirecting...</span>';
+    setTimeout(()=>{ checkAuth(); showView('dashboard'); }, 800);
+  }catch(e){
+    console.error('Direct dash signin error',e);
+    if(status) status.innerHTML='<span style="color:red">❌ '+e.message+'<br>Try /login.html or /simple-login.html</span>';
+  }
+}
+
 
 function toggleSound(){soundOn=!soundOn;const b=document.getElementById('sound-btn');if(b)b.textContent=soundOn?'🔔':'🔕';localStorage.setItem('astra6_sound',soundOn?'1':'0');}
 function toggleTheme(){
