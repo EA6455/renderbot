@@ -314,6 +314,7 @@ body.light-mode .lock-card{background:#ffffff}
           <div style="font-weight:800;color:#92400e">ℹ️ Login Info:</div>
           <div>Website login: Email + Password (e.g. astra6render@gmail.com / admin123)</div>
           <div>Exness server login (BOT) removed per your request</div>
+          <div>If direct form fails, use <a href="/login.html" style="font-weight:900;color:#000">/login.html - Simple login all devices</a></div>
           <div>If you need Exness server login back for REAL exact balance, let me know</div>
         </div>
       </div>
@@ -395,6 +396,13 @@ body.light-mode .lock-card{background:#ffffff}
 <script>
 // SIMPLE WORKING JS - NO EXTERNAL DEPS - ALL DEVICES
 console.log('ASTRA6 loading...');
+// Global error handler for all devices
+window.onerror=function(msg,url,line,col,error){
+  console.error('Global error:',msg,url,line);
+  const errEl=document.getElementById('auth-error');
+  if(errEl){ errEl.textContent='JS Error: '+msg+' - try /login.html'; errEl.style.display='block'; }
+  return false;
+};
 let currentTab='signin', currentView='dashboard', soundOn=true, lastAlertId=null, currentTF='M15';
 let chart=null, candleSeries=null, lastCandles=[];
 

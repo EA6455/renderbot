@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASTRA6 Login - All Devices</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#f5f5f5;padding:20px;max-width:400px;margin:0 auto}
+.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,0.1)}
+.input{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;font-size:14px}
+.btn{width:100%;padding:12px;background:#000;color:#fff;border:none;border-radius:8px;font-weight:900;cursor:pointer}
+.btn-gold{background:linear-gradient(135deg,#f59e0b,#fbbf24)}
+.status{margin-top:12px;padding:10px;border-radius:8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>🔐 ASTRA6 Login - All Devices</h2>
+<p style="font-size:12px;color:#666">Works on mobile, desktop, all browsers. Direct API call.</p>
+<input class="input" id="email" type="email" placeholder="Email: astra6render@gmail.com" value="astra6render@gmail.com">
+<input class="input" id="password" type="password" placeholder="Password" value="admin123">
+<button class="btn btn-gold" onclick="login()">🔐 Sign In - All Devices</button>
+<div id="status" class="status" style="display:none"></div>
+<div style="margin-top:16px;font-size:11px;color:#666">
+<p><b>Website login:</b> astra6render@gmail.com / admin123</p>
+<p><b>API:</b> POST /api/auth/signin</p>
+<p><a href="/">← Back to main site</a></p>
+</div>
+</div>
+<script>
+async function login(){
+  const email=document.getElementById('email').value.trim();
+  const pass=document.getElementById('password').value;
+  const status=document.getElementById('status');
+  status.style.display='block';
+  status.style.background='#e0f2fe';
+  status.textContent='⏳ Signing in...';
+  try{
+    const r=await fetch('/api/auth/signin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Failed');
+    localStorage.setItem('astra6_token',d.token);
+    localStorage.setItem('astra6_email',d.email);
+    status.style.background='#d1fae5';
+    status.innerHTML=`✅ Signed in as <b>${d.email}</b><br>Token: ${d.token.substring(0,20)}...<br><br><a href="/" style="font-weight:900">→ Go to Dashboard</a><br><br>Token saved in localStorage, works all devices.`;
+  }catch(e){
+    status.style.background='#fee2e2';
+    status.textContent='❌ '+e.message;
+  }
+}
+// Auto-fill from query params if present
+const params=new URLSearchParams(location.search);
+if(params.get('email')) document.getElementById('email').value=params.get('email');
+</script>
+</body>
+</html>
