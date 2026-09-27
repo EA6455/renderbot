@@ -208,7 +208,7 @@ body.light-mode .lock-card{background:#ffffff}
       <div class="signal-card hold" id="current-signal-card" style="margin-bottom:14px;border:2px solid #000">
         <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:8px">
           <img src="/logo.png" alt="ASTRA6 Logo" style="height:32px;width:auto">
-          <div class="mono" style="font-size:10px;font-weight:900;letter-spacing:1px">ASTRA6 ELITE</div>
+          <div class="mono" style="font-size:10px;font-weight:900;letter-spacing:1px">ASTRA6 ELITE • HUMAN + AI</div>
         </div>
         <div class="signal-type hold" id="sig-type">--</div>
         <div style="display:flex;justify-content:center;gap:20px;margin-top:14px;flex-wrap:wrap">
@@ -216,7 +216,10 @@ body.light-mode .lock-card{background:#ffffff}
           <div><div class="label">Confidence</div><div class="mono" id="sig-conf" style="font-size:16px;font-weight:800">--%</div></div>
           <div><div class="label">Winrate</div><div class="mono" id="sig-winrate" style="font-size:16px;font-weight:800;color:#000">--%</div></div>
         </div>
-        
+        <div id="sig-sltp" style="display:flex;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap"></div>
+        <div id="sig-reasons" style="font-size:11px;margin-top:8px;color:#333"></div>
+        <div id="sig-ai" style="margin-top:10px;padding:10px;border-radius:10px;font-size:11px;display:none;background:linear-gradient(135deg,#f0f4ff,#fff);border:1px solid #c7d2fe"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:9px;color:#666"><span id="sig-time">--</span><a href="#" onclick="fetchAIStatus();return false" style="color:#4f46e5;font-weight:800">🤖 AI Status</a></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
         <div class="card" style="text-align:center;padding:14px"><div class="label">Alerts</div><div class="mono" id="stat-total" style="font-size:20px;font-weight:900">0</div></div>
@@ -1368,6 +1371,20 @@ function renderCurrent(s){
   }
   const sr=document.getElementById('sig-reasons');if(sr)sr.textContent=s.reasons[0]||'High confluence sniper entry';
   const sl=document.getElementById('stat-last');if(sl)sl.textContent=s.type+' • '+new Date(s.timestamp*1000).toLocaleTimeString();
+  // AI display from pythonidae
+  const aiEl=document.getElementById('sig-ai');
+  if(aiEl){
+    if(s.ai_signal){
+      const ai=s.ai_signal;
+      aiEl.style.display='block';
+      aiEl.innerHTML=`🤖 AI: <b>${ai.type}</b> ${ai.confidence}% (RF ${ai.rf_conf}% GB ${ai.gb_conf}%) • Winrate ${ai.winrate_est}% • ${ai.ensemble_proba.BUY}% BUY ${ai.ensemble_proba.SELL}% SELL ${ai.ensemble_proba.HOLD}% HOLD`;
+      aiEl.style.background = ai.type==='BUY' ? 'rgba(34,197,94,0.15)' : ai.type==='SELL' ? 'rgba(239,68,68,0.15)' : 'rgba(100,100,100,0.1)';
+      aiEl.style.border = ai.type==='BUY' ? '1px solid #10b981' : ai.type==='SELL' ? '1px solid #ef4444' : '1px solid #ccc';
+    } else {
+      aiEl.style.display='block';
+      aiEl.innerHTML=`🤖 AI: Training from pythonidae libs (scikit-learn) - 75%+ winrate target • <a href="#" onclick="fetchAIStatus();return false" style="color:#4f46e5">Check AI Status</a>`;
+    }
+  }
 }
 
 function renderAlerts(alerts){

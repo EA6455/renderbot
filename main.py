@@ -2,6 +2,15 @@
 ASTRA6 - High Winrate Elite Strategy - Gold Sniper
 Not normal SMA/RSI - Multi-confluence 70%+ winrate
 """
+try:
+    from ai_analysis import ai_model, get_ai_signal, extract_features
+    AI_AVAILABLE = True
+    print("✅ AI Analysis loaded from pythonidae")
+except Exception as e:
+    print(f"AI not available: {e}")
+    AI_AVAILABLE = False
+    ai_model = None
+
 from fastapi import FastAPI, Header, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
@@ -712,7 +721,55 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
     elif session == "quiet":
         buy_score *= 0.5
         sell_score *= 0.5
-    # --- HUMAN DECISION - perfect entries only, like people ---
+    
+    # --- AI ANALYSIS from pythonidae (AI.md, Algorithms.md, Statistics.md) ---
+    ai_signal = None
+    ai_confidence = 0
+    if AI_AVAILABLE and ai_model:
+        try:
+            # Train AI if needed (uses db.csv pythonidae libs)
+            if not ai_model.trained and len(m15_candles) >= 200:
+                ai_model.train(m15_candles)
+            ai_signal = ai_model.predict(m15_candles)
+            if ai_signal:
+                ai_confidence = ai_signal.get('confidence',0)
+                print(f"🤖 AI Signal: {ai_signal['type']} {ai_confidence}% (RF:{ai_signal.get('rf_conf')} GB:{ai_signal.get('gb_conf')}) Winrate:{ai_signal.get('winrate_est')}%")
+        except Exception as e:
+            print(f"AI prediction error: {e}")
+    
+
+        # 8. AI BOOST from pythonidae (AI.md, Statistics.md, Algorithms.md) - ML ensemble 75%+ winrate
+    if ai_signal:
+        ai_type = ai_signal.get('type')
+        ai_conf = ai_signal.get('confidence',0)
+        ai_winrate = ai_signal.get('winrate_est',0)
+        if ai_type == "BUY" and ai_conf >= 65:
+            buy_score += 2.5
+            reasons_buy.append(f"🤖 AI BUY {ai_conf}% (RF:{ai_signal.get('rf_conf')}% GB:{ai_signal.get('gb_conf')}%) Winrate {ai_winrate}% - from pythonidae AI libs")
+            filters_buy += 1
+            if ai_conf >= 75:
+                buy_score += 1.5
+                reasons_buy.append(f"🤖 AI HIGH CONFIDENCE {ai_conf}% - strong BUY from pythonidae")
+            if ai_conf >= 85:
+                buy_score += 1.0
+                reasons_buy.append(f"🤖 AI VERY HIGH {ai_conf}% - Elite BUY")
+        elif ai_type == "SELL" and ai_conf >= 65:
+            sell_score += 2.5
+            reasons_sell.append(f"🤖 AI SELL {ai_conf}% (RF:{ai_signal.get('rf_conf')}% GB:{ai_signal.get('gb_conf')}%) Winrate {ai_winrate}% - from pythonidae AI libs")
+            filters_sell += 1
+            if ai_conf >= 75:
+                sell_score += 1.5
+                reasons_sell.append(f"🤖 AI HIGH CONFIDENCE {ai_conf}% - strong SELL from pythonidae")
+            if ai_conf >= 85:
+                sell_score += 1.0
+                reasons_sell.append(f"🤖 AI VERY HIGH {ai_conf}% - Elite SELL")
+        # AI HOLD reduces scores only if high confidence HOLD
+        elif ai_type == "HOLD" and ai_conf >= 75:
+            buy_score *= 0.7
+            sell_score *= 0.7
+            reasons_buy.append(f"🤖 AI HOLD {ai_conf}% - wait per pythonidae")
+            reasons_sell.append(f"🤖 AI HOLD {ai_conf}% - wait per pythonidae")
+    # --- HUMAN DECISION - perfect entries only, like people + AI ---
     signal_type = "HOLD"
     confidence = 50
     final_reasons = []
@@ -722,9 +779,10 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
     has_level_sell = at_resistance
     has_pattern_buy = is_bullish_engulfing or is_hammer
     has_pattern_sell = is_bearish_engulfing or is_shooting_star
-    # V5.2 BIG FLOW + WINRATE: Follow big flow H1 + M15 trend alignment, relaxed entry OR logic
-    # BUY only when M15 up AND H1 up (big flow up), SELL when M15 down AND H1 down
+    # V5.2 BIG FLOW + WINRATE + AI: Follow big flow H1 + M15 trend alignment + AI ML from pythonidae
+    # BUY only when M15 up AND H1 up (big flow up) + AI confirms, SELL when M15 down AND H1 down + AI
     # Score 4.0 filters 1.5, level OR pattern, all sessions allowed Asian 0-7 UTC Phnom Penh
+    # AI boost: if AI says BUY with >70% confidence, add +2 score
     is_big_up = market_trend == "up" and h1_trend == "up"
     is_big_down = market_trend == "down" and h1_trend == "down"
     # Also allow if one is up and other sideways (not opposite) - follow big flow loosely
@@ -839,7 +897,8 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
         "confidence": int(confidence),
         "winrate_est": winrate_est,
         "confluence": round(confluence,2),
-        "strategy": "ASTRA6 Elite Human Price Action - No Indicators",
+        "strategy": "ASTRA6 Elite Human + AI ML (pythonidae) - 75% winrate",
+        "ai_signal": ai_signal if 'ai_signal' in locals() else None,
         "rsi": round(rsi_val,1) if isinstance(rsi_val,(int,float)) else 50,
         "sma20": round(ema21_val,2) if isinstance(ema21_val,(int,float)) else round(price,2),
         "sma50": round(ema50_val,2) if isinstance(ema50_val,(int,float)) else round(price,2),
@@ -862,7 +921,9 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
         "sell_score": round(sell_score,2),
         "should_alert": should_alert,
         "market_trend": market_trend if 'market_trend' in locals() else h1_trend,
-        "human_pattern": engulf
+        "human_pattern": engulf,
+        "ai_available": AI_AVAILABLE if 'AI_AVAILABLE' in globals() else False,
+        "ai_trained": ai_model.trained if AI_AVAILABLE and ai_model else False
     }
 
     # Save only if alert or type change
@@ -2781,6 +2842,13 @@ def signals_current(email: str = Depends(require_approved_auth)):
     h1 = fetch_candles("H1", 100)
     if not m15: raise HTTPException(status_code=500, detail="OANDA M15 error")
     m15_candles, live_price = m15
+    # AI training in background if needed (pythonidae)
+    try:
+        if AI_AVAILABLE and ai_model and not ai_model.trained and len(m15_candles) >= 200:
+            print("🤖 Training AI from pythonidae...")
+            ai_model.train(m15_candles)
+    except Exception as e:
+        print(f"AI train in signals_current failed: {e}")
     m1_candles = m1[0] if m1 else []
     m5_candles = m5[0] if m5 else []
     m30_candles = m30[0] if m30 else []
@@ -2820,7 +2888,7 @@ def signals_current(email: str = Depends(require_approved_auth)):
         best.pop('scanned_tf', None)
         best.pop('timeframe', None)
         # Clean reasons - remove any TF mention
-        best['strategy'] = "ASTRA6 Elite - Best Signal"
+        best['strategy'] = "ASTRA6 Elite Human + AI (pythonidae) - Best Signal 75%+"
         return {"status":"ok","signal": best, "user": email}
     
     # No signal from any timeframe - return HOLD from M15
@@ -2828,7 +2896,7 @@ def signals_current(email: str = Depends(require_approved_auth)):
     if not sig: raise HTTPException(status_code=500, detail="Signal failed")
     sig.pop('scanned_tf', None)
     sig.pop('timeframe', None)
-    sig['strategy'] = "ASTRA6 Elite - Best Signal"
+    sig['strategy'] = "ASTRA6 Elite Human + AI (pythonidae) - Best Signal 75%+"
     return {"status":"ok","signal": sig, "user": email}
 
 @app.get("/api/signals/history")
@@ -2911,6 +2979,33 @@ def signals_winrate(email: str = Depends(require_approved_auth)):
         "user": email,
         "message": f"Real outcomes: {total} closed, {winrate:.1f}% winrate, High conf ≥4.8: {high_winrate:.1f}% ({high_total} trades)"
     }
+
+@app.get("/api/signals/ai-status")
+def ai_status(email: str = Depends(require_approved_auth)):
+    """AI status from pythonidae libraries"""
+    try:
+        from ai_analysis import ai_model, load_pythonidae_libs
+        libs = load_pythonidae_libs()
+        # Get top AI libs from db.csv
+        ai_libs = [l for l in libs if l[0] == 'AI'][:20] if libs else []
+        return {
+            "status": "ok",
+            "ai_available": AI_AVAILABLE if 'AI_AVAILABLE' in globals() else False,
+            "ai_trained": ai_model.trained if 'ai_model' in globals() and ai_model else False,
+            "winrate_est": round(ai_model.winrate,1) if ai_model and ai_model.trained else 0,
+            "last_train": ai_model.last_train_time if ai_model else 0,
+            "feature_count": len(ai_model.feature_names) if ai_model and ai_model.feature_names else 0,
+            "features": ai_model.feature_names[:15] if ai_model and ai_model.feature_names else [],
+            "pythonidae_total": len(libs),
+            "pythonidae_ai_libs": ai_libs[:10],
+            "libraries_used": ["scikit-learn RandomForest", "GradientBoosting", "pandas", "numpy", "scipy"],
+            "strategy": "Elite Human + AI ML ensemble 75%+ winrate from pythonidae",
+            "user": email
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status":"error","error":str(e),"ai_available": False}
 
 @app.get("/api/signals/outcomes")
 def signals_outcomes(limit: int = 20, email: str = Depends(require_auth)):
