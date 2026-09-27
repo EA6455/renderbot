@@ -1070,11 +1070,10 @@ def broker_connect(req: dict, authorization: str = Header(None)):
     login = req.get("login","").strip()
     server = req.get("server","").strip()
     if not broker:
-        raise HTTPException(status_code=400, detail="Broker required: exness or deriv")
-    if broker not in ["exness", "deriv", "binance", "custom"]:
-        raise HTTPException(status_code=400, detail="Supported brokers: exness, deriv")
-    if not api_token and broker == "deriv":
-        raise HTTPException(status_code=400, detail="Deriv API token required - get from https://app.deriv.com/account/api-token")
+        raise HTTPException(status_code=400, detail="Broker required: exness")
+    if broker not in ["exness"]:
+        raise HTTPException(status_code=400, detail="Supported brokers: exness only")
+
     if not login and broker == "exness":
         raise HTTPException(status_code=400, detail="Exness MT5 login required")
     accounts = load_broker_accounts()
@@ -1123,7 +1122,7 @@ def broker_disconnect(authorization: str = Header(None)):
     return {"status":"ok","message": "Broker disconnected"}
 
 @app.get("/api/broker/signal")
-def broker_signal(email: str = "", broker: str = "deriv", tf: str = "M15"):
+def broker_signal(email: str = "", broker: str = "exness", tf: str = "M15"):
     """Public signal for broker bot - no auth, works on free"""
     try:
         m15 = fetch_candles("M15", 100)
@@ -1208,7 +1207,7 @@ def broker_trade(req: dict, authorization: str = Header(None)):
     acc = accounts.get(email)
     if not acc:
         raise HTTPException(status_code=400, detail=" - connect Exness/Deriv first via /api/broker/connect")
-    broker = acc.get("broker","deriv")
+    broker = acc.get("broker","exness")
     trade_type = req.get("type","") or req.get("signal","")
     symbol = req.get("symbol","XAUUSD")
     lot = req.get("lot",0.1)
@@ -1517,7 +1516,7 @@ def broker_balance(email: str = Depends(require_approved_auth)):
                     total_pnl += pnl
             except:
                 pass
-        base_balance = 1000 if broker == "deriv" else 1500
+        base_balance = 1500
         balance = base_balance + total_pnl
         return {
             "status": "ok",
@@ -1750,7 +1749,7 @@ def broker_stats(email: str = Depends(require_approved_auth)):
             balance = real_balance
             balance_msg = f"REAL {broker} balance"
         else:
-            base = 1000 if broker == "deriv" else 1500
+            base = 1500
             balance = base + total_pnl
             balance_msg = f"Simulated (base ${base} + PnL ${total_pnl:.2f}) - connect valid token/password for REAL"
         from collections import defaultdict
@@ -1802,111 +1801,6 @@ def broker_stats(email: str = Depends(require_approved_auth)):
         traceback.print_exc()
         return {"status": "error", "message": str(e)}
 
-@app.get("/api/broker/deriv/oauth/url")
-def deriv_oauth_url():
-    """Get Deriv OAuth URL to get token without needing app.deriv.com/account/api-token page"""
-    # Deriv OAuth - redirect user to Deriv to authorize and get token
-    # Using public app_id 1089 (demo) or we can use 36300 (ASTRA6)
-    app_id = "1089"  # Public app_id for demo, or use 36300
-    redirect_uri = "https://astra6.onrender.com/api/broker/deriv/oauth/callback"
-    # For local dev, use http://localhost:8000/api/broker/deriv/oauth/callback
-    # OAuth URL
-    oauth_url = f"https://oauth.deriv.com/oauth2/authorize?app_id={app_id}&l=en&brand=deriv"
-    return {
-        "oauth_url": oauth_url,
-        "app_id": app_id,
-        "redirect_uri": redirect_uri,
-        "instructions": [
-            "1. Click oauth_url to login to Deriv",
-            "2. Authorize ASTRA6 to access your account",
-            "3. You'll be redirected back with token in URL",
-            "4. Token will be auto-saved for REAL trading",
-            "Alternative: If blocked, try https://app.deriv.com/account/security/api-token or Deriv mobile app"
-        ],
-        "alternative_urls": [
-            "https://app.deriv.com/account/api-token",
-            "https://app.deriv.com/account/security/api-token",
-            "https://deriv.com/account/api-token",
-            "Deriv mobile app -> Account -> Security -> API Token"
-        ]
-    }
-
-@app.get("/api/broker/deriv/oauth/callback")
-def deriv_oauth_callback(request: Request):
-    """Deriv OAuth callback - receives token from Deriv OAuth"""
-    # Deriv OAuth returns token in URL fragment or query param
-    # Example: https://astra6.onrender.com/api/broker/deriv/oauth/callback?token1=xxx&acct1=xxx
-    # Or with fragment: #token1=xxx
-    params = dict(request.query_params)
-    # Try to get token from query params (token1, token2, etc.)
-    tokens = {}
-    for k, v in params.items():
-        if k.startswith("token"):
-            tokens[k] = v
-    
-    # If no token in query, check if we have acct and token in params
-    # Deriv OAuth v2 returns ?acct1=xxx&token1=xxx
-    if not tokens:
-        # Try to get from all params
-        for k, v in params.items():
-            if "token" in k.lower():
-                tokens[k] = v
-    
-    # Return HTML page that extracts token from fragment and saves
-    html = f"""
-    <html>
-    <head><title>Deriv OAuth - ASTRA6</title></head>
-    <body style="font-family:Arial;padding:20px;background:#f5f5f5">
-    <div style="max-width:600px;margin:50px auto;background:white;padding:30px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1)">
-    <h2>🔗 Deriv OAuth Callback - ASTRA6</h2>
-    <p>Processing Deriv token...</p>
-    <div id="status">Checking URL for token...</div>
-    <div id="tokens" style="margin-top:20px;padding:15px;background:#f0f0f0;border-radius:8px;word-break:break-all"></div>
-    <script>
-    // Check query params
-    const urlParams = new URLSearchParams(window.location.search);
-    let tokens = {{}};
-    for (let [k,v] of urlParams.entries()) {{
-        if (k.includes('token')) tokens[k] = v;
-        document.getElementById('tokens').innerHTML += `<div><b>${{k}}:</b> ${{v.substring(0,20)}}***</div>`;
-    }}
-    // Check fragment (after #)
-    const hash = window.location.hash.substring(1);
-    if (hash) {{
-        const hashParams = new URLSearchParams(hash);
-        for (let [k,v] of hashParams.entries()) {{
-            if (k.includes('token')) tokens[k] = v;
-            document.getElementById('tokens').innerHTML += `<div><b>${{k}} (hash):</b> ${{v.substring(0,20)}}***</div>`;
-        }}
-    }}
-    // Also check for acct and token pattern
-    const allParams = {{}};
-    urlParams.forEach((v,k) => allParams[k]=v);
-    document.getElementById('status').innerHTML = 'Found tokens: ' + Object.keys(tokens).length + '<br>Params: ' + JSON.stringify(allParams).substring(0,200);
-    
-    // If we have token, try to save via API (need auth)
-    if (Object.keys(tokens).length > 0) {{
-        const token = tokens['token1'] || Object.values(tokens)[0];
-        document.getElementById('status').innerHTML += '<br><br>✅ Token found! Token: ' + token.substring(0,10) + '***<br><br>';
-        document.getElementById('status').innerHTML += '<p>To save for REAL trading:</p>';
-        document.getElementById('status').innerHTML += '<p>1. Copy token: <code style="background:#eee;padding:5px">' + token + '</code></p>';
-        document.getElementById('status').innerHTML += '<p>2. Go to <a href="https://astra6.onrender.com">ASTRA6</a> → Account → Connect Broker → Deriv → Paste token → Connect</p>';
-        document.getElementById('status').innerHTML += '<p>Or call: <code>POST /api/broker/connect {{"broker":"deriv","api_token":"YOUR_TOKEN"}}</code></p>';
-    }} else {{
-        document.getElementById('status').innerHTML += '<br><br>❌ No token found in URL.<br>';
-        document.getElementById('status').innerHTML += '<p>URL: ' + window.location.href.substring(0,200) + '</p>';
-        document.getElementById('status').innerHTML += '<p>Try alternative: <a href="https://app.deriv.com/account/api-token">app.deriv.com/account/api-token</a> or Deriv mobile app</p>';
-    }}
-    </script>
-    <br><br>
-    <a href="https://astra6.onrender.com" style="background:#4f46e5;color:white;padding:12px 24px;border-radius:8px;text-decoration:none">← Back to ASTRA6</a>
-    </div>
-    </body>
-    </html>
-    """
-    from fastapi.responses import HTMLResponse
-    return HTMLResponse(content=html)
-
 @app.get("/api/broker/info")
 def broker_info():
 
@@ -1921,14 +1815,6 @@ def broker_info():
             "5. Shows Balance, Total Trades, Calendar"
         ],
         "exness_only": True,
-        "deriv": {
-            "how_to_get_token": "Go to https://app.deriv.com/account/api-token -> Create New Token -> Scopes: Read, Trade, Trading information -> Copy token",
-            "api_docs": "https://api.deriv.com",
-            "symbol": "frxXAUUSD for Gold",
-            "real_trading": "REAL via WebSocket wss://ws.binaryws.com/websockets/v3?app_id=1089 - works on Render free",
-            "free": True,
-            "status": "REAL trading implemented - not simulated"
-        },
         "exness": {
             "how_to_connect": "Enter MT5 login, server (e.g., Exness-MT5Real5), and MT5 password - encrypted for REAL trading",
             "real_trading": "REAL via MetaTrader5 library: mt5.initialize(login, server, password) + mt5.order_send() - TRUE REAL, not simulated",
