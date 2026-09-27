@@ -1032,44 +1032,45 @@ def forgot_password(req: dict):
     save_resets(resets)
     reset_link = f"https://astra6.onrender.com/?reset={reset_token}"
     logo_url = "https://astra6.onrender.com/logo.png"
+    # Send Gmail in background thread so request returns immediately (no timeout)
     try:
-        import os, smtplib
-        from email.mime.text import MIMEText
-        from email.mime.multipart import MIMEMultipart
-        smtp_pass = os.getenv("SMTP_PASS")
-        if smtp_pass:
-            html = f"<html><body style='font-family:Arial;background:#fff;color:#000;padding:20px'><div style='max-width:500px;margin:0 auto;border:2px solid #000;border-radius:14px;overflow:hidden'><div style='background:#fff;padding:20px;text-align:center;border-bottom:2px solid #000'><img src='{logo_url}' alt='ASTRA6' style='height:60px'><h2 style='margin:8px 0 0 0;font-weight:900'>ASTRA6</h2><p style='color:#666;font-size:11px'>BEST GOLD SIGNALS</p></div><div style='padding:24px'><h3>Password Reset</h3><p>Hi {email},</p><p>Link (1h):</p><div style='background:#f5f5f5;border:1px solid #000;padding:12px;border-radius:10px;word-break:break-all'><a href='{reset_link}' style='color:#000;font-weight:900'>{reset_link}</a></div><p>Token:</p><div style='background:#000;color:#fff;padding:12px;border-radius:10px;word-break:break-all;font-family:monospace'>{reset_token}</div><p>Go to https://astra6.onrender.com -> Sign In -> Forgot password? -> Paste token</p></div><div style='background:#000;color:#fff;padding:12px;text-align:center;font-size:10px'>From: {OWNER_EMAIL}</div></div></body></html>"
-            text = f"ASTRA6 Reset\nEmail: {email}\nLink: {reset_link}\nToken: {reset_token}"
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = 'ASTRA6 - Password Reset Link'
-            msg['From'] = OWNER_EMAIL
-            msg['To'] = email
-            msg.attach(MIMEText(text, 'plain'))
-            msg.attach(MIMEText(html, 'html'))
-            sent = False
+        import threading, os
+        def send_email_bg():
             try:
-                with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as s:
-                    s.login(OWNER_EMAIL, smtp_pass)
-                    s.send_message(msg)
-                print(f"SSL 465 sent to {email}")
-                sent = True
-            except Exception as e1:
-                print(f"SSL fail {e1}, trying 587")
+                import smtplib
+                from email.mime.text import MIMEText
+                from email.mime.multipart import MIMEMultipart
+                smtp_pass = os.getenv("SMTP_PASS")
+                if not smtp_pass:
+                    print(f"SMTP_PASS not set - would send to {email} link {reset_link}")
+                    return
+                html = f"<html><body style='font-family:Arial;background:#fff;color:#000;padding:20px'><div style='max-width:500px;margin:0 auto;border:2px solid #000;border-radius:14px;overflow:hidden'><div style='background:#fff;padding:20px;text-align:center;border-bottom:2px solid #000'><img src='{logo_url}' alt='ASTRA6' style='height:60px'><h2 style='margin:8px 0 0 0;font-weight:900'>ASTRA6</h2><p style='color:#666;font-size:11px'>BEST GOLD SIGNALS</p></div><div style='padding:24px'><h3>Password Reset</h3><p>Hi {email},</p><p>Link (1h):</p><div style='background:#f5f5f5;border:1px solid #000;padding:12px;border-radius:10px;word-break:break-all'><a href='{reset_link}' style='color:#000;font-weight:900'>{reset_link}</a></div><p>Token:</p><div style='background:#000;color:#fff;padding:12px;border-radius:10px;word-break:break-all;font-family:monospace'>{reset_token}</div><p>Go to https://astra6.onrender.com -> Sign In -> Forgot password? -> Paste token</p></div><div style='background:#000;color:#fff;padding:12px;text-align:center;font-size:10px'>From: {OWNER_EMAIL}</div></div></body></html>"
+                text = f"ASTRA6 Reset\nEmail: {email}\nLink: {reset_link}\nToken: {reset_token}"
+                msg = MIMEMultipart('alternative')
+                msg['Subject'] = 'ASTRA6 - Password Reset Link'
+                msg['From'] = OWNER_EMAIL
+                msg['To'] = email
+                msg.attach(MIMEText(text, 'plain'))
+                msg.attach(MIMEText(html, 'html'))
                 try:
-                    with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as s:
-                        s.starttls(timeout=10)
+                    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as s:
                         s.login(OWNER_EMAIL, smtp_pass)
                         s.send_message(msg)
-                    print(f"TLS 587 sent to {email}")
-                    sent = True
-                except Exception as e2:
-                    print(f"Both fail {e1} {e2}")
-                    raise e2
-        else:
-            print(f"SMTP_PASS not set token {reset_token} for {email}")
+                    print(f"✅ BG SSL 465 sent to {email}")
+                except Exception as e1:
+                    print(f"BG SSL fail {e1}, trying 587")
+                    with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as s:
+                        s.starttls(timeout=15)
+                        s.login(OWNER_EMAIL, smtp_pass)
+                        s.send_message(msg)
+                    print(f"✅ BG TLS 587 sent to {email}")
+            except Exception as e:
+                print(f"❌ BG Email error {e} token {reset_token} for {email}")
+        threading.Thread(target=send_email_bg, daemon=True).start()
     except Exception as e:
-        print(f"Email error {e} token {reset_token}")
-    return {"status":"ok","message": f"Reset link sent to {email} via Gmail {OWNER_EMAIL} - check inbox (expires 1h). If not received, contact owner. Link: {reset_link}", "email": email, "reset_link": reset_link}
+        print(f"BG thread error {e}")
+    # Return immediately with link for copy-paste + Gmail will arrive in background
+    return {"status":"ok","message": f"Reset link sent to {email} via Gmail {OWNER_EMAIL} - check Gmail inbox (expires 1h). Link also available for copy-paste.", "email": email, "reset_link": reset_link}
 
 @app.post("/api/auth/reset-password")
 def reset_password(req: dict):
