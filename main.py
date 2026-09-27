@@ -1276,221 +1276,405 @@ def broker_trades_list(authorization: str = Header(None)):
     return {"status":"ok","count": len(trades), "trades": trades[-50:]}
 
 
+
 @app.get("/api/broker/balance")
-def broker_balance(authorization: str = Header(None)):
-    """Get broker account balance - pure web control"""
-    email = get_current_user(authorization)
-    if not email:
-        raise HTTPException(status_code=401, detail="Sign in required")
-    accounts = load_broker_accounts()
-    acc = accounts.get(email)
-    if not acc:
-        return {"status":"ok","connected": False, "balance": 0, "message": "No broker connected"}
-    
-    broker = acc.get("broker","deriv")
-    balance = 0
-    currency = "USD"
-    
+def broker_balance(email: str = Depends(get_current_email)):
     try:
+        accs = load_broker_accounts()
+        acc = accs.get(email)
+        if not acc or not acc.get("connected"):
+            return {"status": "ok", "connected": False, "balance": 0, "message": "No broker connected - connect Deriv/Exness for REAL balance"}
+        
+        broker = acc.get("broker")
+        
+        # REAL balance from broker API
         if broker == "deriv":
-            import requests
-            api_token = acc.get("api_token","")
-            if api_token:
-                # Try to get balance via Deriv API (HTTP for demo, real needs WS)
-                # For demo, simulate balance based on trades PnL
-                from pathlib import Path
-                import json
-                trades_file = Path("broker_trades.json")
-                total_pnl = 0
-                if trades_file.exists():
+            try:
+                import websocket
+                import json as js
+                api_token = acc.get("api_token","")
+                if api_token:
+                    ws_url = "wss://ws.binaryws.com/websockets/v3?app_id=1089"
+                    ws = websocket.create_connection(ws_url, timeout=10)
+                    ws.send(js.dumps({"authorize": api_token}))
+                    auth_resp = js.loads(ws.recv())
+                    if auth_resp.get("error"):
+                        raise Exception(auth_resp["error"]["message"])
+                    ws.send(js.dumps({"balance": 1}))
+                    bal_resp = js.loads(ws.recv())
+                    ws.close()
+                    if "balance" in bal_resp:
+                        real_balance = float(bal_resp["balance"]["balance"])
+                        currency = bal_resp["balance"].get("currency","USD")
+                        return {
+                            "status": "ok",
+                            "connected": True,
+                            "broker": broker,
+                            "balance": round(real_balance, 2),
+                            "currency": currency,
+                            "real": True,
+                            "message": f"✅ REAL Deriv balance for {email}: {real_balance} {currency} via WebSocket API"
+                        }
+            except Exception as e:
+                print(f"Deriv real balance error {e}")
+        
+        elif broker == "exness":
+            try:
+                import MetaTrader5 as mt5
+                login = acc.get("login","")
+                server = acc.get("server","")
+                password = acc.get("password","")
+                if password and login and server:
+                    initialized = False
                     try:
-                        trades = json.loads(trades_file.read_text())
-                        user_trades = [t for t in trades if t.get("email","").lower() == email.lower()]
-                        for tr in user_trades:
-                            import random
-                            random.seed(hash(tr.get("id","")) % 100000)
-                            if random.random() < 0.7:
-                                total_pnl += tr.get("lot",0.1) * 10
-                            else:
-                                total_pnl -= tr.get("lot",0.1) * 5
+                        if login.isdigit():
+                            initialized = mt5.initialize(login=int(login), server=server, password=password)
+                        else:
+                            initialized = mt5.initialize(login=login, server=server, password=password)
                     except:
                         pass
-                balance = 1000 + total_pnl
-                currency = "USD"
-            else:
-                balance = 0
-        elif broker == "exness":
-            # Exness balance - simulate
-            from pathlib import Path
-            import json
-            trades_file = Path("broker_trades.json")
-            total_pnl = 0
-            if trades_file.exists():
-                try:
-                    trades = json.loads(trades_file.read_text())
-                    user_trades = [t for t in trades if t.get("email","").lower() == email.lower()]
-                    for tr in user_trades:
-                        import random
-                        random.seed(hash(tr.get("id","")) % 100000)
-                        if random.random() < 0.72:
-                            total_pnl += tr.get("lot",0.1) * 12
-                        else:
-                            total_pnl -= tr.get("lot",0.1) * 6
-                except:
-                    pass
-            balance = 1500 + total_pnl
-            currency = "USD"
-    except Exception as e:
-        print(f"Balance error {e}")
-        balance = 0
-    
-    return {
-        "status":"ok",
-        "connected": True,
-        "broker": broker,
-        "login": acc.get("login",""),
-        "balance": round(balance, 2),
-        "currency": currency,
-        "message": f"Balance for {email} via {broker} - pure web control"
-    }
-
-@app.get("/api/broker/calendar")
-def broker_calendar(authorization: str = Header(None), year: int = 0, month: int = 0):
-    """Get calendar view of trades - for Account page"""
-    email = get_current_user(authorization)
-    if not email:
-        raise HTTPException(status_code=401, detail="Sign in required")
-    from pathlib import Path
-    import json, time, calendar
-    from collections import defaultdict
-    
-    trades_file = Path("broker_trades.json")
-    if not trades_file.exists():
-        return {"status":"ok","count":0,"calendar":{},"trades":[]}
-    
-    try:
-        trades = json.loads(trades_file.read_text())
-        user_trades = [t for t in trades if t.get("email","").lower() == email.lower()]
+                    if initialized:
+                        account_info = mt5.account_info()
+                        if account_info:
+                            real_balance = float(account_info.balance)
+                            equity = float(account_info.equity)
+                            currency = account_info.currency if hasattr(account_info, 'currency') else "USD"
+                            mt5.shutdown()
+                            return {
+                                "status": "ok",
+                                "connected": True,
+                                "broker": broker,
+                                "balance": round(real_balance, 2),
+                                "equity": round(equity, 2),
+                                "currency": currency,
+                                "login": login,
+                                "server": server,
+                                "real": True,
+                                "message": f"✅ REAL Exness MT5 balance for {email}: {real_balance} {currency} (equity {equity}) via MT5 Direct"
+                            }
+                        mt5.shutdown()
+            except Exception as e:
+                print(f"Exness real balance error {e}")
+            try:
+                api_token = acc.get("api_token","")
+                if api_token and len(api_token) > 20:
+                    import requests
+                    headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
+                    r = requests.get("https://api.exness.com/v1/accounts", headers=headers, timeout=10)
+                    if r.status_code == 200:
+                        data = r.json()
+                        if isinstance(data, dict) and "accounts" in data:
+                            acc_data = data["accounts"][0] if data["accounts"] else {}
+                            real_balance = float(acc_data.get("balance",0))
+                            return {
+                                "status": "ok",
+                                "connected": True,
+                                "broker": broker,
+                                "balance": round(real_balance, 2),
+                                "currency": acc_data.get("currency","USD"),
+                                "real": True,
+                                "message": f"✅ REAL Exness API balance for {email}: {real_balance}"
+                            }
+            except Exception as e:
+                print(f"Exness API balance error {e}")
         
-        # Group by date
-        calendar_data = defaultdict(list)
-        for tr in user_trades:
-            t = tr.get("time",0)
-            date_str = time.strftime("%Y-%m-%d", time.gmtime(t))
-            calendar_data[date_str].append(tr)
-        
-        # If year/month filter
-        if year and month:
-            filtered = {}
-            for date_str, day_trades in calendar_data.items():
-                try:
-                    y,m,d = map(int, date_str.split("-"))
-                    if y == year and m == month:
-                        filtered[date_str] = day_trades
-                except:
-                    pass
-            calendar_data = filtered
-        
-        # Summary per day
-        calendar_summary = {}
-        for date_str, day_trades in calendar_data.items():
-            buys = len([t for t in day_trades if t.get("type")=="BUY"])
-            sells = len([t for t in day_trades if t.get("type")=="SELL"])
-            total = len(day_trades)
-            # Simulate PnL
-            pnl = 0
-            for tr in day_trades:
-                import random
-                random.seed(hash(tr.get("id","")) % 100000)
-                if random.random() < 0.7:
-                    pnl += tr.get("lot",0.1) * 10
-                else:
-                    pnl -= tr.get("lot",0.1) * 5
-            calendar_summary[date_str] = {
-                "date": date_str,
-                "total": total,
-                "buys": buys,
-                "sells": sells,
-                "pnl": round(pnl,2),
-                "trades": day_trades
-            }
-        
+        trades_file = pathlib.Path(BROKER_TRADES_FILE)
+        total_pnl = 0
+        if trades_file.exists():
+            try:
+                trades = json.loads(trades_file.read_text())
+                user_trades = [t for t in trades if t.get("email") == email]
+                for t in user_trades:
+                    import random
+                    random.seed(hash(t.get("id","")) % 1000000)
+                    pnl = random.uniform(5, 50) if random.random() < 0.7 else -random.uniform(5, 30)
+                    total_pnl += pnl
+            except:
+                pass
+        base_balance = 1000 if broker == "deriv" else 1500
+        balance = base_balance + total_pnl
         return {
-            "status":"ok",
-            "count": len(user_trades),
-            "calendar": calendar_summary,
-            "trades": user_trades[-50:],
-            "message": f"Calendar for {email} - {len(user_trades)} trades"
+            "status": "ok",
+            "connected": True,
+            "broker": broker,
+            "balance": round(balance, 2),
+            "total_pnl": round(total_pnl, 2),
+            "currency": "USD",
+            "real": False,
+            "message": f"⚠️ Simulated balance for {email} via {broker}: ${balance:.2f} (base ${base_balance} + PnL ${total_pnl:.2f}) - REAL balance needs valid Deriv token or Exness MT5 terminal + Wine Docker"
         }
     except Exception as e:
-        print(f"Calendar error {e}")
         import traceback
         traceback.print_exc()
-        return {"status":"error","error": str(e), "calendar":{}}
+        return {"status": "error", "message": str(e), "balance": 0}
+
+@app.get("/api/broker/calendar")
+def broker_calendar(email: str = Depends(get_current_email)):
+    try:
+        accs = load_broker_accounts()
+        acc = accs.get(email)
+        if not acc or not acc.get("connected"):
+            return {"status": "ok", "connected": False, "calendar": {}, "message": "No broker connected - connect for REAL calendar"}
+        broker = acc.get("broker")
+        real_trades = []
+        if broker == "deriv":
+            try:
+                import websocket
+                import json as js
+                api_token = acc.get("api_token","")
+                if api_token:
+                    ws_url = "wss://ws.binaryws.com/websockets/v3?app_id=1089"
+                    ws = websocket.create_connection(ws_url, timeout=10)
+                    ws.send(js.dumps({"authorize": api_token}))
+                    auth_resp = js.loads(ws.recv())
+                    if not auth_resp.get("error"):
+                        ws.send(js.dumps({"profit_table": 1, "description": 1, "limit": 50}))
+                        profit_resp = js.loads(ws.recv())
+                        if "profit_table" in profit_resp and "transactions" in profit_resp["profit_table"]:
+                            for tx in profit_resp["profit_table"]["transactions"]:
+                                real_trades.append({
+                                    "id": str(tx.get("transaction_id","")),
+                                    "email": email,
+                                    "broker": "deriv",
+                                    "type": "BUY" if tx.get("contract_type","").upper() in ["CALL","RISE"] else "SELL",
+                                    "symbol": tx.get("symbol",""),
+                                    "pnl": float(tx.get("sell_price",0)) - float(tx.get("buy_price",0)),
+                                    "time": tx.get("sell_time", tx.get("purchase_time",0)),
+                                    "time_str": str(tx.get("longcode",""))[:20],
+                                    "real": True,
+                                    "deriv_data": tx
+                                })
+                    ws.close()
+            except Exception as e:
+                print(f"Deriv real calendar error {e}")
+        elif broker == "exness":
+            try:
+                import MetaTrader5 as mt5
+                login = acc.get("login","")
+                server = acc.get("server","")
+                password = acc.get("password","")
+                if password and login and server:
+                    init = False
+                    try:
+                        init = mt5.initialize(login=int(login) if login.isdigit() else login, server=server, password=password)
+                    except:
+                        pass
+                    if init:
+                        from datetime import datetime, timedelta
+                        to_date = datetime.now()
+                        from_date = to_date - timedelta(days=30)
+                        deals = mt5.history_deals_get(from_date, to_date)
+                        if deals:
+                            for deal in deals:
+                                real_trades.append({
+                                    "id": str(deal.ticket),
+                                    "email": email,
+                                    "broker": "exness",
+                                    "type": "BUY" if deal.type == mt5.DEAL_TYPE_BUY else "SELL",
+                                    "symbol": deal.symbol,
+                                    "volume": deal.volume,
+                                    "price": deal.price,
+                                    "profit": deal.profit,
+                                    "time": deal.time,
+                                    "time_str": datetime.fromtimestamp(deal.time).strftime("%Y-%m-%d %H:%M:%S"),
+                                    "real": True
+                                })
+                        mt5.shutdown()
+            except Exception as e:
+                print(f"Exness real calendar error {e}")
+        trades_file = pathlib.Path(BROKER_TRADES_FILE)
+        local_trades = []
+        if trades_file.exists():
+            try:
+                all_trades = json.loads(trades_file.read_text())
+                local_trades = [t for t in all_trades if t.get("email") == email]
+            except:
+                pass
+        trades = real_trades if real_trades else local_trades
+        is_real = len(real_trades) > 0
+        from collections import defaultdict
+        cal = defaultdict(list)
+        for t in trades:
+            try:
+                date = t.get("time_str","").split(" ")[0] if t.get("time_str") else str(t.get("time",""))[:10]
+                if isinstance(t.get("time"), (int, float)) and t.get("time") > 1000000:
+                    from datetime import datetime
+                    try:
+                        date = datetime.fromtimestamp(float(t.get("time"))).strftime("%Y-%m-%d")
+                    except:
+                        pass
+                if date and len(date) >= 10:
+                    cal[date[:10]].append(t)
+            except:
+                pass
+        calendar = {}
+        for date, day_trades in cal.items():
+            day_pnl = 0
+            for dt in day_trades:
+                if dt.get("real") and "profit" in dt:
+                    day_pnl += float(dt.get("profit",0))
+                elif dt.get("real") and "pnl" in dt:
+                    day_pnl += float(dt.get("pnl",0))
+                else:
+                    import random
+                    random.seed(hash(dt.get("id","")) % 1000000)
+                    pnl = random.uniform(5, 80) if random.random() < 0.72 else -random.uniform(5, 40)
+                    day_pnl += pnl
+            calendar[date] = {
+                "total": len(day_trades),
+                "buys": len([x for x in day_trades if x.get("type")=="BUY"]),
+                "sells": len([x for x in day_trades if x.get("type")=="SELL"]),
+                "pnl": round(day_pnl, 2),
+                "real": is_real,
+                "trades": day_trades
+            }
+        return {
+            "status": "ok",
+            "connected": True,
+            "broker": broker,
+            "count": len(trades),
+            "real": is_real,
+            "calendar": calendar,
+            "trades": trades[-50:],
+            "message": f"{'REAL' if is_real else 'Simulated'} calendar for {email}: {len(trades)} trades via {broker}"
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}
+
 
 @app.get("/api/broker/stats")
-def broker_stats(authorization: str = Header(None)):
-    """Get total stats: balance, total trades, winrate, calendar summary"""
-    email = get_current_user(authorization)
-    if not email:
-        raise HTTPException(status_code=401, detail="Sign in required")
-    from pathlib import Path
-    import json
-    import time
-    
-    trades_file = Path("broker_trades.json")
-    trades = []
-    if trades_file.exists():
-        try:
-            trades = json.loads(trades_file.read_text())
-            trades = [t for t in trades if t.get("email","").lower() == email.lower()]
-        except:
-            trades = []
-    
-    total = len(trades)
-    buys = len([t for t in trades if t.get("type")=="BUY"])
-    sells = len([t for t in trades if t.get("type")=="SELL"])
-    
-    # Simulate PnL and winrate
-    total_pnl = 0
-    wins = 0
-    for tr in trades:
-        import random
-        random.seed(hash(tr.get("id","")) % 100000)
-        if random.random() < 0.72:
-            total_pnl += tr.get("lot",0.1) * 10
-            wins += 1
+def broker_stats(email: str = Depends(get_current_email)):
+    try:
+        accs = load_broker_accounts()
+        acc = accs.get(email)
+        if not acc or not acc.get("connected"):
+            return {"status": "ok", "connected": False, "balance": 0, "total_trades": 0, "message": "No broker connected - connect for REAL balance"}
+        broker = acc.get("broker")
+        real_balance = None
+        real_currency = "USD"
+        real_equity = None
+        if broker == "deriv":
+            try:
+                import websocket
+                import json as js
+                api_token = acc.get("api_token","")
+                if api_token:
+                    ws_url = "wss://ws.binaryws.com/websockets/v3?app_id=1089"
+                    ws = websocket.create_connection(ws_url, timeout=10)
+                    ws.send(js.dumps({"authorize": api_token}))
+                    auth_resp = js.loads(ws.recv())
+                    if not auth_resp.get("error"):
+                        ws.send(js.dumps({"balance": 1}))
+                        bal_resp = js.loads(ws.recv())
+                        if "balance" in bal_resp:
+                            real_balance = float(bal_resp["balance"]["balance"])
+                            real_currency = bal_resp["balance"].get("currency","USD")
+                    ws.close()
+            except Exception as e:
+                print(f"Deriv real balance for stats error {e}")
+        elif broker == "exness":
+            try:
+                import MetaTrader5 as mt5
+                login = acc.get("login","")
+                server = acc.get("server","")
+                password = acc.get("password","")
+                if password and login and server:
+                    init = False
+                    try:
+                        init = mt5.initialize(login=int(login) if login.isdigit() else login, server=server, password=password)
+                    except:
+                        pass
+                    if init:
+                        info = mt5.account_info()
+                        if info:
+                            real_balance = float(info.balance)
+                            real_equity = float(info.equity)
+                            real_currency = info.currency if hasattr(info, 'currency') else "USD"
+                        mt5.shutdown()
+            except Exception as e:
+                print(f"Exness real balance for stats error {e}")
+        trades_file = pathlib.Path(BROKER_TRADES_FILE)
+        trades = []
+        if trades_file.exists():
+            try:
+                all_trades = json.loads(trades_file.read_text())
+                trades = [t for t in all_trades if t.get("email") == email]
+            except:
+                pass
+        total = len(trades)
+        buys = len([t for t in trades if t.get("type") == "BUY"])
+        sells = len([t for t in trades if t.get("type") == "SELL"])
+        wins = 0
+        losses = 0
+        total_pnl = 0
+        for t in trades:
+            import random
+            random.seed(hash(t.get("id","")) % 1000000)
+            is_win = random.random() < 0.72
+            pnl = random.uniform(5, 80) if is_win else -random.uniform(5, 40)
+            total_pnl += pnl
+            if is_win:
+                wins += 1
+            else:
+                losses += 1
+        winrate = round((wins / total * 100) if total > 0 else 0, 1)
+        if real_balance is not None:
+            balance = real_balance
+            balance_msg = f"REAL {broker} balance"
         else:
-            total_pnl -= tr.get("lot",0.1) * 5
-    
-    winrate = (wins / total * 100) if total > 0 else 0
-    
-    # Balance
-    balance = 1000 + total_pnl
-    
-    # Calendar - last 30 days
-    from collections import defaultdict
-    calendar_data = defaultdict(int)
-    for tr in trades:
-        date_str = time.strftime("%Y-%m-%d", time.gmtime(tr.get("time",0)))
-        calendar_data[date_str] += 1
-    
-    return {
-        "status":"ok",
-        "email": email,
-        "balance": round(balance,2),
-        "currency": "USD",
-        "total_trades": total,
-        "buys": buys,
-        "sells": sells,
-        "wins": wins,
-        "losses": total - wins,
-        "winrate": round(winrate,1),
-        "total_pnl": round(total_pnl,2),
-        "calendar": dict(calendar_data),
-        "trades": trades[-20:],
-        "message": f"Stats for {email}: {total} trades, {winrate:.1f}% winrate, ${balance:.2f} balance"
-    }
+            base = 1000 if broker == "deriv" else 1500
+            balance = base + total_pnl
+            balance_msg = f"Simulated (base ${base} + PnL ${total_pnl:.2f}) - connect valid token/password for REAL"
+        from collections import defaultdict
+        cal = defaultdict(list)
+        for t in trades:
+            try:
+                date = t.get("time_str","").split(" ")[0] if t.get("time_str") else t.get("time","")[:10]
+                if date:
+                    cal[date].append(t)
+            except:
+                pass
+        calendar = {}
+        for date, day_trades in cal.items():
+            day_pnl = 0
+            for dt in day_trades:
+                import random
+                random.seed(hash(dt.get("id","")) % 1000000)
+                pnl = random.uniform(5, 80) if random.random() < 0.72 else -random.uniform(5, 40)
+                day_pnl += pnl
+            calendar[date] = {
+                "total": len(day_trades),
+                "buys": len([x for x in day_trades if x.get("type")=="BUY"]),
+                "sells": len([x for x in day_trades if x.get("type")=="SELL"]),
+                "pnl": round(day_pnl, 2),
+                "trades": day_trades
+            }
+        return {
+            "status": "ok",
+            "connected": True,
+            "broker": broker,
+            "balance": round(balance, 2),
+            "equity": round(real_equity, 2) if real_equity else None,
+            "currency": real_currency,
+            "real_balance": real_balance is not None,
+            "balance_source": balance_msg,
+            "total_trades": total,
+            "buys": buys,
+            "sells": sells,
+            "wins": wins,
+            "losses": losses,
+            "winrate": winrate,
+            "total_pnl": round(total_pnl, 2),
+            "calendar": calendar,
+            "trades": trades[-20:],
+            "message": f"Stats for {email}: {total} trades, {winrate}% winrate, ${balance:.2f} balance ({balance_msg})"
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}
 
 @app.get("/api/broker/info")
 def broker_info():
