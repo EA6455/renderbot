@@ -1858,11 +1858,13 @@ def broker_stats(email: str = Depends(require_approved_auth)):
                 losses += 1
         winrate = round((wins / total * 100) if total > 0 else 0, 1)
         if real_balance is not None:
-            balance = real_balance
+            # REAL exact balance + PnL from trades = dynamic REAL balance (not fake)
+            base_real = real_balance
+            balance = base_real + total_pnl
             if acc.get("real_balance"):
-                balance_msg = f"✅ REAL {broker} balance {real_balance} {real_currency} ({acc.get('real_balance_source','manual')})"
+                balance_msg = f"✅ REAL {broker} balance {base_real} + PnL {total_pnl:.2f} = {balance:.2f} {real_currency} ({acc.get('real_balance_source','manual')})"
             else:
-                balance_msg = f"REAL {broker} balance"
+                balance_msg = f"REAL {broker} balance {balance:.2f} {real_currency}"
         else:
             base = 1500
             balance = base + total_pnl
