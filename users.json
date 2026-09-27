@@ -52,7 +52,7 @@
     "last_login": 1790475033.174056,
     "login_count": 2,
     "is_active": true,
-    "approved": false,
+    "approved": true,
     "is_admin": false,
     "plan": "elite_70",
     "winrate_target": "70-76%"
