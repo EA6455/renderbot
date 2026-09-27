@@ -1046,6 +1046,205 @@ def debug_smtp_test():
     return result
 
 
+
+# MT5 Bridge EA endpoints - No MetaAPI, No VPS, No password sharing
+# EA fetches signals via HTTP (works on Render free)
+
+@app.get("/api/mt5/signal")
+def mt5_signal(email: str = "", telegram: str = "", tf: str = "M15"):
+    """Public endpoint for MT5 EA ASTRA6_Bridge to fetch current signal - no auth required, works on free"""
+    try:
+        # Fetch candles
+        m15 = fetch_candles("M15", 100)
+        if not m15:
+            return {"signal": "HOLD", "type": "HOLD", "price": 0, "message": "OANDA error"}
+        m15_candles, live_price = m15
+        h1 = fetch_candles("H1", 100)
+        h1_candles = h1[0] if h1 else []
+        
+        # Use existing signal logic
+        # Simplified - get best signal from current market
+        from pathlib import Path
+        import json
+        # Try to get last signal from file or generate new
+        try:
+            # Use the same logic as signals_current but without auth
+            m1 = fetch_candles("M1", 50)
+            m5 = fetch_candles("M5", 50)
+            m30 = fetch_candles("M30", 50)
+            m1_candles = m1[0] if m1 else []
+            m5_candles = m5[0] if m5 else []
+            m30_candles = m30[0] if m30 else []
+            
+            # For EA, we want simple BUY/SELL/HOLD
+            # Use M15 + H1 big flow logic
+            # This is simplified version - in production use full scan
+            price = live_price or (m15_candles[-1]["close"] if m15_candles else 0)
+            
+            # Get last signal from signals file if exists
+            signals_file = Path("signals.json")
+            last_signal = "HOLD"
+            sl = price * 0.998 if price else 0
+            tp = price * 1.003 if price else 0
+            confidence = 75
+            
+            if signals_file.exists():
+                try:
+                    signals = json.loads(signals_file.read_text())
+                    if signals:
+                        last = signals[-1]
+                        last_signal = last.get("type", "HOLD")
+                        sl = last.get("sl", sl)
+                        tp = last.get("tp1", tp)
+                        confidence = last.get("confidence", 75)
+                except:
+                    pass
+            
+            # If no signals file, generate one quickly
+            if last_signal == "HOLD":
+                # Simple logic: if price up trend, BUY, else SELL, else HOLD
+                # Use EMA check
+                if len(m15_candles) >= 50:
+                    ema21 = sum(c["close"] for c in m15_candles[-21:]) / 21
+                    ema50 = sum(c["close"] for c in m15_candles[-50:]) / 50
+                    if price > ema21 > ema50:
+                        last_signal = "BUY"
+                    elif price < ema21 < ema50:
+                        last_signal = "SELL"
+            
+            return {
+                "signal": last_signal,
+                "type": last_signal,
+                "price": price,
+                "sl": sl,
+                "tp1": tp,
+                "tp2": tp,
+                "confidence": confidence,
+                "tf": tf,
+                "email": email,
+                "telegram": telegram,
+                "symbol": "XAUUSD",
+                "message": f"ASTRA6 {last_signal} for {email} via Bridge EA - No MetaAPI, No VPS",
+                "bot": "ASTRA6_Bridge",
+                "website": "https://astra6.onrender.com"
+            }
+        except Exception as e:
+            print(f"MT5 signal error {e}")
+            import traceback
+            traceback.print_exc()
+            return {"signal": "HOLD", "type": "HOLD", "price": 0, "error": str(e)}
+    except Exception as e:
+        return {"signal": "HOLD", "error": str(e)}
+
+@app.post("/api/mt5/trade")
+def mt5_trade_report(req: dict):
+    """MT5 EA reports trades back to website - for dashboard display"""
+    try:
+        from pathlib import Path
+        import json, time
+        email = req.get("email","").lower().strip()
+        trade_type = req.get("type","")
+        symbol = req.get("symbol","XAUUSD")
+        price = req.get("price",0)
+        sl = req.get("sl",0)
+        tp = req.get("tp",0)
+        lot = req.get("lot",0.1)
+        magic = req.get("magic",20260927)
+        
+        # Save to mt5_trades.json
+        trades_file = Path("mt5_trades.json")
+        trades = []
+        if trades_file.exists():
+            try:
+                trades = json.loads(trades_file.read_text())
+            except:
+                trades = []
+        
+        entry = {
+            "id": secrets.token_hex(8),
+            "email": email,
+            "telegram_username": req.get("telegram_username",""),
+            "type": trade_type,
+            "symbol": symbol,
+            "price": price,
+            "sl": sl,
+            "tp": tp,
+            "lot": lot,
+            "magic": magic,
+            "time": time.time(),
+            "time_str": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+            "via": "ASTRA6_Bridge EA - No MetaAPI"
+        }
+        trades.append(entry)
+        # Keep last 500
+        trades = trades[-500:]
+        trades_file.write_text(json.dumps(trades, indent=2))
+        
+        print(f"✅ MT5 trade reported: {email} {trade_type} {symbol} {price}")
+        
+        return {"status":"ok","message": f"Trade {trade_type} reported for {email}", "trade": entry}
+    except Exception as e:
+        print(f"MT5 trade report error {e}")
+        return {"status":"error","error": str(e)}
+
+@app.get("/api/mt5/trades")
+def mt5_trades_list(email: str = "", authorization: str = Header(None)):
+    """Get MT5 trades for user - for dashboard"""
+    try:
+        from pathlib import Path
+        import json
+        trades_file = Path("mt5_trades.json")
+        if not trades_file.exists():
+            return {"status":"ok","count":0,"trades":[]}
+        trades = json.loads(trades_file.read_text())
+        # Filter by email if provided
+        if email:
+            trades = [t for t in trades if t.get("email","").lower() == email.lower()]
+        else:
+            # If auth, filter by current user
+            try:
+                data = get_token_data(authorization)
+                if data:
+                    user_email = data.get("email","")
+                    trades = [t for t in trades if t.get("email","").lower() == user_email.lower()]
+            except:
+                pass
+        return {"status":"ok","count": len(trades), "trades": trades[-50:]}
+    except Exception as e:
+        return {"status":"error","error": str(e), "trades":[]}
+
+@app.get("/api/mt5/ea")
+def mt5_ea_download():
+    """Download ASTRA6_Bridge EA file info"""
+    return {
+        "name": "ASTRA6_Bridge.mq5",
+        "version": "1.00",
+        "description": "ASTRA6 Elite Bridge EA - No MetaAPI, No VPS, No password sharing - Fetches signals from website and auto-trades on MT5",
+        "bot": "@astra6renderbot",
+        "website": "https://astra6.onrender.com",
+        "download_url": "https://astra6.onrender.com/ASTRA6_Bridge.mq5",
+        "how_to_use": [
+            "1. Download ASTRA6_Bridge.mq5 from /ASTRA6_Bridge.mq5",
+            "2. Copy to MT5 -> File -> Open Data Folder -> MQL5 -> Experts",
+            "3. Compile in MetaEditor (F7) -> ASTRA6_Bridge.ex5",
+            "4. Drag to XAUUSD chart M15",
+            "5. Inputs: Email = same as website (astra6render@gmail.com)",
+            "6. Allow WebRequest to https://astra6.onrender.com in MT5 Tools -> Options -> Expert Advisors",
+            "7. Enable AutoTrading in MT5",
+            "8. Bot will auto-trade your signals 24/7 free, no VPS, no MetaAPI"
+        ],
+        "inputs": {
+            "UserEmail": "Email same as website for signal fetching",
+            "TelegramUsername": "Optional Telegram @username without @",
+            "AutoTrade": "Enable auto trading true/false",
+            "LotSize": "Lot size 0.1 default",
+            "MagicNumber": "20260927 for ASTRA6",
+            "ScanIntervalSeconds": "Scan every 10 sec for M1 M5 M15 M30 H1"
+        },
+        "free_hosting": "Works on Render free 24/7 via self-ping + GitHub Actions + UptimeRobot m804098585 - no VPS cost"
+    }
+
+
 # Telegram Bot Webhook with Menu for Password Reset
 # Bot: @astra6renderbot Token: 8727468322:AAFhft72EMI7L1p0R4sGdeYAxkaQwFVoI-M
 # Menu: 1. Get reset token by Gmail, 2. Contact owner @ASTRA6RENDER
@@ -1324,6 +1523,15 @@ def telegram_qr():
     p = Path("telegram-qr.jpg")
     if p.exists(): return FileResponse(p, media_type="image/jpeg")
     raise HTTPException(status_code=404, detail="QR not found")
+
+@app.get("/ASTRA6_Bridge.mq5")
+def ea_file():
+    from pathlib import Path
+    from fastapi.responses import FileResponse
+    p = Path("ASTRA6_Bridge.mq5")
+    if p.exists():
+        return FileResponse(p, media_type="text/plain", filename="ASTRA6_Bridge.mq5")
+    raise HTTPException(status_code=404, detail="EA file not found")
 
 @app.get("/t_me-astra6render.jpg")
 def telegram_qr_alias():
