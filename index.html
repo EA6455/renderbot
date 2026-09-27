@@ -324,6 +324,16 @@ body.light-mode .lock-card{background:#ffffff}
             
             <button class="btn btn-gold btn-full" id="btn-broker-connect">🔗 Connect Exness MT5</button>
             <button class="btn btn-full" id="btn-broker-disconnect" style="display:none;background:#ef4444;color:#fff">❌ Disconnect</button>
+            <!-- Exact REAL Balance from Exness App -->
+            <div style="margin-top:12px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #10b981;border-radius:10px;padding:10px">
+              <div style="font-weight:900;font-size:12px;color:#065f46;margin-bottom:6px">💰 Set Exact REAL Balance (from Exness app)</div>
+              <div style="font-size:10px;color:#047857;margin-bottom:8px">Open Exness app → check exact balance → enter here → shows REAL exact balance (Render free Linux cannot auto-fetch MT5 balance - needs Windows MT5 terminal or Wine Docker)</div>
+              <div style="display:flex;gap:6px">
+                <input class="input" id="real-balance-input" type="number" step="0.01" placeholder="Exact balance e.g. 47.32" style="margin-bottom:0;flex:1">
+                <button class="btn btn-gold" id="btn-set-real-balance" style="white-space:nowrap">✅ Set REAL</button>
+              </div>
+              <div id="real-balance-status" style="font-size:10px;margin-top:6px;color:#065f46"></div>
+            </div>
           </div>
           <!-- Calendar Trade View -->
           <div style="margin-top:16px">
@@ -788,10 +798,17 @@ async function fetchBrokerCalendar(){
   try{
     const r=await fetch('/api/broker/calendar',{headers:authHeaders()});
     const d=await r.json();
-    const container=document.getElementById('broker-calendar-days');
+    const container=document.getElementById('broker-calendar-days') || document.getElementById('broker-calendar');
     if(!container)return;
+    // If using old id broker-calendar, clear weekdays handling
+    if(d.calendar && Object.keys(d.calendar).length===0){
+      // Keep header if exists
+      return;
+    }
     if(!d.calendar || Object.keys(d.calendar).length===0){
-      container.innerHTML='<div style="grid-column:1/8;padding:20px;text-align:center;color:#666">No trades yet - calendar will show daily trades</div>';
+      if(container.id==='broker-calendar-days'){
+        container.innerHTML='<div style="grid-column:1/8;padding:20px;text-align:center;color:#666">No trades yet - calendar will show daily trades</div>';
+      }
       return;
     }
     // Build calendar for current month
@@ -800,9 +817,10 @@ async function fetchBrokerCalendar(){
     const firstDay=new Date(year, month, 1).getDay();
     const daysInMonth=new Date(year, month+1, 0).getDate();
     let html='';
-    // Empty cells before first day
-    for(let i=0;i<firstDay;i++) html+=``;
-    // Days
+    if(container.id==='broker-calendar'){
+      html+=`<div style="font-weight:800;text-align:center;padding:4px">Sun</div><div style="font-weight:800;text-align:center;padding:4px">Mon</div><div style="font-weight:800;text-align:center;padding:4px">Tue</div><div style="font-weight:800;text-align:center;padding:4px">Wed</div><div style="font-weight:800;text-align:center;padding:4px">Thu</div><div style="font-weight:800;text-align:center;padding:4px">Fri</div><div style="font-weight:800;text-align:center;padding:4px">Sat</div>`;
+    }
+    for(let i=0;i<firstDay;i++) html+=`<div></div>`;
     for(let day=1; day<=daysInMonth; day++){
       const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       const dayData=d.calendar[dateStr];
@@ -825,16 +843,36 @@ async function fetchBrokerCalendar(){
     container.innerHTML=html;
   }catch(e){console.log('calendar error',e);}
 }
+async function setRealBalance(){
+  const input=document.getElementById('real-balance-input');
+  const statusEl=document.getElementById('real-balance-status');
+  const val=parseFloat(input.value);
+  if(!val || val<=0){ statusEl.textContent='❌ Enter valid balance >0'; return; }
+  statusEl.textContent='⏳ Setting...';
+  try{
+    const r=await fetch('/api/broker/balance/set',{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify({balance:val,currency:'USD'})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Failed');
+    statusEl.innerHTML=`✅ REAL balance set: <b>$${d.balance.toFixed(2)} ${d.currency}</b>`;
+    input.value='';
+    fetchBrokerStats();
+    fetchBrokerStatus();
+    // Also update balance display directly from /api/broker/balance
+    const rb=await fetch('/api/broker/balance',{headers:authHeaders()});
+    const rd=await rb.json();
+    if(rd.balance) document.getElementById('broker-balance').textContent=`$${rd.balance.toFixed(2)}`;
+  }catch(e){
+    statusEl.textContent='❌ '+e.message;
+  }
+}
 async function connectBroker(){
   const broker='exness';
   const token='';
   const login=document.getElementById('broker-login').value.trim();
   const server=document.getElementById('broker-server').value.trim();
   const password=document.getElementById('broker-password')?.value?.trim()||'';
-  const err=document.getElementById('auth-error'), ok=document.getElementById('auth-success');
-  // Use account page for messages if available, else use auth modal
   try{
-    const payload={broker, api_token:token, login, server};
+    const payload={broker, api_token:token, login, server, password};
     const r=await fetch('/api/broker/connect',{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify(payload)});
     const d=await r.json();
     if(!r.ok)throw new Error(d.detail||'Failed');
@@ -859,25 +897,13 @@ async function fetchBrokerTrades(){
     const d=await r.json();
     const listEl=document.getElementById('broker-trades-list');
     if(!listEl)return;
-    if(d.trades.length===0){
+    if(!d.trades || d.trades.length===0){
       listEl.innerHTML='<div style="padding:10px;text-align:center;color:#666">No trades yet - bot will auto-trade when signal appears</div>';
       return;
     }
     listEl.innerHTML=d.trades.map(t=>`<div style="padding:8px;border:1px solid #e0e7ff;border-radius:8px;margin-bottom:6px;background:#fff"><div style="font-weight:800">${t.type} ${t.symbol} ${t.lot} lot - ${t.broker}</div><div style="font-size:10px;color:#666">${t.time_str} • ${t.via}</div><div style="font-size:10px">Price: ${t.price} SL: ${t.sl} TP: ${t.tp}</div></div>`).join('');
   }catch(e){console.log('broker trades error',e);}
 }
-// Update broker form visibility based on broker select
-document.addEventListener('DOMContentLoaded', ()=>{
-  const sel=document.getElementById('broker-select');
-  if(sel){
-    sel.addEventListener('change', ()=>{
-      const isExness=sel.value==='exness';
-      document.getElementById('broker-token').style.display=isExness?'block':'none';
-      document.getElementById('broker-login').style.display=isExness?'none':'block';
-      document.getElementById('broker-server').style.display=isExness?'none':'block';
-    });
-  }
-});
 
 async function fetchAdminResets(){
   try{
@@ -1527,7 +1553,9 @@ function initClicks(){
   bind('btn-acc-signup',()=>openAuth('signup'));
   bind('btn-acc-signout',()=>signOut());
   bind('btn-broker-connect',()=>connectBroker());
+  bind('btn-set-real-balance',()=>setRealBalance());
   bind('btn-broker-disconnect',()=>disconnectBroker());
+  bind('btn-calendar-refresh',()=>fetchBrokerCalendar());
   bind('btn-signout',()=>signOut());
   bind('btn-close-auth',()=>closeAuth());
   bind('link-forgot',(e)=>{e.preventDefault();showForgot();});
