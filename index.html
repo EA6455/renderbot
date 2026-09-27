@@ -277,8 +277,8 @@ body.light-mode .lock-card{background:#ffffff}
             <div style="padding:20px;text-align:center;color:var(--muted)">Loading users...</div>
           </div>
           <div style="border-top:2px solid #000;padding-top:14px">
-            <div style="font-weight:900;font-size:14px;margin-bottom:8px">🔑 Password Reset Tokens (Gmail)</div>
-            <div style="font-size:11px;color:#666;margin-bottom:8px">If Gmail not sending, copy token here and send manually via astra6render@gmail.com</div>
+            <div style="font-weight:900;font-size:14px;margin-bottom:8px">🔑 Password Reset Tokens (Telegram + Gmail)</div>
+            <div style="font-size:11px;color:#666;margin-bottom:8px">If Gmail blocked (Render free), copy token and send manually via Telegram @ASTRA6RENDER or Gmail astra6render@gmail.com</div>
             <div id="admin-resets-list" style="max-height:300px;overflow-y:auto">
               <div style="padding:10px;text-align:center;color:var(--muted)">Loading resets...</div>
             </div>
@@ -295,17 +295,25 @@ body.light-mode .lock-card{background:#ffffff}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-weight:900;font-size:16px" id="auth-title">Sign In</div><button class="btn" id="btn-close-auth" style="padding:6px 12px">✕</button></div>
     <div class="auth-tabs"><div class="tab active" id="tab-signin">Sign In</div><div class="tab" id="tab-signup">Sign Up</div></div>
     <div class="error" id="auth-error"></div><div class="success" id="auth-success"></div>
-    <input class="input" id="email" type="email" placeholder="Email"><input class="input" id="password" type="password" placeholder="Password (min 6 chars)">
+    <input class="input" id="email" type="email" placeholder="Email">
+    <input class="input" id="telegram-username" type="text" placeholder="Telegram username (optional, for reset via Telegram)" style="display:none">
+    <input class="input" id="password" type="password" placeholder="Password (min 6 chars)">
     <button class="btn btn-gold btn-full" id="auth-submit" style="padding:13px;margin-top:4px">Sign In</button>
+    <div id="telegram-hint" style="display:none;font-size:10px;color:#666;margin-top:6px">For password reset via Telegram @ASTRA6RENDER - works even when Gmail blocked on Render free</div>
     <div style="text-align:center;margin-top:12px">
       <a href="#" id="link-forgot" style="font-size:12px;color:#000;text-decoration:underline">Forgot password?</a>
     </div>
-    <!-- Forgot Password Section -->
+    <!-- Forgot Password Section - NOW TELEGRAM USERNAME -->
     <div id="forgot-section" style="display:none;margin-top:16px;border-top:2px solid #000;padding-top:16px">
-      <div style="font-weight:900;font-size:14px;margin-bottom:8px">Reset Password via Email</div>
-      <div style="font-size:11px;color:#666;margin-bottom:8px">Owner: astra6render@gmail.com - reset link sent to your email</div>
-      <input class="input" id="forgot-email" type="email" placeholder="Enter your email">
-      <button class="btn btn-full" id="btn-forgot-send" style="background:#000;color:#fff;margin-bottom:10px">📧 Send Reset Link</button>
+      <div style="font-weight:900;font-size:14px;margin-bottom:8px">Reset Password via Telegram</div>
+      <div style="font-size:11px;color:#666;margin-bottom:8px">Contact: <a href="https://t.me/ASTRA6RENDER" target="_blank" style="color:#000;font-weight:900">@ASTRA6RENDER</a> on Telegram - token sent via Telegram bot</div>
+      <div style="background:#f0f8ff;border:1px solid #000;border-radius:8px;padding:8px;margin-bottom:8px;font-size:11px">
+        <div style="font-weight:700">📱 Telegram Username (without @)</div>
+        <div style="color:#666">Enter your Telegram username - e.g., if your Telegram is @john123, enter john123</div>
+      </div>
+      <input class="input" id="forgot-email" type="text" placeholder="Telegram username e.g. john123">
+      <button class="btn btn-full" id="btn-forgot-send" style="background:#0088cc;color:#fff;margin-bottom:10px">📱 Send Reset via Telegram</button>
+      <div style="font-size:10px;color:#666;margin-bottom:8px;text-align:center">Or enter email if you signed up with email - both work</div>
       <div style="font-size:11px;color:#666;margin:8px 0">Already have token?</div>
       <input class="input" id="reset-token" type="text" placeholder="Paste reset token">
       <input class="input" id="reset-new-password" type="password" placeholder="New password (min 6 chars)">
@@ -360,11 +368,16 @@ function switchTab(tab){
   document.getElementById('tab-signup').classList.toggle('active',tab==='signup');
   document.getElementById('auth-title').textContent=tab==='signin'?'Sign In':'Sign Up';
   document.getElementById('auth-submit').textContent=tab==='signin'?'Sign In':'Create Account';
+  const tgField=document.getElementById('telegram-username');
+  const tgHint=document.getElementById('telegram-hint');
+  if(tgField) tgField.style.display = tab==='signup' ? 'block' : 'none';
+  if(tgHint) tgHint.style.display = tab==='signup' ? 'block' : 'none';
 }
 
 async function submitAuth(){
   const email=document.getElementById('email').value.trim();
   const pass=document.getElementById('password').value;
+  const tgUsername=(document.getElementById('telegram-username')?.value || '').trim().lstrip('@');
   const err=document.getElementById('auth-error'), ok=document.getElementById('auth-success');
   err.style.display='none';ok.style.display='none';
   if(!email||!pass){err.textContent='Email and password required';err.style.display='block';return;}
@@ -372,7 +385,8 @@ async function submitAuth(){
   const btn=document.getElementById('auth-submit');const orig=btn.textContent;btn.textContent='Loading...';btn.disabled=true;
   const url=currentTab==='signin'?'/api/auth/signin':'/api/auth/signup';
   try{
-    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const payload = currentTab==='signup' ? {email, password:pass, telegram_username: tgUsername} : {email, password:pass};
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||'Failed');
     setToken(d.token,d.email);ok.textContent=d.message||'Success';ok.style.display='block';
     setTimeout(()=>{closeAuth();checkAuth();showView('dashboard');btn.textContent=orig;btn.disabled=false;},600);
@@ -383,36 +397,47 @@ function showForgot(){
   document.getElementById('forgot-section').style.display='block';
   document.getElementById('email').style.display='none';
   document.getElementById('password').style.display='none';
+  document.getElementById('telegram-username').style.display='none';
+  document.getElementById('telegram-hint').style.display='none';
   document.getElementById('auth-submit').style.display='none';
   document.getElementById('link-forgot').style.display='none';
   document.getElementById('auth-title').textContent='Forgot Password';
-  // prefill forgot email
+  // prefill forgot field
   const e=document.getElementById('email').value;
-  if(e)document.getElementById('forgot-email').value=e;
+  const tg=document.getElementById('telegram-username')?.value || '';
+  if(tg)document.getElementById('forgot-email').value=tg;
+  else if(e)document.getElementById('forgot-email').value=e;
 }
 function hideForgot(){
   document.getElementById('forgot-section').style.display='none';
   document.getElementById('email').style.display='block';
+  const tgField=document.getElementById('telegram-username');
+  if(tgField) tgField.style.display = currentTab==='signup' ? 'block' : 'none';
+  const tgHint=document.getElementById('telegram-hint');
+  if(tgHint) tgHint.style.display = currentTab==='signup' ? 'block' : 'none';
   document.getElementById('password').style.display='block';
   document.getElementById('auth-submit').style.display='block';
   document.getElementById('link-forgot').style.display='block';
   document.getElementById('auth-title').textContent=currentTab==='signin'?'Sign In':'Sign Up';
 }
 async function sendForgot(){
-  const email=document.getElementById('forgot-email').value.trim();
+  const input=document.getElementById('forgot-email').value.trim();
   const err=document.getElementById('auth-error'), ok=document.getElementById('auth-success');
   err.style.display='none';ok.style.display='none';
-  if(!email){err.textContent='Enter your email';err.style.display='block';return;}
+  if(!input){err.textContent='Enter your Telegram username or email';err.style.display='block';return;}
   const btn=document.getElementById('btn-forgot-send');const orig=btn.textContent;btn.textContent='Sending...';btn.disabled=true;
   try{
-    const r=await fetch('/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    // Detect if input is email or telegram username
+    const isEmail = input.includes('@') && input.includes('.');
+    const payload = isEmail ? {email: input} : {telegram_username: input};
+    const r=await fetch('/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||'Failed');
-    // New API returns reset_link + Gmail in background
     let htmlMsg = d.message;
     if(d.reset_link){
-      const tokenFromLink = d.reset_link.split('reset=')[1] || '';
+      const tokenFromLink = d.reset_link.split('reset=')[1] || d.reset_token || '';
       if(tokenFromLink) document.getElementById('reset-token').value=tokenFromLink;
-      htmlMsg = `✅ Reset link ready!<br><br><strong>Gmail:</strong> Check ${d.email} inbox via ${'astra6render@gmail.com'} (same logo)<br><br><strong>Copy link for paste:</strong><br><div style='background:#000;color:#fff;padding:10px;border-radius:8px;word-break:break-all;font-family:monospace;font-size:12px;margin:8px 0'>${d.reset_link}</div><button onclick="navigator.clipboard.writeText('${d.reset_link}');this.textContent='Copied!'" style='background:#fff;color:#000;border:2px solid #000;padding:6px 12px;border-radius:6px;font-weight:900;cursor:pointer'>📋 Copy Link</button> <button onclick="navigator.clipboard.writeText('${tokenFromLink}');this.textContent='Copied token!'" style='background:#000;color:#fff;border:2px solid #000;padding:6px 12px;border-radius:6px;font-weight:900;cursor:pointer'>📋 Copy Token</button><br><br><small>Token auto-filled below - enter new password and click Change Password. Gmail also sent in background.</small>`;
+      const tgUser = d.telegram_username ? `@${d.telegram_username}` : input;
+      htmlMsg = `✅ Reset link ready for ${tgUser}!<br><br><strong>📱 Telegram:</strong> Check Telegram ${tgUser} via <a href="https://t.me/ASTRA6RENDER" target="_blank" style="color:#000;font-weight:900">@ASTRA6RENDER</a> - bot sent token (works on Render free via HTTP, not blocked like Gmail SMTP)<br><br><strong>Copy link for paste:</strong><br><div style='background:#000;color:#fff;padding:10px;border-radius:8px;word-break:break-all;font-family:monospace;font-size:12px;margin:8px 0'>${d.reset_link}</div><button onclick="navigator.clipboard.writeText('${d.reset_link}');this.textContent='Copied!'" style='background:#fff;color:#000;border:2px solid #000;padding:6px 12px;border-radius:6px;font-weight:900;cursor:pointer'>📋 Copy Link</button> <button onclick="navigator.clipboard.writeText('${tokenFromLink}');this.textContent='Copied token!'" style='background:#000;color:#fff;border:2px solid #000;padding:6px 12px;border-radius:6px;font-weight:900;cursor:pointer'>📋 Copy Token</button><br><br><small>Token auto-filled below - enter new password and click Change Password. If Telegram bot not set, contact @ASTRA6RENDER manually with token.</small>`;
       ok.innerHTML=htmlMsg;
     } else {
       ok.textContent=d.message;

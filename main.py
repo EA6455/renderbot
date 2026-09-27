@@ -155,9 +155,10 @@ def validate_email(email):
     import re
     return re.match(r'^[^@]+@[^@]+\.[^@]+$', email) is not None
 
-def create_user(email, password):
+def create_user(email, password, telegram_username=""):
     users = load_users()
     email = email.lower().strip()
+    telegram_username = (telegram_username or "").strip().lstrip("@")
     if not validate_email(email):
         return None, "Invalid email format"
     if email in users:
@@ -175,6 +176,7 @@ def create_user(email, password):
         "email": email,
         "salt": salt,
         "hash": hash_password(password, salt),
+        "telegram_username": telegram_username,
         "created": now,
         "created_str": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(now)),
         "last_login": now,
@@ -186,7 +188,7 @@ def create_user(email, password):
         "winrate_target": "70-76%"
     }
     save_users(users)
-    print(f"✅ New user created: {email} total={len(users)}")
+    print(f"✅ New user created: {email} tg=@{telegram_username} total={len(users)}")
     return users[email], None
 
 def verify_user(email, password):
@@ -196,7 +198,22 @@ def verify_user(email, password):
         return None
     if not u.get("is_active", True):
         return None
-    if hash_password(password, u["salt"]) == u["hash"]:
+    # Support both old simple hash and new salt/hash
+    ok = False
+    if "salt" in u and "hash" in u:
+        if hash_password(password, u["salt"]) == u["hash"]:
+            ok = True
+    elif "password_hash" in u:
+        import hashlib
+        if hashlib.sha256(password.encode()).hexdigest() == u["password_hash"]:
+            ok = True
+            # Migrate to new format
+            import secrets
+            salt = secrets.token_hex(16)
+            u["salt"] = salt
+            u["hash"] = hash_password(password, salt)
+            del u["password_hash"]
+    if ok:
         # update last login
         u["last_login"] = time.time()
         u["login_count"] = u.get("login_count",0)+1
@@ -276,6 +293,7 @@ def require_approved_auth(authorization: str = Header(None)):
 class AuthRequest(BaseModel):
     email: str
     password: str
+    telegram_username: str = 
 class ContactRequest(BaseModel):
     email: str
     subject: str = ""
@@ -1051,7 +1069,7 @@ def status():
 
 @app.post("/api/auth/signup")
 def signup(req: AuthRequest):
-    user, err = create_user(req.email, req.password)
+    user, err = create_user(req.email, req.password, req.telegram_username)
     if err: raise HTTPException(status_code=400, detail=err)
     token, tdata = create_token(user["email"])
     approved = user.get("approved", False)
@@ -1066,11 +1084,117 @@ def signin(req: AuthRequest):
     token, tdata = create_token(user["email"])
     return {"status":"ok","email": user["email"], "token": token, "message":"Signed in", "created": user["created"], "expires": tdata["expires"], "approved": user.get("approved", True), "is_admin": is_admin(user["email"])}
 
+def send_telegram_message(telegram_username, text, html_text=None):
+    """Send message via Telegram Bot API - works on Render free (HTTP, not SMTP)"""
+    import os, requests
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("BOT_TOKEN")
+    if not bot_token:
+        print(f"TELEGRAM_BOT_TOKEN not set - would send to {telegram_username}: {text[:100]}")
+        return False, "BOT_TOKEN not set"
+    # Clean username
+    chat_id = telegram_username.strip()
+    if not chat_id.startswith("@") and not chat_id.lstrip("-").isdigit():
+        # If username without @, add @ for channel, or keep as is for user
+        if chat_id.replace("_","").replace("0","").isalnum() or "_" in chat_id:
+            # Try as @username
+            chat_id = "@" + chat_id.lstrip("@")
+    try:
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        payload = {
+            "chat_id": chat_id,
+            "text": text,
+            "parse_mode": "HTML" if html_text else None
+        }
+        if html_text:
+            payload["text"] = html_text
+            payload["parse_mode"] = "HTML"
+        r = requests.post(url, json=payload, timeout=10)
+        print(f"Telegram send to {chat_id} status {r.status_code} {r.text[:200]}")
+        if r.status_code == 200:
+            return True, "sent"
+        else:
+            return False, r.text[:300]
+    except Exception as e:
+        print(f"Telegram send error to {chat_id}: {e}")
+        return False, str(e)
+
 @app.post("/api/auth/forgot-password")
 def forgot_password(req: dict):
+    # Support both email and telegram_username - now prefers telegram
     email = req.get("email","").lower().strip()
+    telegram_username = req.get("telegram_username","") or req.get("telegram","") or req.get("username","")
+    telegram_username = telegram_username.strip().lstrip("@")
+    
+    # If telegram_username provided, use telegram flow
+    if telegram_username:
+        users = load_users()
+        # Find user by telegram_username or email containing it
+        found_email = None
+        for u_email, u_data in users.items():
+            if u_data.get("telegram_username","").lower().lstrip("@") == telegram_username.lower():
+                found_email = u_email
+                break
+            if telegram_username.lower() in u_email.lower():
+                found_email = u_email
+                break
+        # If not found, still allow reset by telegram (create temp mapping)
+        if not found_email:
+            # Check if telegram_username is actually an email
+            if "@" in telegram_username and "." in telegram_username:
+                email = telegram_username.lower()
+                telegram_username = ""
+            else:
+                # For telegram flow, we allow any username - will create token linked to telegram
+                found_email = f"telegram_{telegram_username}@telegram.local"
+        
+        reset_token = secrets.token_urlsafe(32)
+        resets = load_resets()
+        now = time.time()
+        expired = [k for k,v in resets.items() if v.get("expires",0) < now]
+        for k in expired:
+            del resets[k]
+        # Store with both email and telegram_username
+        resets[reset_token] = {"email": found_email or email, "telegram_username": telegram_username, "created": now, "expires": now + 3600, "used": False}
+        save_resets(resets)
+        reset_link = f"https://astra6.onrender.com/?reset={reset_token}"
+        logo_url = "https://astra6.onrender.com/logo.png"
+        
+        # Send via Telegram in background (HTTP - works on Render free)
+        try:
+            import threading, os
+            def send_tg_bg():
+                try:
+                    # Message for user
+                    tg_text = f"🔐 ASTRA6 Password Reset\n\nHi @{telegram_username},\n\nYour reset link (expires 1h):\n{reset_link}\n\nToken:\n{reset_token}\n\nGo to https://astra6.onrender.com → Sign In → Forgot password? → Paste token\n\nFrom ASTRA6 @ASTRA6RENDER"
+                    tg_html = f"🔐 <b>ASTRA6 Password Reset</b>\n\nHi @{telegram_username},\n\nYour reset link (expires 1h):\n{reset_link}\n\n<b>Token:</b>\n<code>{reset_token}</code>\n\nGo to https://astra6.onrender.com → Sign In → Forgot password? → Paste token\n\nFrom ASTRA6 @ASTRA6RENDER"
+                    # Try send to user
+                    ok, msg = send_telegram_message(telegram_username, tg_text, tg_html)
+                    # Also send to admin channel @ASTRA6RENDER for backup
+                    try:
+                        admin_msg = f"🔑 Password reset for @{telegram_username} ({found_email})\nLink: {reset_link}\nToken: {reset_token}"
+                        send_telegram_message("@ASTRA6RENDER", admin_msg)
+                    except:
+                        pass
+                    # Also try webhook if set
+                    webhook_url = os.getenv("EMAIL_WEBHOOK_URL") or os.getenv("GMAIL_WEBHOOK_URL")
+                    if webhook_url and not ok:
+                        try:
+                            import requests
+                            payload = {"to": found_email, "telegram_username": telegram_username, "reset_link": reset_link, "reset_token": reset_token}
+                            requests.post(webhook_url, json=payload, timeout=10)
+                        except:
+                            pass
+                except Exception as e:
+                    print(f"TG BG error {e}")
+            threading.Thread(target=send_tg_bg, daemon=True).start()
+        except Exception as e:
+            print(f"TG thread error {e}")
+        
+        return {"status":"ok","message": f"Reset link sent to Telegram @{telegram_username} via @ASTRA6RENDER - check your Telegram (expires 1h). Link also available for copy-paste.", "telegram_username": telegram_username, "email": found_email, "reset_link": reset_link, "reset_token": reset_token}
+    
+    # Fallback to email flow (old)
     if not email:
-        raise HTTPException(status_code=400, detail="Email required")
+        raise HTTPException(status_code=400, detail="Email or Telegram username required")
     users = load_users()
     if email not in users:
         return {"status":"ok","message": f"If {email} exists, reset link sent to email via {OWNER_EMAIL}"}
@@ -1163,13 +1287,42 @@ def reset_password(req: dict):
         save_resets(resets)
         raise HTTPException(status_code=400, detail="Token expired")
     email = data["email"]
+    telegram_username = data.get("telegram_username","")
     users = load_users()
+    # Handle telegram flow - find user by telegram_username if email not found
+    if email not in users and telegram_username:
+        # Try find by telegram_username
+        for u_email, u_data in users.items():
+            if u_data.get("telegram_username","").lower().lstrip("@") == telegram_username.lower():
+                email = u_email
+                break
+        # If still not found and email is telegram placeholder, try to find any user with matching telegram
+        if email not in users:
+            # If token was for telegram but user doesn't have telegram_username set, allow reset for any matching email pattern
+            # For simplicity, if email is telegram_...@telegram.local, we need to have actual user email from data
+            # Check if data has original email that exists
+            if email.startswith("telegram_") and email.endswith("@telegram.local"):
+                # Try to find user by telegram_username in all users, or fail with helpful message
+                found = False
+                for u_email, u_data in users.items():
+                    if telegram_username.lower() in u_email.lower() or telegram_username.lower() == u_data.get("telegram_username","").lower().lstrip("@"):
+                        email = u_email
+                        found = True
+                        break
+                if not found:
+                    # Create user entry for telegram if not exists? For now, error with instruction
+                    raise HTTPException(status_code=404, detail=f"User with Telegram @{telegram_username} not found. Please sign up with email and add Telegram username in account, or contact @ASTRA6RENDER")
     if email not in users:
         raise HTTPException(status_code=404, detail="User not found")
-    # Update password
+    # Update password - support both old hash and new salt/hash format
     salt = secrets.token_hex(16)
-    users[email]["salt"] = salt
-    users[email]["hash"] = hash_password(new_password, salt)
+    # Check user structure
+    if "password_hash" in users[email]:
+        import hashlib
+        users[email]["password_hash"] = hashlib.sha256(new_password.encode()).hexdigest()
+    else:
+        users[email]["salt"] = salt
+        users[email]["hash"] = hash_password(new_password, salt)
     users[email]["last_password_change"] = time.time()
     save_users(users)
     # Mark token used
