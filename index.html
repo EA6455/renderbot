@@ -53,7 +53,7 @@ body{font-family:system-ui,-apple-system,Inter,sans-serif;background:#ffffff;col
 @media(max-width:640px){
  body{flex-direction:column}
  .sidebar{display:none !important}
- .main-wrap{margin-left:0 !important;padding-bottom:0;max-width:1200px;margin:0 auto}
+ .main-wrap{margin-left:0 !important;padding-bottom:0}
  .mobile-logo{display:flex}
  .topbar{padding:10px 12px}
  .price-main{font-size:18px}
@@ -77,16 +77,22 @@ body{font-family:system-ui,-apple-system,Inter,sans-serif;background:#ffffff;col
 .qr-img{border:3px solid transparent !important;background: linear-gradient(white, white) padding-box, linear-gradient(135deg, #667eea, #764ba2, #f093fb) border-box !important;box-shadow: 0 8px 32px rgba(102,126,234,0.2)}
 
 
-/* Single page layout - all parts together */
-.content{max-width:1200px;margin:0 auto;padding:16px}
+/* FIX: Single page - all parts together without breaking working system */
+.content{display:block !important;max-width:1400px;margin:0 auto}
 .view{display:block !important;margin-bottom:20px}
-#view-dashboard{order:1}
-#view-signals{order:2}
-#view-account{order:3;display:none !important} /* Hide account, keep dashboard+chart main */
-#view-contact{order:4;display:none !important}
-#view-admin{display:none !important}
-.single-page-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:900px){.single-page-grid{grid-template-columns:1fr}}
+#view-dashboard{display:block !important}
+#view-signals{display:block !important}
+#view-account{display:block !important}
+#view-contact{display:block !important}
+#view-admin{display:none !important} /* Keep admin hidden unless admin */
+/* Make dashboard and chart side by side on desktop */
+@media(min-width:900px){
+  .content{display:grid !important;grid-template-columns:1fr 1fr;gap:16px}
+  #view-dashboard{grid-column:1}
+  #view-signals{grid-column:2}
+  #view-account{grid-column:1 / -1}
+  #view-contact{grid-column:1 / -1}
+}
 
 </style>
 </head>
@@ -143,11 +149,9 @@ body{font-family:system-ui,-apple-system,Inter,sans-serif;background:#ffffff;col
     </div>
   </div>
 
-    <div class="content" style="max-width:1200px;margin:0 auto;padding:16px;display:block">
-    <!-- SINGLE PAGE - ALL PARTS TOGETHER - Dashboard + Chart + Alerts -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-      <div>
-        <div class="signal-card hold" id="current-signal-card" style="margin-bottom:14px;border:2px solid #000">
+  <div class="content">
+    <div class="view active" id="view-dashboard">
+      <div class="signal-card hold" id="current-signal-card" style="margin-bottom:14px;border:2px solid #000">
         <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:8px">
           <img src="/logo.png" alt="ASTRA6 Logo" style="height:32px;width:auto">
           <div class="mono" style="font-size:10px;font-weight:900;letter-spacing:1px">ASTRA6 ELITE • HUMAN + AI</div>
@@ -161,41 +165,91 @@ body{font-family:system-ui,-apple-system,Inter,sans-serif;background:#ffffff;col
         <!-- Clean signal only - details removed per user request -->
         <div style="margin-top:12px;font-size:10px;color:#999" class="mono">ASTRA6 Elite • 80%+ Winrate • Clean</div>
       </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
         <div class="card" style="text-align:center;padding:14px"><div class="label">Alerts</div><div class="mono" id="stat-total" style="font-size:20px;font-weight:900">0</div></div>
         <div class="card" style="text-align:center;padding:14px"><div class="label">Buy / Sell</div><div class="mono" id="stat-bs" style="font-size:14px;font-weight:700">0 / 0</div></div>
         <div class="card" style="text-align:center;padding:14px"><div class="label">Live</div><div class="mono" style="font-size:11px;color:var(--green)">● XAUUSD</div><div class="mono" id="stat-last" style="font-size:9px;margin-top:2px">--</div></div>
       </div>
+
+      <div class="card">
+        <div style="font-weight:900;font-size:14px;margin-bottom:12px">🚨 Alerts</div>
+        <div id="alerts-list" style="max-height:500px;overflow-y:auto">
+          <div style="font-size:12px;color:var(--muted);padding:20px;text-align:center">Sign in to view<br><button class="btn btn-gold" style="margin-top:10px" id="btn-signin-alert">Sign In</button></div>
+        </div>
       </div>
-      <div>
-        <div class="card">
-          <div style="font-weight:900;font-size:14px;margin-bottom:12px">📈 Live Chart - XAUUSD / GOLD</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px" id="tf-buttons">
-            <button class="tf-btn" data-tf="M1">M1</button>
-            <button class="tf-btn" data-tf="M5">M5</button>
-            <button class="tf-btn active" data-tf="M15">M15</button>
-            <button class="tf-btn" data-tf="M30">M30</button>
-            <button class="tf-btn" data-tf="H1">H1</button>
-            <button class="tf-btn" data-tf="H4">H4</button>
-            <button class="tf-btn" data-tf="D">D1</button>
-            <button class="tf-btn" data-tf="W">W1</button>
+      <div class="lock-overlay" id="dash-lock" style="background: linear-gradient(135deg, rgba(102,126,234,0.95) 0%, rgba(118,75,162,0.95) 50%, rgba(240,147,251,0.95) 100%);backdrop-filter: blur(20px)">
+        <div class="lock-card" style="background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);border:3px solid transparent;background-clip: padding-box;border-radius:24px;padding:32px;max-width:420px;box-shadow: 0 20px 80px rgba(0,0,0,0.3);position:relative;overflow:hidden">
+          
+          <div style="text-align:center;margin-bottom:20px">
+            <img src="/logo.png" alt="ASTRA6" style="height:64px;width:auto;margin-bottom:12px;filter: drop-shadow(0 4px 12px rgba(102,126,234,0.3))">
+            <div style="font-size:32px;font-weight:900;background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);-webkit-background-clip: text;-webkit-text-fill-color: transparent;background-clip: text;letter-spacing:1px">ASTRA6</div>
           </div>
-          <div id="oanda_chart" style="height:400px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Loading chart • Free access</div>
-          <div class="info-bar"><span>ASTRA6 CHART • <span id="chart-info-tf">M15</span></span><span class="mono" id="chart-candle-count">--</span></div>
+          <div style="font-size:28px;font-weight:900;text-align:center;margin-bottom:20px;background: linear-gradient(135deg, #1f2937 0%, #4f46e5 100%);-webkit-background-clip: text;-webkit-text-fill-color: transparent">Welcome to ASTRA6</div>
+          <!-- Direct login form - appears immediately, no modal needed - FIX for user report -->
+          <div style="background:#fff;border:2px solid #667eea;border-radius:14px;padding:16px;margin-bottom:16px">
+            <div style="font-weight:800;font-size:13px;margin-bottom:10px;color:#4f46e5">🔐 Direct Login - Type Email & Password Here</div>
+            <input class="input" id="dash-email" type="email" placeholder="Email: astra6render@gmail.com" style="margin-bottom:8px;padding:12px;border:2px solid #000;border-radius:10px;font-size:14px">
+            <input class="input" id="dash-password" type="password" placeholder="Password: admin123" style="margin-bottom:8px;padding:12px;border:2px solid #000;border-radius:10px;font-size:14px">
+            <button class="btn btn-gold" id="btn-dash-direct-signin" style="width:100%;padding:14px;font-weight:900;font-size:15px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;border:none;border-radius:12px" onclick="directDashSignIn()">🔐 Sign In - Direct (Works All Devices)</button>
+            <div id="dash-login-status" style="font-size:12px;margin-top:8px"></div>
+            <div style="font-size:10px;color:#666;margin-top:6px">If modal fails, use this direct form. Also try <a href="/login.html" style="color:#4f46e5;font-weight:800">/login.html</a> or <a href="/simple-login.html" style="color:#dc2626;font-weight:800">/simple-login.html</a></div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:10px">
+            <button class="btn" style="flex:1;padding:12px;font-size:13px;font-weight:700;background:#fff;color:#4f46e5;border:2px solid #e0e7ff;border-radius:10px" id="btn-dash-signin">🔑 Log In (Modal)</button>
+            <button class="btn btn-gold" style="flex:1;padding:12px;font-size:13px;font-weight:700" id="btn-dash-signup">📝 Sign Up (Modal)</button>
+          </div>
+          <div style="text-align:center;margin-top:14px;font-size:10px;color:#9ca3af">
+            <div>Contact: <a href="https://t.me/ASTRA6RENDER" target="_blank" style="color:#4f46e5;font-weight:700">@ASTRA6RENDER</a> • <a href="https://t.me/astra6renderbot" target="_blank" style="color:#0088cc;font-weight:700">@astra6renderbot</a></div>
+            <div style="margin-top:4px">Admin: astra6render@gmail.com</div>
+          </div>
         </div>
       </div>
     </div>
-    
-    <div class="card">
-      <div style="font-weight:900;font-size:14px;margin-bottom:12px">🚨 Alerts - Live Signals</div>
-      <div id="alerts-list" style="max-height:500px;overflow-y:auto">
-        <div style="font-size:12px;color:var(--muted);padding:20px;text-align:center">Loading signals... Free access, no login needed<br></div>
+
+    <div class="view" id="view-signals">
+      <div class="terminal" id="terminal">
+        <div class="terminal-top">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div style="font-weight:900">ASTRA6 CHART <span style="color:var(--muted);font-weight:400">• XAUUSD / GOLD</span></div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap" id="tf-buttons">
+              <button class="tf-btn" data-tf="M1">M1</button>
+              <button class="tf-btn" data-tf="M5">M5</button>
+              <button class="tf-btn active" data-tf="M15">M15</button>
+              <button class="tf-btn" data-tf="M30">M30</button>
+              <button class="tf-btn" data-tf="H1">H1</button>
+              <button class="tf-btn" data-tf="H4">H4</button>
+              <button class="tf-btn" data-tf="D">D1</button>
+              <button class="tf-btn" data-tf="W">W1</button>
+            </div>
+          </div>
+          <div class="mono" style="font-size:10px;color:var(--muted)" id="chart-tf-label">M15 • Live</div>
+        </div>
+        <div id="oanda_chart" style="display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Chart loads after sign in • All devices</div>
+        <div class="info-bar"><span>ASTRA6 CHART • <span id="chart-info-tf">M15</span> • Easy • All devices</span><span class="mono" id="chart-candle-count">--</span></div>
+        <div class="lock-overlay" id="lock-overlay" style="background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%);backdrop-filter: blur(15px)">
+          <div class="lock-card">
+            <div style="font-size:32px;margin-bottom:10px">🔒</div>
+            <div style="font-weight:900;font-size:18px;margin-bottom:6px">Sign in to view chart</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Dashboard has easy signals. Chart for confirmation. All devices.</div>
+            <div style="display:flex;gap:8px"><button class="btn" style="flex:1" id="btn-chart-signin">Sign In</button><button class="btn btn-gold" style="flex:1" id="btn-chart-signup">Sign Up</button></div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Hidden views for account/contact/admin but accessible via hamburger if needed -->
-    <div class="view" id="view-dashboard" style="display:none"></div>
-    <div class="view" id="view-signals" style="display:none"></div>
+    <div class="view" id="view-contact">
+      <div style="display:flex;align-items:center;justify-content:center;min-height:60vh;padding:10px">
+        <div class="card" style="text-align:center;max-width:380px;width:100%;padding:28px">
+          <div style="font-weight:900;font-size:18px;margin-bottom:10px">📞 Admin Contact • All devices</div>
+          <img src="/telegram-qr.jpg" alt="@ASTRA6RENDER" class="qr-img">
+          <a href="https://t.me/ASTRA6RENDER" target="_blank" style="display:block;color:var(--gold);font-weight:900;font-size:16px;text-decoration:none;margin-top:10px" class="mono">@ASTRA6RENDER</a>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">Scan QR • Telegram only • All devices</div>
+          <a href="https://t.me/ASTRA6RENDER" target="_blank" class="btn btn-gold btn-full" style="margin-top:16px;text-decoration:none;padding:12px">Open Telegram</a>
+        </div>
+      </div>
+    </div>
+      </div>
+    </div>
 
 <div class="view" id="view-account">
       <div class="card">
