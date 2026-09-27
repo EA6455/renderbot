@@ -5,5 +5,10 @@ __pycache__/
 venv/
 signals.json
 contacts.json
-# users.json and tokens.json are kept for persistence on free plan (hashed passwords, tokens)
-# For production, use Postgres disk
+users.json
+tokens.json
+broker_accounts.json
+broker_trades.json
+mt5_trades.json
+*.log
+.DS_Store
