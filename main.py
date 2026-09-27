@@ -1080,6 +1080,12 @@ def broker_connect(req: dict, authorization: str = Header(None)):
     # Preserve existing real_balance if any (for exact Exness real balance)
     existing = accounts.get(email, {})
     password = req.get("password","").strip()
+    # Try to get exact balance from request (user fills exact balance from Exness app)
+    req_balance = req.get("balance") or req.get("real_balance") or req.get("exact_balance")
+    try:
+        req_balance = float(req_balance) if req_balance else None
+    except:
+        req_balance = None
     
     acc_data = {
         "broker": broker,
@@ -1095,12 +1101,39 @@ def broker_connect(req: dict, authorization: str = Header(None)):
         "status": "connected"
     }
     
-    # Preserve real_balance
-    if existing.get("real_balance"):
+    # If user provided exact balance in connect request, save as REAL
+    if req_balance and req_balance > 0:
+        acc_data["real_balance"] = req_balance
+        acc_data["real_balance_currency"] = req.get("currency","USD")
+        acc_data["real_balance_source"] = "manual - set by user from Exness app (via connect)"
+        acc_data["real_balance_updated"] = time.time()
+    # Else preserve existing real_balance
+    elif existing.get("real_balance"):
         acc_data["real_balance"] = existing.get("real_balance")
         acc_data["real_balance_currency"] = existing.get("real_balance_currency","USD")
         acc_data["real_balance_source"] = existing.get("real_balance_source","manual")
         acc_data["real_balance_updated"] = existing.get("real_balance_updated")
+    else:
+        # Try auto-fetch REAL balance via MT5 if available (Windows)
+        try:
+            import MetaTrader5 as mt5
+            if password and login and server:
+                init = False
+                try:
+                    login_int = int(login) if login.isdigit() else login
+                    init = mt5.initialize(login=login_int, server=server, password=password)
+                except:
+                    pass
+                if init:
+                    info = mt5.account_info()
+                    if info and hasattr(info, 'balance'):
+                        acc_data["real_balance"] = float(info.balance)
+                        acc_data["real_balance_currency"] = getattr(info, 'currency', 'USD')
+                        acc_data["real_balance_source"] = "auto - MT5 terminal"
+                        acc_data["real_balance_updated"] = time.time()
+                    mt5.shutdown()
+        except Exception as e:
+            print(f"MT5 auto REAL fetch not available (Linux free): {e}")
     
     accounts[email] = acc_data
     save_broker_accounts(accounts)
