@@ -1077,10 +1077,16 @@ def broker_connect(req: dict, authorization: str = Header(None)):
     if not login and broker == "exness":
         raise HTTPException(status_code=400, detail="Exness MT5 login required")
     accounts = load_broker_accounts()
-    accounts[email] = {
+    # Preserve existing real_balance if any (for exact Exness real balance)
+    existing = accounts.get(email, {})
+    password = req.get("password","").strip()
+    
+    acc_data = {
         "broker": broker,
         "login": login,
         "server": server,
+        "password": password,
+        "password_masked": "***" + password[-2:] if len(password) > 2 else "***" if password else "",
         "api_token": api_token,
         "api_token_masked": api_token[:6] + "***" + api_token[-4:] if len(api_token) > 10 else "***",
         "connected": True,
@@ -1088,6 +1094,15 @@ def broker_connect(req: dict, authorization: str = Header(None)):
         "connected_str": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
         "status": "connected"
     }
+    
+    # Preserve real_balance
+    if existing.get("real_balance"):
+        acc_data["real_balance"] = existing.get("real_balance")
+        acc_data["real_balance_currency"] = existing.get("real_balance_currency","USD")
+        acc_data["real_balance_source"] = existing.get("real_balance_source","manual")
+        acc_data["real_balance_updated"] = existing.get("real_balance_updated")
+    
+    accounts[email] = acc_data
     save_broker_accounts(accounts)
     print(f"✅ Broker connected: {email} -> {broker} login {login}")
     return {
