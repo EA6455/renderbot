@@ -1371,7 +1371,7 @@ function renderCurrent(s){
   }
   const sr=document.getElementById('sig-reasons');if(sr)sr.textContent=s.reasons[0]||'High confluence sniper entry';
   const sl=document.getElementById('stat-last');if(sl)sl.textContent=s.type+' • '+new Date(s.timestamp*1000).toLocaleTimeString();
-  // AI display from pythonidae + Finance+Web
+  // AI display from pythonidae + Finance+Web + TradingView
   const aiEl=document.getElementById('sig-ai');
   if(aiEl){
     let html='';
@@ -1391,10 +1391,24 @@ function renderCurrent(s){
         const dxy=corr.DXY?`${corr.DXY.trend}(${corr.DXY.gold_signal})`:'-';
         const silver=corr.SILVER?`${corr.SILVER.trend}(${corr.SILVER.gold_signal})`:'-';
         const spx=corr.SPX?`${corr.SPX.trend}(${corr.SPX.gold_signal})`:'-';
-        html+=`<span style="font-size:10px;color:#666">DXY:${dxy} Silver:${silver} SPX:${spx} Oil:${corr.OIL?.trend||'-'} EURUSD:${corr.EURUSD?.trend||'-'} • <a href="#" onclick="fetchFinanceWebStatus();return false" style="color:#059669">Finance+Web Status</a></span>`;
+        html+=`<span style="font-size:10px;color:#666">DXY:${dxy} Silver:${silver} SPX:${spx} Oil:${corr.OIL?.trend||'-'} EURUSD:${corr.EURUSD?.trend||'-'} • <a href="#" onclick="fetchFinanceWebStatus();return false" style="color:#059669">Finance+Web</a> </span>`;
       }
     } else {
-      html+=`💰 Finance+Web: Multi-asset (DXY, Silver, SPX, Oil, BTC, EURUSD) + web-check • <a href="#" onclick="fetchFinanceWebStatus();return false" style="color:#059669">Check Finance+Web</a>`;
+      html+=`💰 Finance+Web: Multi-asset (DXY, Silver, SPX, Oil, BTC, EURUSD) + web-check • <a href="#" onclick="fetchFinanceWebStatus();return false" style="color:#059669">Check Finance+Web</a><br>`;
+    }
+    if(s.tradingview_signal){
+      const tv=s.tradingview_signal;
+      const ind=tv.indicators||{};
+      const pine=tv.pine||{};
+      html+=`📈 TradingView: <b>${tv.type}</b> ${tv.confidence}% • Buy:${tv.buy_score} Sell:${tv.sell_score}<br>`;
+      if(ind.indicators){
+        const rsi=ind.indicators.rsi_14||'-';
+        const macd=ind.indicators.macd_line||'-';
+        const ema21=ind.indicators.ema_21||'-';
+        html+=`<span style="font-size:10px;color:#666">RSI:${rsi} MACD:${macd} EMA21:${ema21} BB:${ind.indicators.bb_position||'-'} Vol:${ind.indicators.vol_ratio||'-'}x • Pine:${pine.overall||'-'} ${pine.confidence||0}% • <a href="#" onclick="fetchTradingViewStatus();return false" style="color:#ea580c">TradingView</a></span>`;
+      }
+    } else {
+      html+=`📈 TradingView: RSI, MACD, EMA, BB, Pine engulfing/pin bar • <a href="#" onclick="fetchTradingViewStatus();return false" style="color:#ea580c">Check TradingView</a>`;
     }
     aiEl.style.display='block';
     aiEl.innerHTML=html;

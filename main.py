@@ -19,6 +19,14 @@ except Exception as e:
     print(f"Finance+Web not available: {e}")
     FINANCE_WEB_AVAILABLE = False
 
+try:
+    from tradingview_analysis import get_tradingview_combined_signal, analyze_tradingview_indicators, analyze_pine_script_patterns
+    TRADINGVIEW_AVAILABLE = True
+    print("✅ TradingView Analysis loaded from tradingview-mcp Bridge (84 tools)")
+except Exception as e:
+    print(f"TradingView not available: {e}")
+    TRADINGVIEW_AVAILABLE = False
+
 from fastapi import FastAPI, Header, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
@@ -805,6 +813,34 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
                         reasons_sell.append(f"💰 Multi-asset STRONG SELL {fw_conf}% - FinanceDatabase correlation")
         except Exception as e:
             print(f"Finance+Web boost error: {e}")
+    
+    # 10. TRADINGVIEW BOOST from tradingview-mcp Bridge (84 tools, Pine Script, indicators)
+    tradingview_signal = None
+    if TRADINGVIEW_AVAILABLE:
+        try:
+            tradingview_signal = get_tradingview_combined_signal(m15_candles, h1_candles)
+            if tradingview_signal:
+                tv_type = tradingview_signal.get('type')
+                tv_conf = tradingview_signal.get('confidence',0)
+                tv_buy = tradingview_signal.get('buy_score',0)
+                tv_sell = tradingview_signal.get('sell_score',0)
+                print(f"📈 TradingView Signal: {tv_type} {tv_conf}% Buy:{tv_buy} Sell:{tv_sell}")
+                if tv_type == "BUY" and tv_conf >= 65:
+                    buy_score += 2.5
+                    reasons_buy.append(f"📈 TradingView BUY {tv_conf}% (RSI, MACD, EMA, BB, Pine engulfing/pin bar) - from tradingview-mcp 84 tools")
+                    filters_buy += 1
+                    if tv_conf >= 80:
+                        buy_score += 1.0
+                        reasons_buy.append(f"📈 TradingView STRONG BUY {tv_conf}% - indicators + Pine patterns")
+                elif tv_type == "SELL" and tv_conf >= 65:
+                    sell_score += 2.5
+                    reasons_sell.append(f"📈 TradingView SELL {tv_conf}% (RSI, MACD, EMA, BB, Pine engulfing/pin bar) - from tradingview-mcp 84 tools")
+                    filters_sell += 1
+                    if tv_conf >= 80:
+                        sell_score += 1.0
+                        reasons_sell.append(f"📈 TradingView STRONG SELL {tv_conf}% - indicators + Pine patterns")
+        except Exception as e:
+            print(f"TradingView boost error: {e}")
     # --- HUMAN DECISION - perfect entries only, like people + AI ---
     signal_type = "HOLD"
     confidence = 50
@@ -936,6 +972,7 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
         "strategy": "ASTRA6 Elite Human + AI ML (pythonidae) - 75% winrate",
         "ai_signal": ai_signal if 'ai_signal' in locals() else None,
         "finance_web_signal": finance_web_signal if 'finance_web_signal' in locals() else None,
+        "tradingview_signal": tradingview_signal if 'tradingview_signal' in locals() else None,
         "rsi": round(rsi_val,1) if isinstance(rsi_val,(int,float)) else 50,
         "sma20": round(ema21_val,2) if isinstance(ema21_val,(int,float)) else round(price,2),
         "sma50": round(ema50_val,2) if isinstance(ema50_val,(int,float)) else round(price,2),
@@ -3066,6 +3103,35 @@ def finance_web_status(email: str = Depends(require_approved_auth)):
             "web_checks": WEB_CHECKS,
             "source": "FinanceDatabase 300k symbols + web-check Astro/Svelte",
             "strategy": "Multi-asset correlation (DXY, Silver, SPX, Oil, BTC, EURUSD) + broker security health",
+            "user": email
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status":"error","error":str(e)}
+
+@app.get("/api/signals/tradingview")
+def tradingview_status(email: str = Depends(require_approved_auth)):
+    """TradingView MCP Bridge analysis"""
+    try:
+        from tradingview_analysis import get_tradingview_combined_signal, analyze_tradingview_indicators, analyze_pine_script_patterns, TRADINGVIEW_INDICATORS, PINE_SCRIPT_PATTERNS
+        m15_result = fetch_candles("M15", 100)
+        h1_result = fetch_candles("H1", 100)
+        m15_candles = m15_result[0] if m15_result else []
+        h1_candles = h1_result[0] if h1_result else []
+        indicators = analyze_tradingview_indicators(m15_candles)
+        pine = analyze_pine_script_patterns(m15_candles)
+        combined = get_tradingview_combined_signal(m15_candles, h1_candles)
+        return {
+            "status": "ok",
+            "tradingview_available": TRADINGVIEW_AVAILABLE if 'TRADINGVIEW_AVAILABLE' in globals() else False,
+            "indicators": indicators,
+            "pine": pine,
+            "combined": combined,
+            "tradingview_indicators": TRADINGVIEW_INDICATORS,
+            "pine_patterns": PINE_SCRIPT_PATTERNS,
+            "source": "TradingView MCP Bridge - 84 tools (chart.js, indicator.js, pine.js, drawing.js)",
+            "strategy": "TradingView indicators (RSI, MACD, EMA, BB, Stochastic, Volume) + Pine Script patterns (engulfing, pin bar, inside bar, order blocks)",
             "user": email
         }
     except Exception as e:
