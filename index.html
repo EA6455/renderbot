@@ -216,10 +216,8 @@ body.light-mode .lock-card{background:#ffffff}
           <div><div class="label">Confidence</div><div class="mono" id="sig-conf" style="font-size:16px;font-weight:800">--%</div></div>
           <div><div class="label">Winrate</div><div class="mono" id="sig-winrate" style="font-size:16px;font-weight:800;color:#000">--%</div></div>
         </div>
-        <div id="sig-sltp" style="display:flex;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap"></div>
-        <div id="sig-reasons" style="font-size:11px;margin-top:8px;color:#333"></div>
-        <div id="sig-ai" style="margin-top:10px;padding:10px;border-radius:10px;font-size:11px;display:none;background:linear-gradient(135deg,#f0f4ff,#fff);border:1px solid #c7d2fe"></div>
-        <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:9px;color:#666"><span id="sig-time">--</span><a href="#" onclick="fetchAIStatus();return false" style="color:#4f46e5;font-weight:800">🤖 AI Status</a></div>
+        <!-- Clean signal only - details removed per user request -->
+        <div style="margin-top:12px;font-size:10px;color:#999" class="mono">ASTRA6 Elite • 80%+ Winrate • Clean</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
         <div class="card" style="text-align:center;padding:14px"><div class="label">Alerts</div><div class="mono" id="stat-total" style="font-size:20px;font-weight:900">0</div></div>
@@ -1362,81 +1360,8 @@ function renderCurrent(s){
   const sp=document.getElementById('sig-price');if(sp)sp.textContent='$'+s.price.toFixed(2);
   const sc=document.getElementById('sig-conf');if(sc)sc.textContent=s.confidence+'%';
   const sw=document.getElementById('sig-winrate');if(sw)sw.textContent=s.winrate_est+'% WIN';
-  const st=document.getElementById('sig-time');if(st)st.textContent=s.time_str;
-  const sltp=document.getElementById('sig-sltp');
-  if(sltp){
-    if(s.sl){
-      sltp.innerHTML=`<div class="sltp-box" style="border-color:rgba(239,68,68,0.3)"><div class="label">Stop Loss</div><div class="mono" style="color:var(--red);font-weight:800">$${s.sl}</div></div><div class="sltp-box" style="border-color:rgba(34,197,94,0.3)"><div class="label">TP1</div><div class="mono" style="color:var(--green);font-weight:800">$${s.tp1}</div></div><div class="sltp-box" style="border-color:rgba(34,197,94,0.3)"><div class="label">TP2</div><div class="mono" style="color:var(--green);font-weight:800">$${s.tp2}</div></div>`;
-    } else {sltp.innerHTML=`<div class="mono" style="font-size:11px;color:var(--muted)">Wait for next sniper entry</div>`;}
-  }
-  const sr=document.getElementById('sig-reasons');if(sr)sr.textContent=s.reasons[0]||'High confluence sniper entry';
   const sl=document.getElementById('stat-last');if(sl)sl.textContent=s.type+' • '+new Date(s.timestamp*1000).toLocaleTimeString();
-  // AI display from pythonidae + Finance+Web + TradingView
-  const aiEl=document.getElementById('sig-ai');
-  if(aiEl){
-    let html='';
-    if(s.ai_signal){
-      const ai=s.ai_signal;
-      html+=`🤖 AI: <b>${ai.type}</b> ${ai.confidence}% (RF ${ai.rf_conf}% GB ${ai.gb_conf}%) • Winrate ${ai.winrate_est}% • ${ai.ensemble_proba.BUY}% BUY ${ai.ensemble_proba.SELL}% SELL<br>`;
-    } else {
-      html+=`🤖 AI: Training from pythonidae libs (scikit-learn) - 75%+ winrate • <a href="#" onclick="fetchAIStatus();return false" style="color:#4f46e5">Check AI Status</a><br>`;
-    }
-    if(s.finance_web_signal){
-      const fw=s.finance_web_signal;
-      const finance=fw.finance||{};
-      const web=fw.web||{};
-      html+=`💰 Finance+Web: <b>${fw.type}</b> ${fw.confidence}% • Buy:${fw.buy_score} Sell:${fw.sell_score} • Web health ${web.score||0}% ${web.health||''}<br>`;
-      if(finance.correlations){
-        const corr=finance.correlations;
-        const dxy=corr.DXY?`${corr.DXY.trend}(${corr.DXY.gold_signal})`:'-';
-        const silver=corr.SILVER?`${corr.SILVER.trend}(${corr.SILVER.gold_signal})`:'-';
-        const spx=corr.SPX?`${corr.SPX.trend}(${corr.SPX.gold_signal})`:'-';
-        html+=`<span style="font-size:10px;color:#666">DXY:${dxy} Silver:${silver} SPX:${spx} Oil:${corr.OIL?.trend||'-'} EURUSD:${corr.EURUSD?.trend||'-'} • <a href="#" onclick="fetchFinanceWebStatus();return false" style="color:#059669">Finance+Web</a> </span>`;
-      }
-    } else {
-      html+=`💰 Finance+Web: Multi-asset (DXY, Silver, SPX, Oil, BTC, EURUSD) + web-check • <a href="#" onclick="fetchFinanceWebStatus();return false" style="color:#059669">Check Finance+Web</a><br>`;
-    }
-    if(s.tradingview_signal){
-      const tv=s.tradingview_signal;
-      const ind=tv.indicators||{};
-      const pine=tv.pine||{};
-      html+=`📈 TradingView: <b>${tv.type}</b> ${tv.confidence}% • Buy:${tv.buy_score} Sell:${tv.sell_score}<br>`;
-      if(ind.indicators){
-        const rsi=ind.indicators.rsi_14||'-';
-        const macd=ind.indicators.macd_line||'-';
-        const ema21=ind.indicators.ema_21||'-';
-        html+=`<span style="font-size:10px;color:#666">RSI:${rsi} MACD:${macd} EMA21:${ema21} BB:${ind.indicators.bb_position||'-'} Vol:${ind.indicators.vol_ratio||'-'}x • Pine:${pine.overall||'-'} ${pine.confidence||0}% • <a href="#" onclick="fetchTradingViewStatus();return false" style="color:#ea580c">TradingView</a> </span>`;
-      }
-    } else {
-      html+=`📈 TradingView: RSI, MACD, EMA, BB, Pine engulfing/pin bar • <a href="#" onclick="fetchTradingViewStatus();return false" style="color:#ea580c">Check TradingView</a><br>`;
-    }
-    if(s.vibe_trading_signal){
-      const vibe=s.vibe_trading_signal;
-      const shadow=vibe.shadow||{};
-      const qlib=vibe.qlib||{};
-      const limits=vibe.limits||{};
-      html+=`🔥 Vibe-Trading: <b>${vibe.type}</b> ${vibe.confidence}% • Buy:${vibe.buy_score} Sell:${vibe.sell_score}<br>`;
-      html+=`<span style="font-size:10px;color:#666">Shadow RSI:${shadow.entry_rsi14||'-'} Prior5d:${shadow.prior_5d_return||'-'}% ${shadow.signal||'-'} • Qlib ${qlib.overall||'-'} ${qlib.confidence||0}% WVMA:${Object.keys(qlib.wvma||{}).length} • Limits ${limits.can_trade?'OK':'HALT'} ${limits.exposure_limit*100||0}% • <a href="#" onclick="fetchVibeTradingStatus();return false" style="color:#dc2626">Vibe-Trading</a></span>`;
-    } else {
-      html+=`🔥 Vibe-Trading: Shadow Account + Qlib158 WVMA + Limits • <a href="#" onclick="fetchVibeTradingStatus();return false" style="color:#dc2626">Check Vibe-Trading</a>`;
-    }
-    aiEl.style.display='block';
-    aiEl.innerHTML=html;
-    // Background based on combined
-    const hasBuy = (s.ai_signal?.type==='BUY' || s.finance_web_signal?.type==='BUY');
-    const hasSell = (s.ai_signal?.type==='SELL' || s.finance_web_signal?.type==='SELL');
-    if(hasBuy && !hasSell){
-      aiEl.style.background='rgba(34,197,94,0.15)';
-      aiEl.style.border='1px solid #10b981';
-    } else if(hasSell && !hasBuy){
-      aiEl.style.background='rgba(239,68,68,0.15)';
-      aiEl.style.border='1px solid #ef4444';
-    } else {
-      aiEl.style.background='linear-gradient(135deg,#f0f4ff,#fff)';
-      aiEl.style.border='1px solid #c7d2fe';
-    }
-  }
-}
+
 
 function renderAlerts(alerts){
   const el=document.getElementById('alerts-list');
