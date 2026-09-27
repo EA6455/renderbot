@@ -409,9 +409,38 @@ window.onerror=function(msg,url,line,col,error){
 let currentTab='signin', currentView='dashboard', soundOn=true, lastAlertId=null, currentTF='M15';
 let chart=null, candleSeries=null, lastCandles=[];
 
-function getToken(){return localStorage.getItem('astra6_token');}
-function setToken(t,e){if(t){localStorage.setItem('astra6_token',t);if(e)localStorage.setItem('astra6_email',e);}else{localStorage.removeItem('astra6_token');localStorage.removeItem('astra6_email');}}
+let memToken=null, memEmail=null;
+function getToken(){
+  try{ 
+    const t=localStorage.getItem('astra6_token'); 
+    if(t) return t;
+    return memToken;
+  }catch(e){ 
+    console.log('localStorage blocked, using memory',e);
+    return memToken; 
+  }
+}
+function setToken(t,e){
+  memToken=t; memEmail=e||null;
+  try{
+    if(t){
+      localStorage.setItem('astra6_token',t);
+      if(e) localStorage.setItem('astra6_email',e);
+    }else{
+      localStorage.removeItem('astra6_token');
+      localStorage.removeItem('astra6_email');
+    }
+  }catch(err){
+    console.log('localStorage set failed, using memory only',err);
+  }
+}
 function authHeaders(){const t=getToken();return t?{'Authorization':'Bearer '+t}:{};}
+// Check localStorage availability on load
+try{ localStorage.setItem('test','1'); localStorage.removeItem('test'); }catch(e){
+  console.error('localStorage blocked - login may fail, use /login.html');
+  const el=document.getElementById('account-status');
+  if(el) el.innerHTML+='<br><span style="color:red">⚠️ localStorage blocked on this device - use <a href="/login.html">/login.html</a> simple login</span>';
+}
 
 function showView(v){
   console.log('showView',v);
@@ -473,12 +502,32 @@ async function submitAuth(){
   const btn=document.getElementById('auth-submit');const orig=btn.textContent;btn.textContent='Loading...';btn.disabled=true;
   const url=currentTab==='signin'?'/api/auth/signin':'/api/auth/signup';
   try{
+    console.log('Signing in',email,url);
     const payload = currentTab==='signup' ? {email, password:pass, telegram_username: tgUsername} : {email, password:pass};
     const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    const d=await r.json();if(!r.ok)throw new Error(d.detail||'Failed');
-    setToken(d.token,d.email);ok.textContent=d.message||'Success';ok.style.display='block';
+    console.log('Signin response',r.status);
+    let d;
+    try{
+      d=await r.json();
+    }catch(jsonErr){
+      const txt=await r.text();
+      console.error('Non-JSON response',txt.substring(0,500));
+      throw new Error('Server returned non-JSON (maybe Cloudflare blocked) - try /login.html - '+txt.substring(0,100));
+    }
+    if(!r.ok)throw new Error(d.detail||'Failed: '+r.status);
+    console.log('Signin success',d.email);
+    setToken(d.token,d.email);
+    ok.textContent=(d.message||'Success')+' - token saved, works all devices';
+    ok.style.display='block';
+    const accStatus=document.getElementById('acc-login-status');
+    if(accStatus) accStatus.innerHTML='<span style="color:green">✅ '+d.message+'</span>';
     setTimeout(()=>{closeAuth();checkAuth();showView('dashboard');btn.textContent=orig;btn.disabled=false;},600);
-  }catch(e){err.textContent=e.message;err.style.display='block';btn.textContent=orig;btn.disabled=false;}
+  }catch(e){
+    console.error('Signin error',e);
+    err.innerHTML=e.message+'<br><br>Try <a href="/login.html" style="color:red;font-weight:900">/login.html simple login</a> or Account tab direct form - works all devices';
+    err.style.display='block';
+    btn.textContent=orig;btn.disabled=false;
+  }
 }
 
 function showForgot(){
