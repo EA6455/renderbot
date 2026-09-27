@@ -310,10 +310,10 @@ body.light-mode .lock-card{background:#ffffff}
           </div>
           <div style="display:grid;gap:8px">
             <select id="broker-select" class="input" style="margin-bottom:0">
-              <option value="deriv">Deriv (API token) - Recommended</option>
+              
               <option value="exness">Exness (MT5 login/server)</option>
             </select>
-            <input class="input" id="broker-token" type="text" placeholder="Deriv API token - app.deriv.com/account/api-token">
+            <input class="input" id="broker-token" type="text" placeholder="Exness API token - app.exness.com/account/api-token">
             <div style="background:linear-gradient(135deg,#dbeafe,#ede9fe);padding:10px;border-radius:10px;margin:5px 0;border:1px solid #c7d2fe">
               <div style="font-weight:800;color:#4f46e5;font-size:12px">Exness MT5</div>
               
@@ -871,10 +871,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const sel=document.getElementById('broker-select');
   if(sel){
     sel.addEventListener('change', ()=>{
-      const isDeriv=sel.value==='deriv';
-      document.getElementById('broker-token').style.display=isDeriv?'block':'none';
-      document.getElementById('broker-login').style.display=isDeriv?'none':'block';
-      document.getElementById('broker-server').style.display=isDeriv?'none':'block';
+      const isExness=sel.value==='exness';
+      document.getElementById('broker-token').style.display=isExness?'block':'none';
+      document.getElementById('broker-login').style.display=isExness?'none':'block';
+      document.getElementById('broker-server').style.display=isExness?'none':'block';
     });
   }
 });

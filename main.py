@@ -1803,29 +1803,15 @@ def broker_stats(email: str = Depends(require_approved_auth)):
 
 @app.get("/api/broker/info")
 def broker_info():
-
     return {
         "brokers": ["exness"],
-        "description": "ASTRA6 BOT - Exness MT5",
+        "description": "ASTRA6 BOT",
         "how_it_works": [
-            "1. Go to ASTRA6 BOT tab",
-            "2. Enter Server, Login, Password",
-            "3. Connect",
-            "4. Bot auto-trades",
-            "5. Shows Balance, Total Trades, Calendar"
+            "Server, Login, Password",
+            "Connect",
+            "Balance, Total Trades, Calendar"
         ],
-        "exness_only": True,
-        "exness": {
-            "how_to_connect": "Enter MT5 login, server (e.g., Exness-MT5Real5), and MT5 password - encrypted for REAL trading",
-            "real_trading": "REAL via MetaTrader5 library: mt5.initialize(login, server, password) + mt5.order_send() - TRUE REAL, not simulated",
-            "requirements": "For Render free Linux: needs Docker with Wine MT5 (xm-exness-mt5-linux) or mt5linux - MetaTrader5 pip only works on Windows with MT5 terminal",
-            "docker": "See Dockerfile.exness-real and EXNESS_REAL_GUIDE.md - xm-exness-mt5-linux for true real",
-            "fallback": "If MetaTrader5 not installed, does REAL attempt with real price via OANDA + explains Docker setup - Deriv REAL works now on free",
-            "free": "REAL via MT5 Direct, not simulated - needs MT5 terminal or Wine Docker"
-        },
-        "security": "Tokens/passwords encrypted, never logged, works on Render free via HTTP/WSS",
-        "website": "https://astra6.onrender.com",
-        "guide": "See EXNESS_REAL_GUIDE.md for true real Exness setup"
+        "exness_only": True
     }
 
 # Telegram Bot Webhook with Menu
