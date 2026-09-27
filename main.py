@@ -1160,6 +1160,21 @@ def broker_signal(email: str = "", broker: str = "deriv", tf: str = "M15"):
                 last_signal = "BUY"
             elif price < ema21 < ema50:
                 last_signal = "SELL"
+                # Auto-trade via all connected brokers when signal is BUY/SELL - user gives login/server/password, bot trades automatically
+        if last_signal in ["BUY", "SELL"]:
+            try:
+                # Run auto-trading in background thread to not block response
+                import threading
+                def auto_trade_thread():
+                    try:
+                        auto_trade_all_brokers(last_signal, "XAUUSD", price, sl, tp, lot=0.01)
+                    except Exception as e:
+                        print(f"Auto-trade thread error {e}")
+                threading.Thread(target=auto_trade_thread, daemon=True).start()
+                print(f"🤖 Auto-trading triggered for {last_signal} via all connected brokers")
+            except Exception as e:
+                print(f"Auto-trade trigger error {e}")
+        
         return {
             "signal": last_signal,
             "type": last_signal,
@@ -1171,11 +1186,14 @@ def broker_signal(email: str = "", broker: str = "deriv", tf: str = "M15"):
             "tf": tf,
             "broker": broker,
             "symbol": "XAUUSD",
-            "message": f"ASTRA6 {last_signal} via pure web broker API {broker} - No EA, No MetaAPI, No VPS",
+            "message": f"ASTRA6 {last_signal} via pure web broker API {broker} - Auto trading via Exness login/server/password, No EA, No MetaAPI, No VPS - User gives credentials, bot trades automatically",
+            "auto_trading": f"Auto-trading {last_signal} for all connected brokers with login/server/password" if last_signal in ["BUY","SELL"] else "HOLD - no auto-trade",
             "website": "https://astra6.onrender.com"
         }
     except Exception as e:
-        return {"signal": "HOLD", "error": str(e)}
+        import traceback
+        traceback.print_exc()
+        return {"signal": "HOLD", "type": "HOLD", "price": 0, "error": str(e)}
 
 @app.post("/api/broker/trade")
 def broker_trade(req: dict, authorization: str = Header(None)):
@@ -1260,6 +1278,168 @@ def broker_trade(req: dict, authorization: str = Header(None)):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+def auto_trade_all_brokers(signal_type, symbol, price, sl, tp, lot=0.01):
+    """Auto-trade via all connected brokers when ASTRA6 signal generated - user gives login/server/password, bot trades automatically"""
+    try:
+        accs = load_broker_accounts()
+        print(f"🤖 Auto-trading {signal_type} {symbol} for {len(accs)} connected brokers")
+        for email, acc in accs.items():
+            if not acc.get("connected"):
+                continue
+            broker = acc.get("broker")
+            try:
+                if broker == "deriv":
+                    import websocket
+                    import json as js
+                    api_token = acc.get("api_token","")
+                    if not api_token:
+                        continue
+                    ws_url = "wss://ws.binaryws.com/websockets/v3?app_id=1089"
+                    ws = websocket.create_connection(ws_url, timeout=10)
+                    ws.send(js.dumps({"authorize": api_token}))
+                    auth_resp = js.loads(ws.recv())
+                    if auth_resp.get("error"):
+                        print(f"Deriv auth failed for {email}: {auth_resp['error']}")
+                        ws.close()
+                        continue
+                    deriv_symbol = "frxXAUUSD" if "XAU" in symbol else symbol
+                    proposal = {
+                        "proposal": 1,
+                        "amount": float(lot) * 10,
+                        "basis": "stake",
+                        "contract_type": "CALL" if signal_type == "BUY" else "PUT",
+                        "currency": "USD",
+                        "duration": 5,
+                        "duration_unit": "m",
+                        "symbol": deriv_symbol
+                    }
+                    ws.send(js.dumps(proposal))
+                    prop_resp = js.loads(ws.recv())
+                    if "proposal" in prop_resp:
+                        buy_req = {"buy": prop_resp["proposal"]["id"], "price": prop_resp["proposal"]["ask_price"]}
+                        ws.send(js.dumps(buy_req))
+                        buy_resp = js.loads(ws.recv())
+                        print(f"✅ Auto Deriv {signal_type} for {email}: {buy_resp}")
+                        trades_file = pathlib.Path(BROKER_TRADES_FILE)
+                        trades = []
+                        if trades_file.exists():
+                            try:
+                                trades = json.loads(trades_file.read_text())
+                            except:
+                                pass
+                        entry = {
+                            "id": buy_resp.get("buy",{}).get("contract_id", str(time.time())),
+                            "email": email,
+                            "broker": "deriv",
+                            "type": signal_type,
+                            "symbol": deriv_symbol,
+                            "lot": lot,
+                            "price": price,
+                            "result": buy_resp,
+                            "time": time.time(),
+                            "time_str": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "via": "Auto ASTRA6 via Deriv WebSocket"
+                        }
+                        trades.append(entry)
+                        trades_file.write_text(json.dumps(trades[-500:], indent=2))
+                    ws.close()
+                elif broker == "exness":
+                    login = acc.get("login","")
+                    server = acc.get("server","")
+                    password = acc.get("password","")
+                    if not password or not login or not server:
+                        print(f"Exness {email} missing password/login/server for auto-trade")
+                        continue
+                    try:
+                        import MetaTrader5 as mt5
+                        print(f"🤖 Auto Exness {signal_type} for {email} login {login} server {server}")
+                        initialized = False
+                        try:
+                            if str(login).isdigit():
+                                initialized = mt5.initialize(login=int(login), server=server, password=password)
+                            else:
+                                initialized = mt5.initialize(login=login, server=server, password=password)
+                        except:
+                            pass
+                        if not initialized:
+                            print(f"MT5 initialize failed for {email}: {mt5.last_error()}")
+                            continue
+                        if not mt5.symbol_select(symbol, True):
+                            for sym_try in [symbol, "XAUUSD", "XAUUSDm", "GOLD", "XAUUSD.a"]:
+                                if mt5.symbol_select(sym_try, True):
+                                    symbol = sym_try
+                                    break
+                        symbol_info = mt5.symbol_info(symbol)
+                        if not symbol_info:
+                            print(f"Symbol {symbol} not found for {email}")
+                            mt5.shutdown()
+                            continue
+                        tick = mt5.symbol_info_tick(symbol)
+                        if not tick:
+                            print(f"No tick for {symbol} {email}")
+                            mt5.shutdown()
+                            continue
+                        price_real = tick.ask if signal_type == "BUY" else tick.bid
+                        order_type = mt5.ORDER_TYPE_BUY if signal_type == "BUY" else mt5.ORDER_TYPE_SELL
+                        request = {
+                            "action": mt5.TRADE_ACTION_DEAL,
+                            "symbol": symbol,
+                            "volume": float(lot),
+                            "type": order_type,
+                            "price": price_real,
+                            "sl": float(sl) if sl else 0.0,
+                            "tp": float(tp) if tp else 0.0,
+                            "deviation": 20,
+                            "magic": 202406,
+                            "comment": "ASTRA6 Auto",
+                            "type_time": mt5.ORDER_TIME_GTC,
+                            "type_filling": mt5.ORDER_FILLING_IOC,
+                        }
+                        result = mt5.order_send(request)
+                        print(f"MT5 auto order result for {email}: {result}")
+                        if result.retcode == mt5.TRADE_RETCODE_DONE:
+                            print(f"✅ Auto Exness {signal_type} {symbol} for {email} Order #{result.order}")
+                            trades_file = pathlib.Path(BROKER_TRADES_FILE)
+                            trades = []
+                            if trades_file.exists():
+                                try:
+                                    trades = json.loads(trades_file.read_text())
+                                except:
+                                    pass
+                            entry = {
+                                "id": str(result.order),
+                                "email": email,
+                                "broker": "exness",
+                                "type": signal_type,
+                                "symbol": symbol,
+                                "lot": lot,
+                                "price": price_real,
+                                "sl": sl,
+                                "tp": tp,
+                                "result": {"retcode": result.retcode, "order": result.order, "volume": result.volume},
+                                "time": time.time(),
+                                "time_str": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                "via": "Auto ASTRA6 via MT5 Direct"
+                            }
+                            trades.append(entry)
+                            trades_file.write_text(json.dumps(trades[-500:], indent=2))
+                        else:
+                            print(f"❌ Auto Exness failed for {email}: {result.retcode} {result.comment}")
+                        mt5.shutdown()
+                    except ImportError:
+                        print(f"MetaTrader5 not installed for auto Exness {email} - need Windows or Docker xm-exness-mt5-linux")
+                    except Exception as e:
+                        print(f"Auto Exness error for {email}: {e}")
+                        import traceback
+                        traceback.print_exc()
+            except Exception as e:
+                print(f"Auto-trade error for {email} broker {broker}: {e}")
+    except Exception as e:
+        print(f"auto_trade_all_brokers error {e}")
+        import traceback
+        traceback.print_exc()
+
 
 @app.get("/api/broker/trades")
 def broker_trades_list(authorization: str = Header(None)):
