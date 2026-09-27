@@ -26,8 +26,8 @@
     "approved": true,
     "is_admin": true,
     "plan": "elite_70",
-    "salt": "743d58c23e4e3fea8fb541b2f1e6117f",
-    "hash": "c9a8ba8402493c8455b71291798a3565306745575ee07febeab4bb2a3d859337",
+    "salt": "1504696fa9c3552edd54a2e76247d73e",
+    "hash": "b7b5e9aa239df20b385e6335ccc4cb1afc06ba77bc6bc1268b81f513245ada2a",
     "last_login": 1790488831.4880326,
     "login_count": 34
   },
