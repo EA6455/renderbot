@@ -391,16 +391,36 @@ body {
       • Animations: card enter, logo float, bubbles, gradient shift<br>
       • API: POST /api/auth/signin • Token saved in localStorage<br>
       • Admin: astra6render@gmail.com / admin123<br>
-      • 5-layer analysis: Human + AI 90% + Finance 90% + TradingView 82% + Vibe 50% = 85%+ winrate
+      • 5-layer analysis: Human + AI 90% + Finance 90% + TradingView 82% + Vibe 50% = 85%+ winrate<br>• If this fails, use <a href="/simple-login.html" style="color:#dc2626;font-weight:900">/simple-login.html ultra-simple</a> or Account tab direct form
     </div>
   </div>
 </div>
 
 <script>
+// Robust error handling - prevent die hard login
+window.onerror = function(msg, url, line, col, error) {
+  console.error('Login page error:', msg, 'at', url+':'+line);
+  const status = document.getElementById('status');
+  if (status) {
+    status.className = 'status error show';
+    status.innerHTML = '❌ JS Error: '+msg+'<br>Try reload or <a href="/">main site</a> or contact @ASTRA6RENDER';
+  }
+  return false;
+};
+
+// Memory token fallback for private mode
+let memToken = null;
+try {
+  localStorage.setItem('test','1');
+  localStorage.removeItem('test');
+} catch(e) {
+  console.warn('localStorage blocked, using memory only');
+}
+
 let isLoginMode = true;
 let isRecoverMode = false;
 
-function toggleMode() {
+window.toggleMode = function toggleMode() {
   if (isRecoverMode) {
     isRecoverMode = false;
     document.getElementById('name-group').style.display = 'none';
@@ -441,7 +461,7 @@ function toggleMode() {
   animateCard();
 }
 
-function showRecover() {
+window.showRecover = function showRecover() {
   isRecoverMode = true;
   isLoginMode = false;
   document.getElementById('name-group').style.display = 'none';
@@ -460,7 +480,7 @@ function animateCard() {
   card.style.animation = 'cardEnter 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
 }
 
-async function handleSubmit() {
+window.handleSubmit = async function handleSubmit() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const name = document.getElementById('name').value.trim();
@@ -505,21 +525,45 @@ async function handleSubmit() {
       body: JSON.stringify(body)
     });
     
-    const d = await r.json();
+    console.log('Login response status:', r.status);
+    let d;
+    try {
+      const text = await r.text();
+      console.log('Response text:', text.substring(0,500));
+      try {
+        d = JSON.parse(text);
+      } catch (jsonErr) {
+        console.error('Non-JSON response (Cloudflare?):', text.substring(0,1000));
+        if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+          throw new Error('Cloudflare challenge or HTML returned - try again or use main site / . If persists, contact @ASTRA6RENDER. Status: '+r.status);
+        }
+        throw new Error('Server returned non-JSON: '+text.substring(0,200));
+      }
+    } catch (e) {
+      if (e.message.includes('Cloudflare') || e.message.includes('non-JSON')) throw e;
+      throw new Error('Network error: '+e.message);
+    }
     
-    if (!r.ok) throw new Error(d.detail || 'Failed');
+    if (!r.ok) throw new Error(d.detail || d.error || 'Failed '+r.status);
     
     if (isRecoverMode) {
       showStatus(`✅ Reset link sent to ${email}<br>Check Telegram @ASTRA6RENDER or email<br>Token: ${d.reset_token?.substring(0,20)}...`, 'success');
     } else {
-      // Save token - robust localStorage with memory fallback (from earlier fix)
+      // Save token - robust with memToken fallback for all devices
+      memToken = d.token;
+      window.memToken = d.token;
       try {
         localStorage.setItem('astra6_token', d.token);
         localStorage.setItem('astra6_email', d.email);
+        console.log('Token saved to localStorage and memory:', d.token.substring(0,20)+'...');
       } catch (e) {
-        console.log('localStorage failed, using memory');
-        window.memToken = d.token;
+        console.warn('localStorage failed, using memory only:', e);
+        // Still saved in memToken
       }
+      // Also try sessionStorage
+      try {
+        sessionStorage.setItem('astra6_token', d.token);
+      } catch(e) {}
       
       showStatus(`✅ ${isLoginMode ? 'Signed in' : 'Account created'} as <b>${d.email}</b><br>Token: ${d.token.substring(0,20)}...<br><br><a href="/" style="font-weight:900;color:#065f46">→ Go to Dashboard - Clean Signals</a><br><br>5-layer analysis: Human + AI 90% + Finance 90% + TradingView 82% + Vibe 50% = 85%+ winrate`, 'success');
       

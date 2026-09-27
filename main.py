@@ -2499,6 +2499,13 @@ def login_page():
     except:
         return HTMLResponse("<h1>Login page not found - use /api/auth/signin via POST</h1>", status_code=404)
 
+@app.get("/simple-login.html", response_class=HTMLResponse)
+def simple_login_page():
+    try:
+        return open("simple-login.html").read()
+    except:
+        return HTMLResponse("<h1>Simple login not found</h1>", status_code=404)
+
 @app.get("/logo.png")
 def logo():
     p = Path("logo.png")
