@@ -1371,18 +1371,45 @@ function renderCurrent(s){
   }
   const sr=document.getElementById('sig-reasons');if(sr)sr.textContent=s.reasons[0]||'High confluence sniper entry';
   const sl=document.getElementById('stat-last');if(sl)sl.textContent=s.type+' • '+new Date(s.timestamp*1000).toLocaleTimeString();
-  // AI display from pythonidae
+  // AI display from pythonidae + Finance+Web
   const aiEl=document.getElementById('sig-ai');
   if(aiEl){
+    let html='';
     if(s.ai_signal){
       const ai=s.ai_signal;
-      aiEl.style.display='block';
-      aiEl.innerHTML=`🤖 AI: <b>${ai.type}</b> ${ai.confidence}% (RF ${ai.rf_conf}% GB ${ai.gb_conf}%) • Winrate ${ai.winrate_est}% • ${ai.ensemble_proba.BUY}% BUY ${ai.ensemble_proba.SELL}% SELL ${ai.ensemble_proba.HOLD}% HOLD`;
-      aiEl.style.background = ai.type==='BUY' ? 'rgba(34,197,94,0.15)' : ai.type==='SELL' ? 'rgba(239,68,68,0.15)' : 'rgba(100,100,100,0.1)';
-      aiEl.style.border = ai.type==='BUY' ? '1px solid #10b981' : ai.type==='SELL' ? '1px solid #ef4444' : '1px solid #ccc';
+      html+=`🤖 AI: <b>${ai.type}</b> ${ai.confidence}% (RF ${ai.rf_conf}% GB ${ai.gb_conf}%) • Winrate ${ai.winrate_est}% • ${ai.ensemble_proba.BUY}% BUY ${ai.ensemble_proba.SELL}% SELL<br>`;
     } else {
-      aiEl.style.display='block';
-      aiEl.innerHTML=`🤖 AI: Training from pythonidae libs (scikit-learn) - 75%+ winrate target • <a href="#" onclick="fetchAIStatus();return false" style="color:#4f46e5">Check AI Status</a>`;
+      html+=`🤖 AI: Training from pythonidae libs (scikit-learn) - 75%+ winrate • <a href="#" onclick="fetchAIStatus();return false" style="color:#4f46e5">Check AI Status</a><br>`;
+    }
+    if(s.finance_web_signal){
+      const fw=s.finance_web_signal;
+      const finance=fw.finance||{};
+      const web=fw.web||{};
+      html+=`💰 Finance+Web: <b>${fw.type}</b> ${fw.confidence}% • Buy:${fw.buy_score} Sell:${fw.sell_score} • Web health ${web.score||0}% ${web.health||''}<br>`;
+      if(finance.correlations){
+        const corr=finance.correlations;
+        const dxy=corr.DXY?`${corr.DXY.trend}(${corr.DXY.gold_signal})`:'-';
+        const silver=corr.SILVER?`${corr.SILVER.trend}(${corr.SILVER.gold_signal})`:'-';
+        const spx=corr.SPX?`${corr.SPX.trend}(${corr.SPX.gold_signal})`:'-';
+        html+=`<span style="font-size:10px;color:#666">DXY:${dxy} Silver:${silver} SPX:${spx} Oil:${corr.OIL?.trend||'-'} EURUSD:${corr.EURUSD?.trend||'-'} • <a href="#" onclick="fetchFinanceWebStatus();return false" style="color:#059669">Finance+Web Status</a></span>`;
+      }
+    } else {
+      html+=`💰 Finance+Web: Multi-asset (DXY, Silver, SPX, Oil, BTC, EURUSD) + web-check • <a href="#" onclick="fetchFinanceWebStatus();return false" style="color:#059669">Check Finance+Web</a>`;
+    }
+    aiEl.style.display='block';
+    aiEl.innerHTML=html;
+    // Background based on combined
+    const hasBuy = (s.ai_signal?.type==='BUY' || s.finance_web_signal?.type==='BUY');
+    const hasSell = (s.ai_signal?.type==='SELL' || s.finance_web_signal?.type==='SELL');
+    if(hasBuy && !hasSell){
+      aiEl.style.background='rgba(34,197,94,0.15)';
+      aiEl.style.border='1px solid #10b981';
+    } else if(hasSell && !hasBuy){
+      aiEl.style.background='rgba(239,68,68,0.15)';
+      aiEl.style.border='1px solid #ef4444';
+    } else {
+      aiEl.style.background='linear-gradient(135deg,#f0f4ff,#fff)';
+      aiEl.style.border='1px solid #c7d2fe';
     }
   }
 }

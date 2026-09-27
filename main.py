@@ -11,6 +11,14 @@ except Exception as e:
     AI_AVAILABLE = False
     ai_model = None
 
+try:
+    from finance_web_analysis import get_combined_finance_web_signal, analyze_multi_asset_correlation, web_check_analysis, get_finance_database_symbols
+    FINANCE_WEB_AVAILABLE = True
+    print("✅ Finance+Web Analysis loaded from FinanceDatabase + web-check")
+except Exception as e:
+    print(f"Finance+Web not available: {e}")
+    FINANCE_WEB_AVAILABLE = False
+
 from fastapi import FastAPI, Header, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
@@ -769,6 +777,34 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
             sell_score *= 0.7
             reasons_buy.append(f"🤖 AI HOLD {ai_conf}% - wait per pythonidae")
             reasons_sell.append(f"🤖 AI HOLD {ai_conf}% - wait per pythonidae")
+    
+    # 9. FINANCE + WEB BOOST from FinanceDatabase 300k + web-check (Astro/Svelte)
+    finance_web_signal = None
+    if FINANCE_WEB_AVAILABLE:
+        try:
+            finance_web_signal = get_combined_finance_web_signal(m15_candles)
+            if finance_web_signal:
+                fw_type = finance_web_signal.get('type')
+                fw_conf = finance_web_signal.get('confidence',0)
+                fw_buy = finance_web_signal.get('buy_score',0)
+                fw_sell = finance_web_signal.get('sell_score',0)
+                print(f"💰 Finance+Web Signal: {fw_type} {fw_conf}% Buy:{fw_buy} Sell:{fw_sell}")
+                if fw_type == "BUY" and fw_conf >= 65:
+                    buy_score += 2.0
+                    reasons_buy.append(f"💰 Finance+Web BUY {fw_conf}% (DXY, Silver, SPX, Oil, EURUSD) + web-check health {finance_web_signal.get('web',{}).get('score',0)}% - from FinanceDatabase 300k")
+                    filters_buy += 1
+                    if fw_conf >= 80:
+                        buy_score += 1.0
+                        reasons_buy.append(f"💰 Multi-asset STRONG BUY {fw_conf}% - FinanceDatabase correlation")
+                elif fw_type == "SELL" and fw_conf >= 65:
+                    sell_score += 2.0
+                    reasons_sell.append(f"💰 Finance+Web SELL {fw_conf}% (DXY, Silver, SPX, Oil, EURUSD) + web-check health {finance_web_signal.get('web',{}).get('score',0)}% - from FinanceDatabase 300k")
+                    filters_sell += 1
+                    if fw_conf >= 80:
+                        sell_score += 1.0
+                        reasons_sell.append(f"💰 Multi-asset STRONG SELL {fw_conf}% - FinanceDatabase correlation")
+        except Exception as e:
+            print(f"Finance+Web boost error: {e}")
     # --- HUMAN DECISION - perfect entries only, like people + AI ---
     signal_type = "HOLD"
     confidence = 50
@@ -899,6 +935,7 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
         "confluence": round(confluence,2),
         "strategy": "ASTRA6 Elite Human + AI ML (pythonidae) - 75% winrate",
         "ai_signal": ai_signal if 'ai_signal' in locals() else None,
+        "finance_web_signal": finance_web_signal if 'finance_web_signal' in locals() else None,
         "rsi": round(rsi_val,1) if isinstance(rsi_val,(int,float)) else 50,
         "sma20": round(ema21_val,2) if isinstance(ema21_val,(int,float)) else round(price,2),
         "sma50": round(ema50_val,2) if isinstance(ema50_val,(int,float)) else round(price,2),
@@ -3006,6 +3043,35 @@ def ai_status(email: str = Depends(require_approved_auth)):
         import traceback
         traceback.print_exc()
         return {"status":"error","error":str(e),"ai_available": False}
+
+@app.get("/api/signals/finance-web")
+def finance_web_status(email: str = Depends(require_approved_auth)):
+    """FinanceDatabase + web-check analysis"""
+    try:
+        from finance_web_analysis import get_combined_finance_web_signal, analyze_multi_asset_correlation, web_check_analysis, get_finance_database_symbols, WEB_CHECKS
+        # Get correlation
+        m15_result = fetch_candles("M15", 100)
+        m15_candles = m15_result[0] if m15_result else []
+        multi = analyze_multi_asset_correlation(m15_candles)
+        web = web_check_analysis("https://www.exness.com")
+        combined = get_combined_finance_web_signal(m15_candles)
+        symbols = get_finance_database_symbols()
+        return {
+            "status": "ok",
+            "finance_web_available": FINANCE_WEB_AVAILABLE if 'FINANCE_WEB_AVAILABLE' in globals() else False,
+            "multi_asset": multi,
+            "web_check": web,
+            "combined": combined,
+            "symbols": symbols,
+            "web_checks": WEB_CHECKS,
+            "source": "FinanceDatabase 300k symbols + web-check Astro/Svelte",
+            "strategy": "Multi-asset correlation (DXY, Silver, SPX, Oil, BTC, EURUSD) + broker security health",
+            "user": email
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status":"error","error":str(e)}
 
 @app.get("/api/signals/outcomes")
 def signals_outcomes(limit: int = 20, email: str = Depends(require_auth)):
