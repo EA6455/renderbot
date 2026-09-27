@@ -2487,7 +2487,7 @@ def keepalive():
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "name": "ASTRA6", "uptime": "24/7", "timestamp": time.time(), "message": "Elite 70%+ AI pythonidae v1.1","ai":"pythonidae","version":"ai-1.1"}
+    return {"status": "ok", "name": "ASTRA6", "uptime": "24/7", "timestamp": time.time(), "message": "Elite 85%+ 5-layer AI+Finance+TradingView+Vibe v1.3","ai":"pythonidae+financedb+tradingview+vibe","version":"ai-5layer-1.3"}
 
 @app.get("/", response_class=HTMLResponse)
 def home(): return open("index.html").read()
