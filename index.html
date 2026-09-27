@@ -166,9 +166,7 @@ body.light-mode .lock-card{background:#ffffff}
   </div>
   <div class="ladder">
     <div class="nav-item active" data-view="dashboard" id="nav-dashboard"><span class="ico">🎯</span><span class="hide-m">Dashboard</span></div>
-    <div class="nav-item" data-view="signals" id="nav-signals"><span class="ico">📈</span><span class="hide-m">Chart</span></div>
-    <div class="nav-item" data-view="bot" id="nav-bot"><span class="ico">🤖</span><span class="hide-m">ASTRA6 BOT</span></div>
-    <div class="nav-item" data-view="account" id="nav-account"><span class="ico">👤</span><span class="hide-m">Account</span></div>
+    <div class="nav-item" data-view="signals" id="nav-signals"><span class="ico">📈</span><span class="hide-m">Chart</span></div>    <div class="nav-item" data-view="account" id="nav-account"><span class="ico">👤</span><span class="hide-m">Account</span></div>
     <div class="nav-item" data-view="admin" id="nav-admin" style="display:none"><span class="ico">👑</span><span class="hide-m">Admin</span></div>
     <div class="nav-item" data-view="signin" id="nav-signin"><span class="ico">🔐</span><span class="hide-m">Sign In</span></div>
     <div class="nav-item" data-view="signup" id="nav-signup"><span class="ico">📝</span><span class="hide-m">Sign Up</span></div>
@@ -192,9 +190,7 @@ body.light-mode .lock-card{background:#ffffff}
           <button class="btn" id="ladder-close-btn" style="padding:4px 10px;font-size:12px">✕</button>
         </div>
         <button class="btn active" data-switch="dashboard" id="sw-dashboard" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Dashboard</button>
-        <button class="btn" data-switch="signals" id="sw-signals" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Chart</button>
-        <button class="btn" data-switch="bot" id="sw-bot" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;font-weight:900">🤖 ASTRA6 BOT - Auto Trading</button>
-        <button class="btn" data-switch="account" id="sw-account" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Account</button>
+        <button class="btn" data-switch="signals" id="sw-signals" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Chart</button>        <button class="btn" data-switch="account" id="sw-account" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Account</button>
         <button class="btn" data-switch="admin" id="sw-admin" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px;background:#000;color:#fff;display:none">👑 Admin - Users</button>
         <button class="btn" data-switch="signin" id="sw-signin" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Sign In</button>
         <button class="btn" data-switch="signup" id="sw-signup" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Sign Up</button>
@@ -282,88 +278,6 @@ body.light-mode .lock-card{background:#ffffff}
       </div>
     </div>
 
-    <div class="view" id="view-bot">
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <div style="font-weight:900;font-size:18px">🤖 ASTRA6 BOT - Auto Trading</div>
-          
-        </div>
-
-          <div id="broker-status" style="font-size:11px;margin-bottom:12px;padding:8px;background:#f5f5f5;border-radius:8px">Connect Exness MT5</div>
-          <!-- Balance + Total Trades + Winrate Stats -->
-          <div id="broker-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
-            <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);padding:12px;border-radius:12px;text-align:center;border:1px solid #10b981">
-              <div style="font-size:10px;color:#065f46;font-weight:700">BALANCE</div>
-              <div style="font-size:18px;font-weight:900;color:#065f46" id="broker-balance">$0.00</div>
-              <div style="font-size:9px;color:#047857" id="broker-balance-pnl">+ $0.00 PnL</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);padding:12px;border-radius:12px;text-align:center;border:1px solid #3b82f6">
-              <div style="font-size:10px;color:#1e40af;font-weight:700">TOTAL TRADES</div>
-              <div style="font-size:18px;font-weight:900;color:#1e40af" id="broker-total-trades">0</div>
-              <div style="font-size:9px;color:#1d4ed8"><span id="broker-buys">0</span> BUY / <span id="broker-sells">0</span> SELL</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);padding:12px;border-radius:12px;text-align:center;border:1px solid #f59e0b">
-              <div style="font-size:10px;color:#92400e;font-weight:700">WINRATE</div>
-              <div style="font-size:18px;font-weight:900;color:#92400e" id="broker-winrate">0%</div>
-              <div style="font-size:9px;color:#b45309"><span id="broker-wins">0</span>W / <span id="broker-losses">0</span>L</div>
-            </div>
-          </div>
-          <div style="display:grid;gap:8px">
-            <select id="broker-select" class="input" style="margin-bottom:0">
-              
-              <option value="exness">Exness (MT5 login/server)</option>
-            </select>
-            <input class="input" id="broker-token" type="text" placeholder="Exness API token - app.exness.com/account/api-token">
-            <div style="background:linear-gradient(135deg,#dbeafe,#ede9fe);padding:10px;border-radius:10px;margin:5px 0;border:1px solid #c7d2fe">
-              <div style="font-weight:800;color:#4f46e5;font-size:12px">Exness MT5</div>
-              
-            </div>
-            <input class="input" id="broker-server" type="text" placeholder="Server: Exness-MT5Real5 (check MT5 → File → Login → Server)" style="display:block">
-            <input class="input" id="broker-login" type="text" placeholder="Login: 463980664 (MT5 trading account)" style="display:block">
-            <input class="input" id="broker-password" type="password" placeholder="Password: MT5 trading password (encrypted)" style="display:block">
-            <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #10b981;border-radius:8px;padding:8px;margin:4px 0">
-              <div style="font-weight:800;font-size:11px;color:#065f46;margin-bottom:4px">💰 Exact REAL Balance FROM YOUR BROKER (Exness app) - NOT AI simulator</div>
-              <input class="input" id="broker-exact-balance" type="number" step="0.01" placeholder="Exact balance from YOUR Exness app e.g. 47.32 - REAL from broker" style="display:block;margin-bottom:0;background:#fff;font-weight:700">
-              <div style="font-size:9px;color:#065f46;margin-top:4px;font-weight:700">✅ This IS exact balance FROM YOUR BROKER (you copy from Exness app) → NOT AI simulator. Fill server/login/password + exact balance → Connect → shows REAL exact balance instantly. Auto REAL without manual needs MetaApi (free 1 account) - add token below.</div>
-            </div>
-            <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b;border-radius:8px;padding:8px;margin:4px 0">
-              <div style="font-weight:800;font-size:11px;color:#92400e;margin-bottom:4px">🔑 MetaApi Token (optional - for TRUE AUTO REAL without manual)</div>
-              <input class="input" id="broker-metaapi-token" type="text" placeholder="MetaApi token from metaapi.cloud - free 1 account - for auto REAL fetch" style="display:block;margin-bottom:0;background:#fff">
-              <div style="font-size:9px;color:#92400e;margin-top:4px">Get free token at https://app.metaapi.cloud/token → paste here → auto REAL balance from broker without manual entry. Works on Linux free.</div>
-            </div>
-            
-            <button class="btn btn-gold btn-full" id="btn-broker-connect">🔗 Connect Exness MT5 - Show REAL Balance</button>
-            <button class="btn btn-full" id="btn-broker-disconnect" style="display:none;background:#ef4444;color:#fff">❌ Disconnect</button>
-            <!-- Exact REAL Balance from Exness App -->
-            <div style="margin-top:12px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #10b981;border-radius:10px;padding:10px">
-              <div style="font-weight:900;font-size:12px;color:#065f46;margin-bottom:6px">💰 Set Exact REAL Balance (from Exness app)</div>
-              <div style="font-size:10px;color:#047857;margin-bottom:8px">Open Exness app → check exact balance → enter here → shows REAL exact balance (Render free Linux cannot auto-fetch MT5 balance - needs Windows MT5 terminal or Wine Docker)</div>
-              <div style="display:flex;gap:6px">
-                <input class="input" id="real-balance-input" type="number" step="0.01" placeholder="Exact balance e.g. 47.32" style="margin-bottom:0;flex:1">
-                <button class="btn btn-gold" id="btn-set-real-balance" style="white-space:nowrap">✅ Set REAL</button>
-              </div>
-              <div id="real-balance-status" style="font-size:10px;margin-top:6px;color:#065f46"></div>
-            </div>
-          </div>
-          <!-- Calendar Trade View -->
-          <div style="margin-top:16px">
-            <div style="font-weight:800;font-size:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
-              <span>📅 Calendar Trades</span>
-              <button class="btn" id="btn-calendar-refresh" style="font-size:10px;padding:4px 8px">🔄 Refresh</button>
-            </div>
-            <div id="broker-calendar" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:9px;margin-bottom:12px">
-              <div style="font-weight:800;text-align:center;padding:4px">Sun</div><div style="font-weight:800;text-align:center;padding:4px">Mon</div><div style="font-weight:800;text-align:center;padding:4px">Tue</div><div style="font-weight:800;text-align:center;padding:4px">Wed</div><div style="font-weight:800;text-align:center;padding:4px">Thu</div><div style="font-weight:800;text-align:center;padding:4px">Fri</div><div style="font-weight:800;text-align:center;padding:4px">Sat</div>
-            </div>
-            
-          </div>
-          <div style="margin-top:12px">
-            <div style="font-weight:800;font-size:12px;margin-bottom:6px">📊 Recent Trades</div>
-            <div id="broker-trades-list" style="max-height:300px;overflow-y:auto;font-size:11px"><div style="padding:10px;text-align:center;color:#666">No trades yet</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="view" id="view-contact">
       <div style="display:flex;align-items:center;justify-content:center;min-height:60vh;padding:10px">
         <div class="card" style="text-align:center;max-width:380px;width:100%;padding:28px">
@@ -384,7 +298,7 @@ body.light-mode .lock-card{background:#ffffff}
         
         <div id="account-status" style="font-size:11px;margin-bottom:12px;padding:8px;background:#f5f5f5;border-radius:8px">Not signed in</div>
         <button class="btn btn-full" id="btn-signout" style="display:none;background:#ef4444;color:white">Sign Out</button>
-        <div style="margin-top:12px;font-size:11px;color:#666">Go to <b>🤖 ASTRA6 BOT</b> tab in menu (☰) for auto trading with login/server/password → REAL balance, total trades, calendar</div>
+        <div style="margin-top:12px;font-size:11px;color:#666">Bot removed</div>
       </div>
     </div>
 
@@ -487,7 +401,7 @@ function showView(v){
   const sw=document.getElementById('sw-'+v);
   if(sw){sw.classList.add('active'); sw.classList.add('btn-gold');}
   if(v==='account')loadAccount();
-  if(v==='bot'){loadAccount();fetchBrokerStatus();fetchBrokerStats();fetchBrokerCalendar();fetchBrokerTrades();}
+  
   if(v==='dashboard')fetchDashboard();
   if(v==='signals' && getToken()){initChart();fetchChart(currentTF);}
   window.scrollTo(0,0);
@@ -866,7 +780,7 @@ async function setRealBalance(){
     statusEl.innerHTML=`✅ REAL balance set: <b>$${d.balance.toFixed(2)} ${d.currency}</b>`;
     input.value='';
     fetchBrokerStats();
-    fetchBrokerStatus();
+    
     // Also update balance display directly from /api/broker/balance
     const rb=await fetch('/api/broker/balance',{headers:authHeaders()});
     const rd=await rb.json();
@@ -889,7 +803,7 @@ async function connectBroker(){
     const d=await r.json();
     if(!r.ok)throw new Error(d.detail||'Failed');
     alert('✅ '+d.message);
-    fetchBrokerStatus();
+    
   }catch(e){
     alert('❌ '+e.message);
   }
@@ -899,7 +813,7 @@ async function disconnectBroker(){
     const r=await fetch('/api/broker/disconnect',{method:'POST',headers:authHeaders()});
     const d=await r.json();
     alert(d.message);
-    fetchBrokerStatus();
+    
     document.getElementById('broker-trades-list').innerHTML='<div style="padding:10px;text-align:center;color:#666">Disconnected - no trades</div>';
   }catch(e){alert(e.message);}
 }
