@@ -167,6 +167,7 @@ body.light-mode .lock-card{background:#ffffff}
   <div class="ladder">
     <div class="nav-item active" data-view="dashboard" id="nav-dashboard"><span class="ico">🎯</span><span class="hide-m">Dashboard</span></div>
     <div class="nav-item" data-view="signals" id="nav-signals"><span class="ico">📈</span><span class="hide-m">Chart</span></div>
+    <div class="nav-item" data-view="bot" id="nav-bot"><span class="ico">🤖</span><span class="hide-m">ASTRA6 BOT</span></div>
     <div class="nav-item" data-view="account" id="nav-account"><span class="ico">👤</span><span class="hide-m">Account</span></div>
     <div class="nav-item" data-view="admin" id="nav-admin" style="display:none"><span class="ico">👑</span><span class="hide-m">Admin</span></div>
     <div class="nav-item" data-view="signin" id="nav-signin"><span class="ico">🔐</span><span class="hide-m">Sign In</span></div>
@@ -192,6 +193,7 @@ body.light-mode .lock-card{background:#ffffff}
         </div>
         <button class="btn active" data-switch="dashboard" id="sw-dashboard" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Dashboard</button>
         <button class="btn" data-switch="signals" id="sw-signals" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Chart</button>
+        <button class="btn" data-switch="bot" id="sw-bot" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;font-weight:900">🤖 ASTRA6 BOT - Auto Trading</button>
         <button class="btn" data-switch="account" id="sw-account" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Account</button>
         <button class="btn" data-switch="admin" id="sw-admin" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px;background:#000;color:#fff;display:none">👑 Admin - Users</button>
         <button class="btn" data-switch="signin" id="sw-signin" style="width:100%;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px">Sign In</button>
@@ -280,25 +282,16 @@ body.light-mode .lock-card{background:#ffffff}
       </div>
     </div>
 
-    <div class="view" id="view-account">
-      <div style="max-width:480px">
-        <div class="card">
-          <div style="font-weight:900;font-size:14px;margin-bottom:12px">👤 Account • All devices</div>
-          <div id="account-guest">
-            <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Not signed in.</div>
-            <div style="display:flex;gap:8px"><button class="btn" id="btn-acc-signin">Sign In</button><button class="btn btn-gold" id="btn-acc-signup">Sign Up</button></div>
-          </div>
-          <div id="account-user" style="display:none">
-            <div style="margin-bottom:10px"><div class="label">EMAIL</div><div class="mono" id="acc-email" style="font-size:13px;word-break:break-all"></div></div>
-            <div style="margin-bottom:10px"><div class="label">STATUS</div><div style="font-size:12px"><span style="color:var(--green)">● Active</span> • Elite 70%+ • All devices</div></div>
-            <div style="margin-bottom:10px"><div class="label">SINCE</div><div class="mono" id="acc-created" style="font-size:12px"></div></div>
-            <div style="margin-bottom:10px"><div class="label">EXPIRES</div><div class="mono" id="acc-expires" style="font-size:12px"></div></div>
-            <button class="btn" id="btn-acc-signout" style="margin-top:10px">Sign Out</button>
-          </div>
+    
+    
+    <div class="view" id="view-bot">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-weight:900;font-size:18px">🤖 ASTRA6 BOT - Auto Trading</div>
+          <div style="font-size:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;padding:4px 8px;border-radius:20px">REAL - No EA, No MetaAPI</div>
         </div>
-        <!-- Pure Web Control via Broker API (Exness/Deriv) - No EA + Balance + Total Trades + Calendar -->
-        <div class="card" style="margin-top:16px">
-          <div style="font-weight:900;font-size:14px;margin-bottom:8px">🤖 ASTRO6 BOT - Pure Web Control (No EA)</div>
+        <div style="font-size:12px;color:#666;margin-bottom:12px">User gives login/server/password → BOT automatically trades BUY/SELL via MT5 Direct + Deriv WebSocket - 24/7 free, shows REAL balance, total trades, calendar</div>
+        <div style="font-weight:900;font-size:14px;margin-bottom:8px">🤖 ASTRO6 BOT - Pure Web Control (No EA)</div>
           <div style="font-size:11px;color:#666;margin-bottom:12px;background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%);padding:10px;border-radius:10px;border:1px solid #c7d2fe">
             <div style="font-weight:800;color:#4f46e5">No MetaAPI, No VPS, No EA - 100% web control via broker API</div>
             <div style="margin-top:6px">1. Connect Deriv/Exness<br>2. Bot auto-trades ASTRA6 signals via HTTP (Render free 24/7)<br>3. Shows Balance, Total Trades, Calendar</div>
@@ -365,8 +358,20 @@ body.light-mode .lock-card{background:#ffffff}
         </div>
       </div>
     </div>
+      </div>
+    </div>
 
-    <div class="view" id="view-admin">
+<div class="view" id="view-account">
+      <div class="card">
+        <div style="font-weight:900;font-size:14px;margin-bottom:12px">👤 Account • All devices</div>
+        <div id="account-email" style="font-size:13px;margin-bottom:8px;color:#4f46e5;font-weight:700"></div>
+        <div id="account-status" style="font-size:11px;margin-bottom:12px;padding:8px;background:#f5f5f5;border-radius:8px">Not signed in</div>
+        <button class="btn btn-full" id="btn-signout" style="display:none;background:#ef4444;color:white">Sign Out</button>
+        <div style="margin-top:12px;font-size:11px;color:#666">Go to <b>🤖 ASTRA6 BOT</b> tab in menu (☰) for auto trading with login/server/password → REAL balance, total trades, calendar</div>
+      </div>
+    </div>
+
+<div class="view" id="view-admin">
       <div style="max-width:800px">
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
@@ -465,6 +470,7 @@ function showView(v){
   const sw=document.getElementById('sw-'+v);
   if(sw){sw.classList.add('active'); sw.classList.add('btn-gold');}
   if(v==='account')loadAccount();
+  if(v==='bot'){loadAccount();fetchBrokerStatus();fetchBrokerStats();fetchBrokerCalendar();fetchBrokerTrades();}
   if(v==='dashboard')fetchDashboard();
   if(v==='signals' && getToken()){initChart();fetchChart(currentTF);}
   window.scrollTo(0,0);
