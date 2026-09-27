@@ -1912,14 +1912,13 @@ def broker_info():
 
     return {
         "brokers": ["exness"],
-        "description": "ASTRA6 BOT - Exness MT5 only - User gives Server/Login/Password, bot auto-trades via MT5 Direct, No EA, No MetaAPI, No VPS, 24/7 free",
+        "description": "ASTRA6 BOT - Exness MT5",
         "how_it_works": [
-            "1. User goes to 🤖 ASTRA6 BOT tab in hamburger menu (☰)",
-            "2. User gives Exness MT5 Server, Login, Password - encrypted, for auto trading",
-            "3. Website stores encrypted, never returns password",
-            "4. Bot auto-trades REAL via Exness MT5 Direct: mt5.initialize(login, server, password) + order_send()",
-            "5. Works 24/7 free via self-ping + GitHub Actions + UptimeRobot",
-            "6. Shows REAL balance via account_info().balance, total trades, calendar with daily PnL"
+            "1. Go to ASTRA6 BOT tab",
+            "2. Enter Server, Login, Password",
+            "3. Connect",
+            "4. Bot auto-trades",
+            "5. Shows Balance, Total Trades, Calendar"
         ],
         "exness_only": True,
         "deriv": {

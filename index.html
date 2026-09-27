@@ -217,7 +217,7 @@ body.light-mode .lock-card{background:#ffffff}
           <div><div class="label">Confidence</div><div class="mono" id="sig-conf" style="font-size:16px;font-weight:800">--%</div></div>
           <div><div class="label">Winrate</div><div class="mono" id="sig-winrate" style="font-size:16px;font-weight:800;color:#000">--%</div></div>
         </div>
-        <div class="sltp-row" id="sig-sltp"></div>
+        
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
         <div class="card" style="text-align:center;padding:14px"><div class="label">Alerts</div><div class="mono" id="stat-total" style="font-size:20px;font-weight:900">0</div></div>
@@ -233,7 +233,7 @@ body.light-mode .lock-card{background:#ffffff}
       </div>
       <div class="lock-overlay" id="dash-lock" style="background: linear-gradient(135deg, rgba(102,126,234,0.95) 0%, rgba(118,75,162,0.95) 50%, rgba(240,147,251,0.95) 100%);backdrop-filter: blur(20px)">
         <div class="lock-card" style="background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);border:3px solid transparent;background-clip: padding-box;border-radius:24px;padding:32px;max-width:420px;box-shadow: 0 20px 80px rgba(0,0,0,0.3);position:relative;overflow:hidden">
-          <div style="position:absolute;top:0;left:0;right:0;height:6px;background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c)"></div>
+          
           <div style="text-align:center;margin-bottom:20px">
             <img src="/logo.png" alt="ASTRA6" style="height:64px;width:auto;margin-bottom:12px;filter: drop-shadow(0 4px 12px rgba(102,126,234,0.3))">
             <div style="font-size:32px;font-weight:900;background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);-webkit-background-clip: text;-webkit-text-fill-color: transparent;background-clip: text;letter-spacing:1px">ASTRA6</div>
@@ -316,12 +316,12 @@ body.light-mode .lock-card{background:#ffffff}
             <input class="input" id="broker-token" type="text" placeholder="Deriv API token - app.deriv.com/account/api-token">
             <div style="background:linear-gradient(135deg,#dbeafe,#ede9fe);padding:10px;border-radius:10px;margin:5px 0;border:1px solid #c7d2fe">
               <div style="font-weight:800;color:#4f46e5;font-size:12px">Exness MT5</div>
-              <div style="font-size:10px;color:#666;margin-top:4px"></div>
+              
             </div>
             <input class="input" id="broker-server" type="text" placeholder="Server: Exness-MT5Real5 (check MT5 → File → Login → Server)" style="display:block">
             <input class="input" id="broker-login" type="text" placeholder="Login: 463980664 (MT5 trading account)" style="display:block">
             <input class="input" id="broker-password" type="password" placeholder="Password: MT5 trading password (encrypted)" style="display:block">
-            <div id="exness-real-note" style="display:block;font-size:10px;color:#065f46;margin:4px 0;background:#d1fae5;padding:6px;border-radius:6px"></div>
+            
             <button class="btn btn-gold btn-full" id="btn-broker-connect">🔗 Connect Exness MT5</button>
             <button class="btn btn-full" id="btn-broker-disconnect" style="display:none;background:#ef4444;color:#fff">❌ Disconnect</button>
           </div>
@@ -334,7 +334,7 @@ body.light-mode .lock-card{background:#ffffff}
             <div id="broker-calendar" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:9px;margin-bottom:12px">
               <div style="font-weight:800;text-align:center;padding:4px">Sun</div><div style="font-weight:800;text-align:center;padding:4px">Mon</div><div style="font-weight:800;text-align:center;padding:4px">Tue</div><div style="font-weight:800;text-align:center;padding:4px">Wed</div><div style="font-weight:800;text-align:center;padding:4px">Thu</div><div style="font-weight:800;text-align:center;padding:4px">Fri</div><div style="font-weight:800;text-align:center;padding:4px">Sat</div>
             </div>
-            <div id="broker-calendar-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px"></div>
+            
           </div>
           <div style="margin-top:12px">
             <div style="font-weight:800;font-size:12px;margin-bottom:6px">📊 Recent Trades</div>
@@ -361,7 +361,7 @@ body.light-mode .lock-card{background:#ffffff}
 <div class="view" id="view-account">
       <div class="card">
         <div style="font-weight:900;font-size:14px;margin-bottom:12px">👤 Account • All devices</div>
-        <div id="account-email" style="font-size:13px;margin-bottom:8px;color:#4f46e5;font-weight:700"></div>
+        
         <div id="account-status" style="font-size:11px;margin-bottom:12px;padding:8px;background:#f5f5f5;border-radius:8px">Not signed in</div>
         <button class="btn btn-full" id="btn-signout" style="display:none;background:#ef4444;color:white">Sign Out</button>
         <div style="margin-top:12px;font-size:11px;color:#666">Go to <b>🤖 ASTRA6 BOT</b> tab in menu (☰) for auto trading with login/server/password → REAL balance, total trades, calendar</div>
@@ -403,7 +403,7 @@ body.light-mode .lock-card{background:#ffffff}
   <div class="auth-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-weight:900;font-size:16px" id="auth-title">Sign In</div><button class="btn" id="btn-close-auth" style="padding:6px 12px">✕</button></div>
     <div class="auth-tabs"><div class="tab active" id="tab-signin">Sign In</div><div class="tab" id="tab-signup">Sign Up</div></div>
-    <div class="error" id="auth-error"></div><div class="success" id="auth-success"></div>
+    
     <input class="input" id="email" type="email" placeholder="Email">
     <input class="input" id="telegram-username" type="text" placeholder="Telegram username (optional, for reset via Telegram)" style="display:none">
     <input class="input" id="password" type="password" placeholder="Password (min 6 chars)">
@@ -737,7 +737,7 @@ async function fetchAdminUsers(){
     if(listEl)listEl.innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted)">Error: ${e.message}<br>Only admin astra6render@gmail.com can access</div>`;
   }
 }
-// Pure Web Control via Broker API + Balance + Total Trades + Calendar
+//  via Broker API + Balance + Total Trades + Calendar
 async function fetchBrokerStatus(){
   try{
     const r=await fetch('/api/broker/status',{headers:authHeaders()});
@@ -754,7 +754,7 @@ async function fetchBrokerStatus(){
       fetchBrokerTrades();
       fetchBrokerCalendar();
     } else {
-      statusEl.textContent=d.message||'Connect Exness MT5 - Connect Deriv/Exness for pure web control + balance, total trades, calendar';
+      statusEl.textContent=d.message||'Connect Exness MT5 -  for pure web control + balance, total trades, calendar';
       statusEl.style.background='#f5f5f5';
       if(connectBtn)connectBtn.style.display='block';
       if(disconnectBtn)disconnectBtn.style.display='none';
@@ -801,7 +801,7 @@ async function fetchBrokerCalendar(){
     const daysInMonth=new Date(year, month+1, 0).getDate();
     let html='';
     // Empty cells before first day
-    for(let i=0;i<firstDay;i++) html+=`<div style="padding:8px"></div>`;
+    for(let i=0;i<firstDay;i++) html+=``;
     // Days
     for(let day=1; day<=daysInMonth; day++){
       const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
