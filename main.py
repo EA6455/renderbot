@@ -1438,12 +1438,25 @@ def broker_balance(email: str = Depends(require_approved_auth)):
     try:
         accs = load_broker_accounts()
         acc = accs.get(email)
+        # Check for manually set REAL balance first, even if not connected - for exact Exness real balance
+        if acc and acc.get("real_balance") and acc.get("real_balance") > 0:
+            real_balance = float(acc.get("real_balance"))
+            currency = acc.get("real_balance_currency","USD")
+            return {
+                "status": "ok",
+                "connected": acc.get("connected", False),
+                "broker": acc.get("broker","exness"),
+                "balance": round(real_balance, 2),
+                "currency": currency,
+                "real": True,
+                "source": acc.get("real_balance_source","manual"),
+                "message": f"✅ REAL Exness balance for {email}: {real_balance} {currency} ({acc.get('real_balance_source','manual')})"
+            }
+        
         if not acc or not acc.get("connected"):
-            return {"status": "ok", "connected": False, "balance": 0, "message": " - connect Deriv/Exness for REAL balance"}
+            return {"status": "ok", "connected": False, "balance": 0, "message": "No broker connected - connect Exness for REAL balance"}
         
         broker = acc.get("broker")
-        
-        # Check for manually set REAL balance first (for Exness when MT5 terminal not available on free)
         if acc.get("real_balance") and acc.get("real_balance") > 0:
             real_balance = float(acc.get("real_balance"))
             currency = acc.get("real_balance_currency","USD")
