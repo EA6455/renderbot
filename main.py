@@ -744,7 +744,7 @@ def elite_gold_sniper(m15_candles, h1_candles, live_price=None):
     if AI_AVAILABLE and ai_model:
         try:
             # Train AI if needed (uses db.csv pythonidae libs)
-            if not ai_model.trained and len(m15_candles) >= 200:
+            if not ai_model.trained and len(m15_candles) >= 100:
                 ai_model.train(m15_candles)
             ai_signal = ai_model.predict(m15_candles)
             if ai_signal:
