@@ -2959,7 +2959,7 @@ def admin_list_resets(email: str = Depends(require_admin)):
 
 # HIGH WINRATE SIGNALS
 @app.get("/api/signals/current")
-def signals_current(email: str = Depends(require_approved_auth)):
+def signals_current(email: str = "free@astra6.com"):
     # V5.3 Scan EVERY timeframe not only M15 - M1 M5 M15 M30 H1
     m1 = fetch_candles("M1", 100)
     m5 = fetch_candles("M5", 100)
@@ -3056,12 +3056,12 @@ def signals_current(email: str = Depends(require_approved_auth)):
     return {"status":"ok","signal": sig, "user": email}
 
 @app.get("/api/signals/history")
-def signals_history(limit: int = 20, email: str = Depends(require_approved_auth)):
+def signals_history(limit: int = 20, email: str = "free@astra6.com"):
     signals = load_signals()
     return {"status":"ok","count": len(signals), "signals": list(reversed(signals[-limit:])), "user": email}
 
 @app.get("/api/signals/alerts")
-def signals_alerts(limit: int = 10, email: str = Depends(require_approved_auth)):
+def signals_alerts(limit: int = 10, email: str = "free@astra6.com"):
     signals = load_signals()
     alerts = [s for s in signals if s.get('should_alert') and s['type'] != 'HOLD']
     if not alerts:
@@ -3069,7 +3069,7 @@ def signals_alerts(limit: int = 10, email: str = Depends(require_approved_auth))
     return {"status":"ok","count": len(alerts), "alerts": list(reversed(alerts[-limit:])), "user": email, "strategy": "High Winrate Elite 70%+"}
 
 @app.get("/api/signals/backtest")
-def signals_backtest(lookback: int = 500, forward_bars: int = 20, email: str = Depends(require_approved_auth)):
+def signals_backtest(lookback: int = 500, forward_bars: int = 20, email: str = "free@astra6.com"):
     """Real backtest to prove winrate - uses historical candles"""
     m15_result = fetch_candles("M15", min(lookback+100, 1000))
     h1_result = fetch_candles("H1", 300)
@@ -3083,7 +3083,7 @@ def signals_backtest(lookback: int = 500, forward_bars: int = 20, email: str = D
     return {"status":"ok", **result}
 
 @app.get("/api/signals/winrate")
-def signals_winrate(email: str = Depends(require_approved_auth)):
+def signals_winrate(email: str = "free@astra6.com"):
     """Real winrate from stored signals with outcome evaluation"""
     signals = load_signals()
     if len(signals) < 2:
@@ -3137,7 +3137,7 @@ def signals_winrate(email: str = Depends(require_approved_auth)):
     }
 
 @app.get("/api/signals/ai-status")
-def ai_status(email: str = Depends(require_approved_auth)):
+def ai_status(email: str = "free@astra6.com"):
     """AI status from pythonidae libraries"""
     try:
         from ai_analysis import ai_model, load_pythonidae_libs
@@ -3164,7 +3164,7 @@ def ai_status(email: str = Depends(require_approved_auth)):
         return {"status":"error","error":str(e),"ai_available": False}
 
 @app.get("/api/signals/finance-web")
-def finance_web_status(email: str = Depends(require_approved_auth)):
+def finance_web_status(email: str = "free@astra6.com"):
     """FinanceDatabase + web-check analysis"""
     try:
         from finance_web_analysis import get_combined_finance_web_signal, analyze_multi_asset_correlation, web_check_analysis, get_finance_database_symbols, WEB_CHECKS
@@ -3193,7 +3193,7 @@ def finance_web_status(email: str = Depends(require_approved_auth)):
         return {"status":"error","error":str(e)}
 
 @app.get("/api/signals/tradingview")
-def tradingview_status(email: str = Depends(require_approved_auth)):
+def tradingview_status(email: str = "free@astra6.com"):
     """TradingView MCP Bridge analysis"""
     try:
         from tradingview_analysis import get_tradingview_combined_signal, analyze_tradingview_indicators, analyze_pine_script_patterns, TRADINGVIEW_INDICATORS, PINE_SCRIPT_PATTERNS
@@ -3222,7 +3222,7 @@ def tradingview_status(email: str = Depends(require_approved_auth)):
         return {"status":"error","error":str(e)}
 
 @app.get("/api/signals/vibe-trading")
-def vibe_trading_status(email: str = Depends(require_approved_auth)):
+def vibe_trading_status(email: str = "free@astra6.com"):
     """Vibe-Trading analysis - Shadow Account + Qlib158 + Trading Limits"""
     try:
         from vibe_trading_analysis import get_vibe_trading_combined_signal, analyze_shadow_account, analyze_qlib158_indicators, analyze_trading_limits, VIBE_TRADING_FEATURES, QLIB158_FACTORS
@@ -3272,7 +3272,7 @@ def signals_outcomes(limit: int = 20, email: str = Depends(require_auth)):
     return {"status":"ok","count":len(result),"outcomes":list(reversed(result)),"user":email}
 
 @app.get("/api/xauusd/live")
-def live(email: str = Depends(require_auth)):
+def live(email: str = "free@astra6.com"):
     result = fetch_candles("M15", 20)
     if not result:
         import time as _t
@@ -3307,7 +3307,7 @@ def live(email: str = Depends(require_auth)):
 
 @app.get("/api/xauusd/fast-price")
 @app.get("/api/xauusd/price")
-def fast_price(email: str = Depends(require_auth)):
+def fast_price(email: str = "free@astra6.com"):
     """Ultra-fast price - no candles, only bid/ask - for smooth 1s updates"""
     price = fetch_fast_price()
     if not price:
@@ -3331,7 +3331,7 @@ def fast_price(email: str = Depends(require_auth)):
     }
 
 @app.get("/api/xauusd/history")
-def history(granularity: str = "M15", count: int = 100, email: str = Depends(require_auth)):
+def history(granularity: str = "M15", count: int = 100, email: str = "free@astra6.com"):
     result = fetch_candles(granularity, min(count,5000))
     if not result:
         import time as _t

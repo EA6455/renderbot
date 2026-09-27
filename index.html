@@ -119,8 +119,8 @@ body{background:#ffffff !important;color:#111827 !important}
   <div class="ladder">
     <div class="nav-item active" id="nav-dashboard" onclick="showView('dashboard')"><span class="ico">🎯</span><span class="hide-m">Dashboard</span></div>
     <div class="nav-item" id="nav-signals" onclick="showView('signals')"><span class="ico">📊</span><span class="hide-m">Chart</span></div>
-    <div class="nav-item" id="nav-signin" onclick="openAuth('signin')"><span class="ico">🔐</span><span class="hide-m">Sign In</span></div>
-    <div class="nav-item" id="nav-signup" onclick="openAuth('signup')"><span class="ico">📝</span><span class="hide-m">Sign Up</span></div>
+    <div class="nav-item" id="nav-signin" style="display:none !important" onclick="openAuth('signin')"><span class="ico">🔐</span><span class="hide-m">Sign In</span></div>
+    <div class="nav-item" id="nav-signup" style="display:none !important" onclick="openAuth('signup')"><span class="ico">📝</span><span class="hide-m">Sign Up</span></div>
     <div class="nav-item" id="nav-account" onclick="showView('account')"><span class="ico">👤</span><span class="hide-m">Account</span></div>
     <div class="nav-item" id="nav-contact" onclick="showView('contact')"><span class="ico">📞</span><span class="hide-m">Contact</span></div>
   </div>
@@ -182,14 +182,7 @@ body{background:#ffffff !important;color:#111827 !important}
         </div>
       </div>
 
-      <div class="lock-overlay" id="dash-lock" style="border-radius:14px">
-        <div class="lock-card">
-          <div class="lock-icon">🎯</div>
-          <div style="font-weight:900;font-size:18px;margin-bottom:6px">Easy Signals</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Clean & easy catalog. Only BUY/SELL with SL/TP. 70%+ winrate.</div>
-          <div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="openAuth('signin')">Sign In</button><button class="btn btn-gold" style="flex:1" onclick="openAuth('signup')">Sign Up</button></div>
-        </div>
-      </div>
+      
     </div>
 
     <!-- Chart View -->
@@ -198,14 +191,7 @@ body{background:#ffffff !important;color:#111827 !important}
         <div class="terminal-top"><div class="pair-name">XAUUSD / GOLD</div><div class="mono" style="font-size:10px;color:var(--muted)">Easy chart view</div></div>
         <div id="oanda_chart"></div>
         <div class="info-bar"><span>ASTRA6 • Easy</span><span class="mono">M15 • Live</span></div>
-        <div class="lock-overlay" id="lock-overlay">
-          <div class="lock-card">
-            <div class="lock-icon">🔒</div>
-            <div style="font-weight:900;font-size:18px;margin-bottom:6px">Sign in to view chart</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Dashboard has easy signals. Chart for confirmation.</div>
-            <div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="openAuth('signin')">Sign In</button><button class="btn btn-gold" style="flex:1" onclick="openAuth('signup')">Sign Up</button></div>
-          </div>
-        </div>
+                </div>
       </div>
     </div>
 
@@ -219,7 +205,7 @@ body{background:#ffffff !important;color:#111827 !important}
             <div style="display:flex;gap:8px"><button class="btn" onclick="openAuth('signin')">Sign In</button><button class="btn btn-gold" onclick="openAuth('signup')">Sign Up</button></div>
           </div>
           <div id="account-user" style="display:none">
-            <div class="field"><div class="label">EMAIL</div><div class="mono" id="acc-email" style="font-size:13px;word-break:break-all"></div></div>
+            <div class="field"><div class="label">EMAIL</div><div class="mono" id="acc-email" style="display:none" style="font-size:13px;word-break:break-all"></div></div>
             <div class="field"><div class="label">STATUS</div><div style="font-size:12px"><span style="color:var(--green)">● Active</span> • Elite 70%+</div></div>
             <div class="field"><div class="label">SINCE</div><div class="mono" id="acc-created" style="font-size:12px"></div></div>
             <div class="field"><div class="label">EXPIRES</div><div class="mono" id="acc-expires" style="font-size:12px"></div></div>
@@ -291,7 +277,13 @@ async function submitAuth(){
     setTimeout(()=>{closeAuth();checkAuth();showView('dashboard');btn.textContent=orig;btn.disabled=false;},600);
   }catch(e){err.textContent=e.message;err.style.display='block';btn.textContent=orig;btn.disabled=false;}
 }
-async function checkAuth(){
+async function checkAuth(){ // Free access - no sign in needed, market data stays
+  const dashLock=document.getElementById('dash-lock'); if(dashLock) dashLock.style.display='none';
+  const lockOverlay=document.getElementById('lock-overlay'); if(lockOverlay) lockOverlay.style.display='none';
+  // Original checkAuth below but don't block
+  return true;
+}
+async function checkAuth_old(){
   const token=getToken();
   const lock=document.getElementById('lock-overlay');
   const dashLock=document.getElementById('dash-lock');
@@ -304,7 +296,7 @@ async function checkAuth(){
     return false;
   }
   try{
-    const r=await fetch('/api/auth/me',{headers:authHeaders()});if(!r.ok)throw new Error('invalid');const d=await r.json();
+    const r=await fetch('/api/auth/me',{});if(!r.ok)throw new Error('invalid');const d=await r.json();
     document.getElementById('user-email').textContent=d.email;
     userBox.classList.add('show');guestBox.style.display='none';
     if(lock)lock.style.display='none';
@@ -316,13 +308,13 @@ async function checkAuth(){
     return true;
   }catch(e){setToken(null);if(lock)lock.style.display='flex';if(dashLock)dashLock.style.display='flex';userBox.classList.remove('show');guestBox.style.display='block';document.getElementById('nav-signin').style.display='flex';document.getElementById('nav-signup').style.display='flex';return false;}
 }
-async function signOut(){try{await fetch('/api/auth/signout',{method:'POST',headers:authHeaders()});}catch(e){}setToken(null);checkAuth();showView('dashboard');}
+async function signOut(){try{await fetch('/api/auth/signout',{method:'POST',});}catch(e){}setToken(null);checkAuth();showView('dashboard');}
 async function loadAccount(){
   const token=getToken();
   const guest=document.getElementById('account-guest'), user=document.getElementById('account-user');
   if(!token){guest.style.display='block';user.style.display='none';return;}
   try{
-    const r=await fetch('/api/auth/me',{headers:authHeaders()});if(!r.ok)throw new Error();const d=await r.json();
+    const r=await fetch('/api/auth/me',{});if(!r.ok)throw new Error();const d=await r.json();
     guest.style.display='none';user.style.display='block';
     document.getElementById('acc-email').textContent=d.email;
     document.getElementById('acc-created').textContent=d.created?new Date(d.created*1000).toLocaleString():'-';
@@ -342,12 +334,12 @@ function playAlertSound(type){
   }catch(e){}
 }
 async function fetchDashboard(){
-  if(!getToken())return;
+  // free access
   const btn=document.getElementById('refresh-btn');if(btn)btn.textContent='⏳';
   try{
     const [curR, alertsR] = await Promise.all([
-      fetch('/api/signals/current',{headers:authHeaders()}),
-      fetch('/api/signals/alerts?limit=15',{headers:authHeaders()})
+      fetch('/api/signals/current',{}),
+      fetch('/api/signals/alerts?limit=15',{})
     ]);
     if(curR.status===401){checkAuth();return;}
     const cur=await curR.json();const alerts=await alertsR.json();
@@ -450,9 +442,9 @@ function initChart(){
   const ro=new ResizeObserver(()=>{if(chart)chart.applyOptions({width:c.clientWidth})});ro.observe(c);
 }
 async function fetchLive(){
-  if(!getToken())return;
+  // free access
   try{
-    const r=await fetch('/api/xauusd/live',{headers:authHeaders()});
+    const r=await fetch('/api/xauusd/live',{});
     if(r.status===401){checkAuth();return;}
     const d=await r.json();
     if(d.status==='ok'){
@@ -460,7 +452,7 @@ async function fetchLive(){
       if(d.live_price){document.getElementById('bidask').textContent=`BID ${d.live_price.bid.toFixed(2)} / ASK ${d.live_price.ask.toFixed(2)}`;}
       document.getElementById('live-time').textContent=new Date().toLocaleTimeString();
       if(d.last_10 && candleSeries && lastCandles.length===0){
-        const r2=await fetch('/api/xauusd/history?granularity=M15&count=100',{headers:authHeaders()});
+        const r2=await fetch('/api/xauusd/history?granularity=M15&count=100',{});
         const d2=await r2.json();
         if(d2.status==='ok'){const data=d2.candles.map(c=>({time:Math.floor(new Date(c.time).getTime()/1000),open:c.open,high:c.high,low:c.low,close:c.close}));candleSeries.setData(data);lastCandles=data;}
       }
