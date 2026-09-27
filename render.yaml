@@ -22,3 +22,9 @@ services:
         sync: false
       - key: SMTP_PORT
         value: 587
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: EMAIL_WEBHOOK_URL
+        sync: false
