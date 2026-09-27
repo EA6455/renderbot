@@ -1079,7 +1079,13 @@ def mt5_signal(email: str = "", telegram: str = "", tf: str = "M15"):
             # For EA, we want simple BUY/SELL/HOLD
             # Use M15 + H1 big flow logic
             # This is simplified version - in production use full scan
-            price = live_price or (m15_candles[-1]["close"] if m15_candles else 0)
+            # live_price is dict with bid/ask/mid
+            if isinstance(live_price, dict):
+                price = live_price.get("mid") or live_price.get("bid") or 0
+            else:
+                price = live_price or 0
+            if not price and m15_candles:
+                price = m15_candles[-1]["close"] if m15_candles else 0
             
             # Get last signal from signals file if exists
             signals_file = Path("signals.json")
