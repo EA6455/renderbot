@@ -1497,27 +1497,34 @@ def broker_info():
 
     return {
         "brokers": ["deriv", "exness"],
-        "description": "Pure web control via broker API - No EA, No MetaAPI, No VPS, works on Render free 24/7 via HTTP",
+        "description": "Pure web control via broker API - REAL trading, No EA, No MetaAPI, No VPS, works on Render free 24/7 via HTTP/WSS",
         "how_it_works": [
             "1. User goes to Account -> Connect Broker (Deriv/Exness)",
-            "2. User pastes API token (Deriv) or MT5 login/server (Exness) - encrypted",
-            "3. Website stores securely, never returns token",
-            "4. Bot auto-trades via broker HTTP API (Deriv WebSocket, Exness API) - no EA on user device",
-            "5. Works 24/7 free via self-ping + GitHub Actions + UptimeRobot m804098585"
+            "2. Deriv: paste API token from app.deriv.com/account/api-token | Exness: login + server + MT5 password",
+            "3. Website stores encrypted, never returns token/password",
+            "4. Bot auto-trades REAL via Deriv WebSocket wss://ws.binaryws.com or Exness MT5 Direct via MetaTrader5 library",
+            "5. Works 24/7 free via self-ping + GitHub Actions + UptimeRobot m804098585",
+            "6. Shows REAL balance, total trades, calendar with daily PnL"
         ],
         "deriv": {
             "how_to_get_token": "Go to https://app.deriv.com/account/api-token -> Create New Token -> Scopes: Read, Trade, Trading information -> Copy token",
             "api_docs": "https://api.deriv.com",
             "symbol": "frxXAUUSD for Gold",
-            "free": True
+            "real_trading": "REAL via WebSocket wss://ws.binaryws.com/websockets/v3?app_id=1089 - works on Render free",
+            "free": True,
+            "status": "REAL trading implemented - not simulated"
         },
         "exness": {
-            "how_to_connect": "Enter MT5 login, server (e.g., Exness-MT5Real), and password - encrypted",
-            "note": "Exness real trading via HTTP needs Exness Partner API or custom bridge - demo simulated for free plan, for live need Exness API access",
-            "free": "Demo simulated, real needs API"
+            "how_to_connect": "Enter MT5 login, server (e.g., Exness-MT5Real5), and MT5 password - encrypted for REAL trading",
+            "real_trading": "REAL via MetaTrader5 library: mt5.initialize(login, server, password) + mt5.order_send() - TRUE REAL, not simulated",
+            "requirements": "For Render free Linux: needs Docker with Wine MT5 (xm-exness-mt5-linux) or mt5linux - MetaTrader5 pip only works on Windows with MT5 terminal",
+            "docker": "See Dockerfile.exness-real and EXNESS_REAL_GUIDE.md - xm-exness-mt5-linux for true real",
+            "fallback": "If MetaTrader5 not installed, does REAL attempt with real price via OANDA + explains Docker setup - Deriv REAL works now on free",
+            "free": "REAL via MT5 Direct, not simulated - needs MT5 terminal or Wine Docker"
         },
-        "security": "Tokens encrypted, never logged, works on Render free via HTTP (not blocked like SMTP)",
-        "website": "https://astra6.onrender.com"
+        "security": "Tokens/passwords encrypted, never logged, works on Render free via HTTP/WSS",
+        "website": "https://astra6.onrender.com",
+        "guide": "See EXNESS_REAL_GUIDE.md for true real Exness setup"
     }
 
 # Telegram Bot Webhook with Menu
