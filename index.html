@@ -185,7 +185,7 @@ body.light-mode .lock-card{background:#ffffff}
       <button class="btn" id="topbar-signup-btn" style="display:none !important" style="padding:8px 14px;font-weight:700;font-size:13px;background:#fff;border:2px solid #000;display:flex" onclick="openAuth('signup')">📝 Sign Up</button>
       <!-- Removed theme, refresh, sound buttons per user request - ☀️🔄🔔 removed -->
       <!-- Hamburger line button top right - click to show ladder -->
-      <button class="btn" id="ladder-menu-btn" title="Menu" style="font-size:20px;padding:8px 14px;min-width:44px">☰</button>
+      <button class="btn" id="ladder-menu-btn" title="Menu" style="font-size:20px;padding:8px 14px;min-width:44px" onclick="(function(){const dd=document.getElementById('ladder-dropdown');if(dd){const h=dd.style.display==='none'||dd.style.display==='';dd.style.display=h?'flex':'none';if(h)dd.style.flexDirection='column';}})()">☰</button>
       <!-- Ladder dropdown top right - dashboard chart account sign in sign up contact - clean, dont stay -->
       <div id="ladder-dropdown" style="display:none;position:absolute;top:56px;right:10px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px;min-width:200px;z-index:10000;flex-direction:column;gap:8px;box-shadow:0 20px 40px rgba(0,0,0,0.6)">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px 8px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">
@@ -442,7 +442,7 @@ function showView(v){
   if(v==='account')loadAccount();
   
   if(v==='dashboard')fetchDashboard();
-  if(v==='signals' && getToken()){initChart();fetchChart(currentTF);}
+  if(v==='signals'){initChart();fetchChart(currentTF);}
   window.scrollTo(0,0);
 }
 
@@ -496,7 +496,9 @@ async function submitAuth(){
     ok.style.display='block';
     const accStatus=document.getElementById('acc-login-status');
     if(accStatus) accStatus.innerHTML='<span style="color:green">✅ '+d.message+'</span>';
-    setTimeout(()=>{closeAuth();checkAuth();showView('dashboard');btn.textContent=orig;btn.disabled=false;},600);
+    setTimeout(()=>{closeAuth();checkAuth();
+// Free access: load dashboard immediately
+setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800);showView('dashboard');btn.textContent=orig;btn.disabled=false;},600);
   }catch(e){
     console.error('Signin error',e);
     err.innerHTML=e.message+'<br><br>Try <a href="/login.html" style="color:red;font-weight:900">/login.html simple login</a> or Account tab direct form - works all devices';
@@ -695,12 +697,16 @@ async function directAccountSignIn(){
     setToken(d.token,d.email);
     statusEl.innerHTML=`<span style="color:green">✅ Signed in as ${d.email} - token saved, works all devices</span>`;
     emailEl.value=''; passEl.value='';
-    setTimeout(()=>{ checkAuth(); showView('dashboard'); }, 800);
+    setTimeout(()=>{ checkAuth();
+// Free access: load dashboard immediately
+setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800); showView('dashboard'); }, 800);
   }catch(e){
     statusEl.innerHTML=`<span style="color:red">❌ ${e.message} - try astra6render@gmail.com / admin123</span>`;
   }
 }
-async function signOut(){try{await fetch('/api/auth/signout',{method:'POST',headers:authHeaders()});}catch(e){}setToken(null);checkAuth();showView('dashboard');}
+async function signOut(){try{await fetch('/api/auth/signout',{method:'POST',headers:authHeaders()});}catch(e){}setToken(null);checkAuth();
+// Free access: load dashboard immediately
+setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800);showView('dashboard');}
 
 async function loadAccount(){
   const token=getToken();
@@ -1011,7 +1017,9 @@ async function directDashSignIn(){
     if(!r.ok) throw new Error(d.detail||'Failed');
     setToken(d.token,d.email);
     if(status) status.innerHTML='<span style="color:green">✅ Signed in as '+d.email+' - redirecting...</span>';
-    setTimeout(()=>{ checkAuth(); showView('dashboard'); }, 800);
+    setTimeout(()=>{ checkAuth();
+// Free access: load dashboard immediately
+setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800); showView('dashboard'); }, 800);
   }catch(e){
     console.error('Direct dash signin error',e);
     if(status) status.innerHTML='<span style="color:red">❌ '+e.message+'<br>Try /login.html or /simple-login.html</span>';
@@ -1088,7 +1096,9 @@ async function runBacktest(){
       fetch('/api/signals/backtest?lookback=200&forward_bars=20',{headers:authHeaders()}),
       fetch('/api/signals/backtest?lookback=500&forward_bars=20',{headers:authHeaders()})
     ]);
-    if(r200.status===401||r500.status===401){checkAuth();return;}
+    if(r200.status===401||r500.status===401){checkAuth();
+// Free access: load dashboard immediately
+setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800);return;}
     const d200=await r200.json();
     const d500=await r500.json();
     // Prefer d500 for chart but show both stats
@@ -1460,7 +1470,9 @@ async function fetchFastPrice(){
   if(!getToken())return;
   try{
     const r=await fetch('/api/xauusd/price',{headers:authHeaders()});
-    if(r.status===401){checkAuth();return;}
+    if(r.status===401){checkAuth();
+// Free access: load dashboard immediately
+setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800);return;}
     const d=await r.json();
     if(d.status==='ok'){
       const priceEl=document.getElementById('price');
@@ -1491,10 +1503,10 @@ async function fetchFastPrice(){
   }catch(e){console.log('fast price err',e);}
 }
 async function fetchLive(){
-  if(!getToken())return;
+  // Free access - no token required
   try{
-    const r=await fetch('/api/xauusd/live',{headers:authHeaders()});
-    if(r.status===401){checkAuth();return;}
+    const r=await fetch('/api/xauusd/live');
+
     const d=await r.json();
     if(d.status==='ok'){
       // Only update if fast price not running
@@ -1670,17 +1682,19 @@ setTimeout(initClicks,1500);
 soundOn=localStorage.getItem('astra6_sound')!=='0';
 const sb=document.getElementById('sound-btn');if(sb)sb.textContent=soundOn?'🔔':'🔕';
 checkAuth();
+// Free access: load dashboard immediately
+setTimeout(()=>{fetchDashboard();fetchChart(currentTF);fetchLive();fetchFastPrice();},800);
 // Smooth time every 0.5 second - ultra smooth, no delay
 setInterval(updateTimeSmooth,500);
 updateTimeSmooth();
 // Ultra-fast price every 0.8 seconds - zero delay
-setInterval(()=>{if(getToken())fetchFastPrice();},800);
+setInterval(()=>{fetchFastPrice();},800);
 // Full live data every 5 sec for candles
-setInterval(()=>{if(getToken())fetchLive();},5000);
-setInterval(()=>{if(getToken()&&currentView==='dashboard')fetchDashboard();},8000);
+setInterval(()=>{fetchLive();},5000);
+setInterval(()=>{if(currentView==='dashboard')fetchDashboard();},8000);
 setInterval(()=>{fetch('/health').catch(()=>{});},240000);
 // Initial fast price
-setTimeout(()=>{if(getToken())fetchFastPrice();},500);
+setTimeout(()=>{fetchFastPrice();},500);
 
 console.log('ASTRA6 JS loaded - all devices - price & time ultra smooth 0.8s');
 </script>
