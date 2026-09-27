@@ -1321,7 +1321,7 @@ def auto_trade_all_brokers(signal_type, symbol, price, sl, tp, lot=0.01):
                         ws.send(js.dumps(buy_req))
                         buy_resp = js.loads(ws.recv())
                         print(f"✅ Auto Deriv {signal_type} for {email}: {buy_resp}")
-                        trades_file = pathlib.Path(BROKER_TRADES_FILE)
+                        trades_file = Path(BROKER_TRADES_FILE)
                         trades = []
                         if trades_file.exists():
                             try:
@@ -1400,7 +1400,7 @@ def auto_trade_all_brokers(signal_type, symbol, price, sl, tp, lot=0.01):
                         print(f"MT5 auto order result for {email}: {result}")
                         if result.retcode == mt5.TRADE_RETCODE_DONE:
                             print(f"✅ Auto Exness {signal_type} {symbol} for {email} Order #{result.order}")
-                            trades_file = pathlib.Path(BROKER_TRADES_FILE)
+                            trades_file = Path(BROKER_TRADES_FILE)
                             trades = []
                             if trades_file.exists():
                                 try:
@@ -1558,7 +1558,7 @@ def broker_balance(email: str = Depends(require_approved_auth)):
             except Exception as e:
                 print(f"Exness API balance error {e}")
         
-        trades_file = pathlib.Path(BROKER_TRADES_FILE)
+        trades_file = Path(BROKER_TRADES_FILE)
         total_pnl = 0
         if trades_file.exists():
             try:
@@ -1662,7 +1662,7 @@ def broker_calendar(email: str = Depends(require_approved_auth)):
                         mt5.shutdown()
             except Exception as e:
                 print(f"Exness real calendar error {e}")
-        trades_file = pathlib.Path(BROKER_TRADES_FILE)
+        trades_file = Path(BROKER_TRADES_FILE)
         local_trades = []
         if trades_file.exists():
             try:
@@ -1775,7 +1775,7 @@ def broker_stats(email: str = Depends(require_approved_auth)):
                         mt5.shutdown()
             except Exception as e:
                 print(f"Exness real balance for stats error {e}")
-        trades_file = pathlib.Path(BROKER_TRADES_FILE)
+        trades_file = Path(BROKER_TRADES_FILE)
         trades = []
         if trades_file.exists():
             try:
