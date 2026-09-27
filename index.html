@@ -20,9 +20,37 @@
 <link rel="icon" href="/logo.png" type="image/png">
 <link rel="apple-touch-icon" href="/logo.png">
 <style>
-:root{--bg:#ffffff;--card:#ffffff;--card2:#f5f5f5;--border:#000000;--gold:#000000;--green:#000000;--red:#000000;--text:#000000;--muted:#666666;--active:#f0f0f0}
+:root{
+  --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --bg-solid: #f8f9ff;
+  --card: #ffffff;
+  --card2: #f0f4ff;
+  --border: #e0e7ff;
+  --gold: #f59e0b;
+  --gold-light: #fef3c7;
+  --gold-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  --green: #10b981;
+  --green-light: #d1fae5;
+  --green-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  --red: #ef4444;
+  --red-light: #fee2e2;
+  --red-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+  --blue: #3b82f6;
+  --blue-light: #dbeafe;
+  --blue-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  --purple: #8b5cf6;
+  --purple-light: #ede9fe;
+  --purple-gradient: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  --pink: #ec4899;
+  --pink-gradient: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+  --text: #1f2937;
+  --muted: #6b7280;
+  --active: #e0e7ff;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:system-ui,-apple-system,Inter,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;transition:background 0.3s,color 0.3s}
+body{font-family:system-ui,-apple-system,Inter,sans-serif;background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);background-attachment:fixed;background-size:400% 400%;animation:gradientShift 15s ease infinite;color:var(--text);display:flex;min-height:100vh;transition:background 0.3s,color 0.3s}
+@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
 body.dark-mode{--bg:#070709;--card:#111113;--card2:#1a1a1e;--border:#222226;--gold:#f5c518;--green:#22c55e;--red:#ef4444;--text:#e6e6e6;--muted:#888;--active:#1e1e22}
 body.light-mode{--bg:#ffffff;--card:#ffffff;--card2:#f5f5f5;--border:#e0e0e0;--text:#000000;--muted:#666;--active:#f0f0f0}
 body.light-mode .sidebar{background:#ffffff;border-right-color:#e0e0e6}
@@ -41,38 +69,43 @@ body.light-mode .lock-card{background:#ffffff}
 .side-top{display:none !important}
 .side-bottom{display:none !important}
 .main-wrap{flex:1;margin-left:0 !important;display:flex;flex-direction:column;min-height:100vh}
-.topbar{min-height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:10px 16px;gap:12px;position:sticky;top:0;z-index:10}
-.price-main{font-size:22px;font-weight:900;transition:all 0.3s ease;min-width:90px}
+.topbar{min-height:56px;background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);border-bottom:3px solid transparent;border-image: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c) 1;box-shadow: 0 4px 20px rgba(102,126,234,0.15);display:flex;align-items:center;justify-content:space-between;padding:10px 16px;gap:12px;position:sticky;top:0;z-index:10;backdrop-filter: blur(10px)}
+.price-main{font-size:22px;font-weight:900;transition:all 0.3s ease;min-width:90px;background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);-webkit-background-clip: text;-webkit-text-fill-color: transparent;background-clip: text}
 .price-main.up{color:var(--green);transform:scale(1.05)}
 .price-main.down{color:var(--red);transform:scale(0.95)}
 .price-main.flash{animation:priceFlash 0.6s ease}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
 @keyframes priceFlash{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
 .bidask{font-size:11px;background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.2);padding:5px 12px;border-radius:20px;color:var(--gold);font-family:monospace;transition:all 0.3s}
 .time-smooth{font-variant-numeric:tabular-nums;letter-spacing:0.5px}
-.content{flex:1;padding:16px;max-width:1200px;width:100%;margin:0 auto}
+.content{flex:1;padding:16px;max-width:1200px;width:100%;margin:0 auto;background: rgba(255,255,255,0.7);backdrop-filter: blur(10px);border-radius:20px;margin-top:16px;margin-bottom:16px;box-shadow: 0 8px 32px rgba(0,0,0,0.1)}
 .view{display:none}
 .view.active{display:block}
-.card{background:#ffffff;border:2px solid #000000;border-radius:14px;padding:18px;color:#000}
-.signal-card{border-radius:18px;padding:24px;border:2px solid #000;text-align:center;background:#fff}
-.terminal{background:#ffffff;border:2px solid #000000;border-radius:14px;overflow:hidden;position:relative}
-.terminal-top{background:#000;color:#fff;border-bottom:2px solid #000}
+.card{background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);border:2px solid transparent;background-clip: padding-box;border-radius:16px;padding:18px;color:#1f2937;box-shadow: 0 8px 32px rgba(102,126,234,0.12), 0 2px 8px rgba(0,0,0,0.05);position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);border-radius:16px 16px 0 0}
+
+.signal-card{border-radius:20px;padding:24px;border:2px solid transparent;text-align:center;background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);box-shadow: 0 12px 40px rgba(102,126,234,0.15);position:relative;overflow:hidden;transition: all 0.3s ease}
+.signal-card:hover{transform: translateY(-2px);box-shadow: 0 20px 60px rgba(102,126,234,0.25)}
+
+.terminal{background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);border:2px solid #e0e7ff;border-radius:16px;overflow:hidden;position:relative;box-shadow: 0 8px 32px rgba(102,126,234,0.12)}
+.terminal-top{background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;border-bottom:none;padding:16px;font-weight:700}
 .signal-card{border-radius:18px;padding:24px;border:1px solid var(--border);text-align:center}
-.signal-card.buy{background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.3)}
-.signal-card.sell{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.3)}
+.signal-card.buy{background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);border-color:#10b981;box-shadow: 0 12px 40px rgba(16,185,129,0.25)}
+.signal-card.sell{background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);border-color:#ef4444;box-shadow: 0 12px 40px rgba(239,68,68,0.25)}
 .signal-card.hold{background:var(--card)}
 .signal-type{font-size:44px;font-weight:900}
 .signal-type.buy{color:var(--green)}
 .signal-type.sell{color:var(--red)}
 .signal-type.hold{color:var(--muted)}
-.elite-badge{display:inline-flex;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;background:rgba(245,197,24,0.15);color:var(--gold);border:1px solid rgba(245,197,24,0.3)}
+.elite-badge{display:inline-flex;padding:6px 14px;border-radius:20px;font-size:10px;font-weight:800;background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);color:#fff;border:none;box-shadow: 0 2px 8px rgba(245,158,11,0.3);animation: pulse 2s infinite}
 .sltp-row{display:flex;justify-content:center;gap:10px;margin-top:14px;flex-wrap:wrap}
 .sltp-box{padding:8px 14px;border-radius:10px;background:var(--card2);border:1px solid var(--border);min-width:80px}
-.alert-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--card2);margin-bottom:8px}
+.alert-item{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;border:1px solid #e0e7ff;background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);margin-bottom:10px;box-shadow: 0 4px 12px rgba(102,126,234,0.08);transition: all 0.2s}.alert-item:hover{transform: translateX(4px);box-shadow: 0 6px 20px rgba(102,126,234,0.15)}
 .alert-badge{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;min-width:56px;text-align:center}
 .alert-badge.buy{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
 .alert-badge.sell{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
 .tf-btn{padding:8px 12px;font-size:11px;border-radius:8px;min-width:44px;min-height:44px;cursor:pointer;border:1px solid var(--border);background:var(--card2);color:var(--text)}
-.tf-btn.active{background:var(--gold);color:#000;border-color:var(--gold)}
+.tf-btn.active{background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);color:#fff;border-color:#f59e0b;box-shadow: 0 4px 12px rgba(245,158,11,0.4);font-weight:800}
 .terminal{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:relative}
 .terminal-top{padding:14px 16px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
 #oanda_chart{height:50vh;min-height:350px;width:100%;background:var(--card)}
@@ -82,7 +115,7 @@ body.light-mode .lock-card{background:#ffffff}
 .qr-img{width:260px;height:260px;max-width:80vw;max-height:80vw;border-radius:20px;background:#fff;padding:12px;border:2px solid var(--border);margin:16px auto;display:block}
 .auth-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:20000;padding:20px}
 .auth-modal.active{display:flex}
-.auth-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:360px}
+.auth-box{background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);border:2px solid transparent;background-clip: padding-box;border-radius:20px;padding:24px;width:100%;max-width:360px;box-shadow: 0 20px 60px rgba(102,126,234,0.3);position:relative;overflow:hidden}.auth-box::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c)}
 .auth-tabs{display:flex;gap:8px;margin-bottom:20px}
 .tab{flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;text-align:center;min-height:44px}
 .tab.active{background:var(--gold);color:#000;border-color:var(--gold)}
@@ -108,6 +141,21 @@ body.light-mode .lock-card{background:#ffffff}
  .signal-type{font-size:32px}
  #ladder-dropdown{position:fixed !important;top:60px !important;right:8px !important;left:8px !important;min-width:auto !important;width:auto !important;max-width:100% !important}
 }
+
+/* MORE COLOR - Vibrant ASTRA6 */
+.btn-gold{background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%) !important;color:#fff !important;border:none !important;box-shadow: 0 4px 15px rgba(245,158,11,0.4) !important;font-weight:800 !important}
+.btn-gold:hover{transform: translateY(-2px);box-shadow: 0 6px 20px rgba(245,158,11,0.6) !important}
+.btn{background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;border:none;box-shadow: 0 4px 12px rgba(102,126,234,0.3);transition: all 0.3s}
+.btn:hover{transform: translateY(-1px);box-shadow: 0 6px 20px rgba(102,126,234,0.5)}
+#oanda_chart{border-radius:12px;overflow:hidden}
+.info-bar{background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%) !important;color:#4f46e5 !important;font-weight:600}
+.sltp-box{background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%) !important;border:1px solid #e0e7ff !important;box-shadow: 0 2px 8px rgba(102,126,234,0.1)}
+.signal-type{filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1))}
+.view h2, .view h3{background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);-webkit-background-clip: text;-webkit-text-fill-color: transparent;background-clip: text;font-weight:900}
+#ladder-dropdown{background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%) !important;border:2px solid #e0e7ff !important;box-shadow: 0 20px 60px rgba(102,126,234,0.2) !important}
+.nav-item:hover{background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%) !important;color:#4f46e5 !important}
+.qr-img{border:3px solid transparent !important;background: linear-gradient(white, white) padding-box, linear-gradient(135deg, #667eea, #764ba2, #f093fb) border-box !important;box-shadow: 0 8px 32px rgba(102,126,234,0.2)}
+
 </style>
 </head>
 <body>
