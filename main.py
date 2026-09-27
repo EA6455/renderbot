@@ -1047,7 +1047,7 @@ def debug_smtp_test():
 
 
 
-# Pure Web Control via Broker API (Exness/Deriv) - No EA, No MetaAPI, No VPS
+#  via Broker API (Exness/Deriv) - , No VPS
 # User shares broker API token (not MT5 password) - website trades directly via HTTP (works on Render free)
 
 BROKER_FILE = Path("broker_accounts.json")
@@ -1108,7 +1108,7 @@ def broker_status(authorization: str = Header(None)):
     accounts = load_broker_accounts()
     acc = accounts.get(email)
     if not acc:
-        return {"status":"ok","connected": False, "message": "No broker connected - connect Exness/Deriv for pure web control"}
+        return {"status":"ok","connected": False, "message": " - connect Exness/Deriv for pure web control"}
     return {"status":"ok","connected": True, "broker": acc}
 
 @app.post("/api/broker/disconnect")
@@ -1187,7 +1187,7 @@ def broker_signal(email: str = "", broker: str = "deriv", tf: str = "M15"):
             "tf": tf,
             "broker": broker,
             "symbol": "XAUUSD",
-            "message": f"ASTRA6 {last_signal} via pure web broker API {broker} - Auto trading via Exness login/server/password, No EA, No MetaAPI, No VPS - User gives credentials, bot trades automatically",
+            "message": f"ASTRA6 {last_signal} via pure web broker API {broker} - Auto trading via Exness login/server/password, , No VPS - User gives credentials, bot trades automatically",
             "auto_trading": f"Auto-trading {last_signal} for all connected brokers with login/server/password" if last_signal in ["BUY","SELL"] else "HOLD - no auto-trade",
             "website": "https://astra6.onrender.com"
         }
@@ -1207,7 +1207,7 @@ def broker_trade(req: dict, authorization: str = Header(None)):
     accounts = load_broker_accounts()
     acc = accounts.get(email)
     if not acc:
-        raise HTTPException(status_code=400, detail="No broker connected - connect Exness/Deriv first via /api/broker/connect")
+        raise HTTPException(status_code=400, detail=" - connect Exness/Deriv first via /api/broker/connect")
     broker = acc.get("broker","deriv")
     trade_type = req.get("type","") or req.get("signal","")
     symbol = req.get("symbol","XAUUSD")
@@ -1268,7 +1268,7 @@ def broker_trade(req: dict, authorization: str = Header(None)):
             "result": result,
             "time": time.time(),
             "time_str": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
-            "via": f"Pure web broker API {broker} - No EA, No MetaAPI, No VPS"
+            "via": f"Pure web broker API {broker} - , No VPS"
         }
         trades.append(entry)
         trades = trades[-500:]
@@ -1409,7 +1409,7 @@ def broker_balance(email: str = Depends(require_approved_auth)):
         accs = load_broker_accounts()
         acc = accs.get(email)
         if not acc or not acc.get("connected"):
-            return {"status": "ok", "connected": False, "balance": 0, "message": "No broker connected - connect Deriv/Exness for REAL balance"}
+            return {"status": "ok", "connected": False, "balance": 0, "message": " - connect Deriv/Exness for REAL balance"}
         
         broker = acc.get("broker")
         
@@ -1540,7 +1540,7 @@ def broker_calendar(email: str = Depends(require_approved_auth)):
         accs = load_broker_accounts()
         acc = accs.get(email)
         if not acc or not acc.get("connected"):
-            return {"status": "ok", "connected": False, "calendar": {}, "message": "No broker connected - connect for REAL calendar"}
+            return {"status": "ok", "connected": False, "calendar": {}, "message": " - connect for REAL calendar"}
         broker = acc.get("broker")
         real_trades = []
         if broker == "deriv":
@@ -1676,7 +1676,7 @@ def broker_stats(email: str = Depends(require_approved_auth)):
         accs = load_broker_accounts()
         acc = accs.get(email)
         if not acc or not acc.get("connected"):
-            return {"status": "ok", "connected": False, "balance": 0, "total_trades": 0, "message": "No broker connected - connect for REAL balance"}
+            return {"status": "ok", "connected": False, "balance": 0, "total_trades": 0, "message": " - connect for REAL balance"}
         broker = acc.get("broker")
         real_balance = None
         real_currency = "USD"
