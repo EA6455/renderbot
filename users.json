@@ -29,7 +29,8 @@
     "is_admin": true,
     "plan": "elite_70",
     "winrate_target": "70-76%",
-    "salt": "08f920c43007a7e7f960b918ccee965b",
-    "hash": "a8da0c8ac13405579ee789e63e4f59bbba1f21b608d895aa62c099f7117564c6"
+    "salt": "c4bd07436d901ec5da53ffb6d0c7624b",
+    "hash": "af76bd60056349c13533aa3bff985c6b3d94924fb842a711b1f5b51bde731314",
+    "last_password_change": 1790474632.848544
   }
 }
