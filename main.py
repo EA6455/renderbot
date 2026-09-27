@@ -935,6 +935,38 @@ def backtest_elite(m15_candles, h1_candles=None, lookback=500, forward_bars=20):
     }
 
 # Routes
+@app.get("/api/debug/smtp")
+def debug_smtp():
+    import os, smtplib
+    smtp_pass = os.getenv("SMTP_PASS")
+    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    smtp_user = os.getenv("SMTP_USER", OWNER_EMAIL)
+    smtp_port = os.getenv("SMTP_PORT", "587")
+    info = {
+        "smtp_host": smtp_host,
+        "smtp_user": smtp_user,
+        "smtp_port": smtp_port,
+        "smtp_pass_set": bool(smtp_pass),
+        "smtp_pass_len": len(smtp_pass) if smtp_pass else 0,
+        "smtp_pass_has_spaces": " " in smtp_pass if smtp_pass else False,
+        "owner_email": OWNER_EMAIL
+    }
+    # Try to connect and login (no send)
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as s:
+            s.login(OWNER_EMAIL, smtp_pass)
+        info["ssl_465_login"] = "OK"
+    except Exception as e:
+        info["ssl_465_login"] = f"FAIL: {e}"
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as s:
+            s.starttls(timeout=10)
+            s.login(OWNER_EMAIL, smtp_pass)
+        info["tls_587_login"] = "OK"
+    except Exception as e:
+        info["tls_587_login"] = f"FAIL: {e}"
+    return info
+
 @app.get("/health")
 def health():
     return {"status": "ok", "name": "ASTRA6", "uptime": "24/7", "timestamp": time.time(), "message": "Elite 70%+ alive"}
