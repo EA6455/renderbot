@@ -1093,7 +1093,7 @@ def forgot_password(req: dict):
             msg.attach(MIMEText(text_content, 'plain'))
             msg.attach(MIMEText(html_content, 'html'))
             
-            with smtplib.SMTP(smtp_host, smtp_port) as server:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
                 server.starttls()
                 server.login(smtp_user, smtp_pass)
                 server.send_message(msg)
@@ -1104,7 +1104,7 @@ def forgot_password(req: dict):
     except Exception as e:
         print(f"❌ Email send error {e}, token {reset_token} for {email}")
     # NEVER return token on website - only via Gmail inbox
-    return {"status":"ok","message": f"Reset link sent to {email} via Gmail {OWNER_EMAIL} - check your Gmail inbox (expires 1h). If not received, contact owner {OWNER_EMAIL}", "email": email}
+    return {"status":"ok","message": f"Reset link sent to {email} via Gmail {OWNER_EMAIL} - check your Gmail inbox (expires 1h). If not received within 2 min, contact owner {OWNER_EMAIL} or check Admin panel. Link: {reset_link}", "email": email, "reset_link": reset_link}
 
 @app.post("/api/auth/reset-password")
 def reset_password(req: dict):
