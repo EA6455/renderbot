@@ -1051,6 +1051,7 @@ def debug_smtp_test():
 # User shares broker API token (not MT5 password) - website trades directly via HTTP (works on Render free)
 
 BROKER_FILE = Path("broker_accounts.json")
+BROKER_TRADES_FILE = Path("broker_trades.json")
 
 def load_broker_accounts():
     return load_json_file(BROKER_FILE, {})
