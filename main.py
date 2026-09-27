@@ -2,7 +2,7 @@
 ASTRA6 - High Winrate Elite Strategy - Gold Sniper
 Not normal SMA/RSI - Multi-confluence 70%+ winrate
 """
-from fastapi import FastAPI, Header, HTTPException, Depends
+from fastapi import FastAPI, Header, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
