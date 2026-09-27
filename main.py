@@ -1754,7 +1754,12 @@ def broker_stats(email: str = Depends(require_approved_auth)):
         real_balance = None
         real_currency = "USD"
         real_equity = None
-        if broker == "deriv":
+        # Check manual REAL exact balance first (from Exness app)
+        if acc.get("real_balance") and float(acc.get("real_balance",0)) > 0:
+            real_balance = float(acc.get("real_balance"))
+            real_currency = acc.get("real_balance_currency","USD")
+            real_equity = None
+        if broker == "deriv" and real_balance is None:
             try:
                 import websocket
                 import json as js
@@ -1773,7 +1778,7 @@ def broker_stats(email: str = Depends(require_approved_auth)):
                     ws.close()
             except Exception as e:
                 print(f"Deriv real balance for stats error {e}")
-        elif broker == "exness":
+        if broker == "exness" and real_balance is None:
             try:
                 import MetaTrader5 as mt5
                 login = acc.get("login","")
@@ -1821,7 +1826,10 @@ def broker_stats(email: str = Depends(require_approved_auth)):
         winrate = round((wins / total * 100) if total > 0 else 0, 1)
         if real_balance is not None:
             balance = real_balance
-            balance_msg = f"REAL {broker} balance"
+            if acc.get("real_balance"):
+                balance_msg = f"✅ REAL {broker} balance {real_balance} {real_currency} ({acc.get('real_balance_source','manual')})"
+            else:
+                balance_msg = f"REAL {broker} balance"
         else:
             base = 1500
             balance = base + total_pnl
