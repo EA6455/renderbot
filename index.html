@@ -282,21 +282,14 @@ body.light-mode .lock-card{background:#ffffff}
       </div>
     </div>
 
-    
-    
     <div class="view" id="view-bot">
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <div style="font-weight:900;font-size:18px">🤖 ASTRA6 BOT - Auto Trading</div>
-          <div style="font-size:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;padding:4px 8px;border-radius:20px">REAL - No EA, No MetaAPI</div>
+          
         </div>
-        <div style="font-size:12px;color:#666;margin-bottom:12px">User gives login/server/password → BOT automatically trades BUY/SELL via MT5 Direct + Deriv WebSocket - 24/7 free, shows REAL balance, total trades, calendar</div>
-        <div style="font-weight:900;font-size:14px;margin-bottom:8px">🤖 ASTRO6 BOT - Pure Web Control (No EA)</div>
-          <div style="font-size:11px;color:#666;margin-bottom:12px;background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%);padding:10px;border-radius:10px;border:1px solid #c7d2fe">
-            <div style="font-weight:800;color:#4f46e5">No MetaAPI, No VPS, No EA - 100% web control via broker API</div>
-            <div style="margin-top:6px">1. Connect Deriv/Exness<br>2. Bot auto-trades ASTRA6 signals via HTTP (Render free 24/7)<br>3. Shows Balance, Total Trades, Calendar</div>
-          </div>
-          <div id="broker-status" style="font-size:11px;margin-bottom:12px;padding:8px;background:#f5f5f5;border-radius:8px">Not connected</div>
+
+          <div id="broker-status" style="font-size:11px;margin-bottom:12px;padding:8px;background:#f5f5f5;border-radius:8px">Connect Exness MT5</div>
           <!-- Balance + Total Trades + Winrate Stats -->
           <div id="broker-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
             <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);padding:12px;border-radius:12px;text-align:center;border:1px solid #10b981">
@@ -322,13 +315,13 @@ body.light-mode .lock-card{background:#ffffff}
             </select>
             <input class="input" id="broker-token" type="text" placeholder="Deriv API token - app.deriv.com/account/api-token">
             <div style="background:linear-gradient(135deg,#dbeafe,#ede9fe);padding:10px;border-radius:10px;margin:5px 0;border:1px solid #c7d2fe">
-              <div style="font-weight:800;color:#4f46e5;font-size:12px">🔒 Exness MT5 - Server/Login/Password for Auto Trading</div>
-              <div style="font-size:10px;color:#666;margin-top:4px">User gives Server, Login, Password → ASTRA6 BOT automatically trades via MT5 Direct</div>
+              <div style="font-weight:800;color:#4f46e5;font-size:12px">Exness MT5</div>
+              <div style="font-size:10px;color:#666;margin-top:4px"></div>
             </div>
             <input class="input" id="broker-server" type="text" placeholder="Server: Exness-MT5Real5 (check MT5 → File → Login → Server)" style="display:block">
             <input class="input" id="broker-login" type="text" placeholder="Login: 463980664 (MT5 trading account)" style="display:block">
             <input class="input" id="broker-password" type="password" placeholder="Password: MT5 trading password (encrypted)" style="display:block">
-            <div id="exness-real-note" style="display:block;font-size:10px;color:#065f46;margin:4px 0;background:#d1fae5;padding:6px;border-radius:6px">✅ REAL Exness via MT5 Direct - auto trading, REAL balance, total trades, calendar</div>
+            <div id="exness-real-note" style="display:block;font-size:10px;color:#065f46;margin:4px 0;background:#d1fae5;padding:6px;border-radius:6px"></div>
             <button class="btn btn-gold btn-full" id="btn-broker-connect">🔗 Connect Exness MT5</button>
             <button class="btn btn-full" id="btn-broker-disconnect" style="display:none;background:#ef4444;color:#fff">❌ Disconnect</button>
           </div>
@@ -761,7 +754,7 @@ async function fetchBrokerStatus(){
       fetchBrokerTrades();
       fetchBrokerCalendar();
     } else {
-      statusEl.textContent=d.message||'Not connected - Connect Deriv/Exness for pure web control + balance, total trades, calendar';
+      statusEl.textContent=d.message||'Connect Exness MT5 - Connect Deriv/Exness for pure web control + balance, total trades, calendar';
       statusEl.style.background='#f5f5f5';
       if(connectBtn)connectBtn.style.display='block';
       if(disconnectBtn)disconnectBtn.style.display='none';
