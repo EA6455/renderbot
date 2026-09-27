@@ -329,7 +329,9 @@ body.light-mode .lock-card{background:#ffffff}
             </select>
             <input class="input" id="broker-token" type="text" placeholder="Deriv API token - app.deriv.com/account/api-token">
             <input class="input" id="broker-login" type="text" placeholder="Exness MT5 Login e.g., 12345678" style="display:none">
-            <input class="input" id="broker-server" type="text" placeholder="Server e.g., Exness-MT5Real" style="display:none">
+            <input class="input" id="broker-server" type="text" placeholder="Server e.g., Exness-MT5Real5" style="display:none">
+            <input class="input" id="broker-password" type="password" placeholder="Exness MT5 Password (for REAL trading - encrypted)" style="display:none">
+            <div id="exness-real-note" style="display:none;font-size:10px;color:#666;margin:2px 0">🔒 REAL Exness via MT5 Direct mt5.initialize + order_send - Deriv REAL works now free via WebSocket</div>
             <button class="btn btn-gold btn-full" id="btn-broker-connect">🔗 Connect Broker</button>
             <button class="btn btn-full" id="btn-broker-disconnect" style="display:none;background:#ef4444;color:#fff">❌ Disconnect</button>
           </div>
@@ -825,6 +827,7 @@ async function connectBroker(){
   const token=document.getElementById('broker-token').value.trim();
   const login=document.getElementById('broker-login').value.trim();
   const server=document.getElementById('broker-server').value.trim();
+  const password=document.getElementById('broker-password')?.value?.trim()||'';
   const err=document.getElementById('auth-error'), ok=document.getElementById('auth-success');
   // Use account page for messages if available, else use auth modal
   try{
