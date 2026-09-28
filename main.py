@@ -385,15 +385,17 @@ def get_oanda_client():
         return None
 
 def fetch_fast_price():
-    """Ultra-fast price only - 0.8 sec cache + real price fallback chain"""
+    """Ultra-fast price - real gold price from multiple free APIs (no key needed)"""
     global _fast_price_cache
     now = time.time()
     if _fast_price_cache["data"] and now - _fast_price_cache["time"] < 0.8:
         return _fast_price_cache["data"]
     client = get_oanda_client()
     if not client:
-        # Free real gold price fallback chain when OANDA missing
-        # 1. Yahoo Finance GC=F (Gold Futures) - closest to OANDA XAUUSD
+        # Real gold price from free APIs - no key needed, proves real price
+        real_price = None
+        source = "unknown"
+        # 1. Yahoo Finance GC=F Gold Futures (COMEX) - closest to OANDA XAUUSD
         try:
             import requests as _req
             r = _req.get("https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1m&range=1d", timeout=4, headers={"User-Agent":"Mozilla/5.0"})
@@ -401,36 +403,49 @@ def fetch_fast_price():
                 j=r.json()
                 price=j['chart']['result'][0]['meta']['regularMarketPrice']
                 if price:
-                    price=float(price)
-                    data={"mid": price, "bid": price-0.5, "ask": price+0.5, "timestamp": now}
-                    _fast_price_cache = {"data": data, "time": now}
-                    print(f"✅ Yahoo GC=F real gold futures price: {price} (closest to OANDA XAUUSD)")
-                    return data
+                    real_price=float(price)
+                    source="Yahoo Finance GC=F Gold Futures (COMEX) - real market, closest to OANDA"
         except Exception as e:
             print(f"Yahoo GC=F failed: {e}")
-        # 2. gold-api.com spot
-        try:
-            import requests as _req
-            r = _req.get("https://api.gold-api.com/price/XAU", timeout=3)
-            if r.status_code==200:
-                j=r.json()
-                price=j.get('price')
-                if price:
-                    price=float(price)
-                    data={"mid": price, "bid": price-0.5, "ask": price+0.5, "timestamp": now}
-                    _fast_price_cache = {"data": data, "time": now}
-                    print(f"✅ gold-api.com real spot price: {price}")
-                    return data
-        except Exception as e:
-            print(f"gold-api.com failed: {e}")
+        # 2. gold-api.com XAU spot - real
+        if not real_price:
+            try:
+                import requests as _req
+                r = _req.get("https://api.gold-api.com/price/XAU", timeout=3)
+                if r.status_code==200:
+                    j=r.json()
+                    price=j.get('price')
+                    if price:
+                        real_price=float(price)
+                        source="gold-api.com XAU spot - real market"
+            except Exception as e:
+                print(f"gold-api.com failed: {e}")
+        # 3. Coingecko PAX Gold - real, pegged to gold
+        if not real_price:
+            try:
+                import requests as _req
+                r = _req.get("https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd", timeout=3)
+                if r.status_code==200:
+                    j=r.json()
+                    price=j.get('pax-gold',{}).get('usd')
+                    if price:
+                        real_price=float(price)
+                        source="Coingecko PAX Gold (PAXG) - real, pegged to physical gold"
+            except Exception as e:
+                print(f"Coingecko failed: {e}")
+        if real_price:
+            data={"mid": real_price, "bid": real_price-0.5, "ask": real_price+0.5, "timestamp": now, "source": source}
+            _fast_price_cache = {"data": data, "time": now}
+            print(f"✅ REAL gold price: {real_price} from {source}")
+            return data
         if _fast_price_cache["data"]:
             return _fast_price_cache["data"]
-        # Dynamic mock as last resort
+        # Dynamic mock as last resort - still moves like real
         import math
-        base = 4154.0
+        base = 4155.0
         variation = math.sin(now/30)*2 + math.sin(now/120)*5
         mock_price = base + variation
-        data={"mid": mock_price, "bid": mock_price-0.5, "ask": mock_price+0.5, "timestamp": now}
+        data={"mid": mock_price, "bid": mock_price-0.5, "ask": mock_price+0.5, "timestamp": now, "source": "dynamic mock (free APIs failed)"}
         _fast_price_cache = {"data": data, "time": now}
         print(f"⚠️ Using dynamic mock: {mock_price}")
         return data
