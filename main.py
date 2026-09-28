@@ -384,30 +384,103 @@ def get_oanda_client():
     except:
         return None
 
+# XAUS API cache
+_xaus_cache = {"spot": None, "time": 0, "intraday": None, "history": None}
+
+def fetch_xaus_spot():
+    """Fetch REAL XAU/USD spot from xaus.com API - free, no key, trust policy no fabricated data"""
+    global _xaus_cache
+    now = time.time()
+    if _xaus_cache["spot"] and now - _xaus_cache["time"] < 2:
+        return _xaus_cache["spot"]
+    try:
+        import requests as _req
+        # Use compact=1 to omit 160 FX table, smaller, faster
+        r = _req.get("https://xaus.com/api/v1/spot?compact=1", timeout=4, headers={"User-Agent":"ASTRA6/1.0", "Accept":"application/json"})
+        if r.status_code == 200:
+            j = r.json()
+            # Check data_state contract: fresh, stale, unavailable
+            state = j.get("data_state", {})
+            status = state.get("status", "fresh")
+            if status == "unavailable":
+                print(f"XAUS spot unavailable: {j}")
+                return None
+            # spot_usd_oz is main price
+            price = j.get("spot_usd_oz") or j.get("xau",{}).get("price")
+            if price:
+                data = {
+                    "price": float(price),
+                    "spot_usd_oz": float(price),
+                    "silver_usd_oz": j.get("silver_usd_oz"),
+                    "gold_silver_ratio": j.get("gold_silver_ratio"),
+                    "xaut_usd": j.get("xaut_usd"),
+                    "paxg_usd": j.get("paxg_usd"),
+                    "btc_usd": j.get("btc_usd"),
+                    "data_state": state,
+                    "updated_at": j.get("updated_at"),
+                    "source": f"xaus.com API v1/spot - REAL XAUUSD spot, no key, trust no fabricated data, state={status}",
+                    "raw": j
+                }
+                _xaus_cache["spot"] = data
+                _xaus_cache["time"] = now
+                print(f"✅ XAUS REAL spot: {price} state={status} age={state.get('age_seconds')}s")
+                return data
+        elif r.status_code == 503:
+            # No real value exists - honest 503, not fabricated
+            try:
+                j = r.json()
+                print(f"XAUS 503 unavailable (honest, no fake): {j}")
+            except:
+                print(f"XAUS 503: {r.text[:200]}")
+            return None
+        else:
+            # Handle usage_exceeded etc
+            try:
+                j = r.json()
+                if j.get("error") == "usage_exceeded":
+                    print(f"XAUS usage_exceeded - will retry later, fallback to Currency-API")
+                else:
+                    print(f"XAUS spot {r.status_code}: {j}")
+            except:
+                print(f"XAUS spot {r.status_code}: {r.text[:200]}")
+            return None
+    except Exception as e:
+        print(f"XAUS spot fetch failed: {e}")
+        return None
+
 def fetch_fast_price():
-    """Ultra-fast price - REAL XAUUSD forex price from free APIs (no key)"""
+    """Ultra-fast price - REAL XAUUSD forex/spot from free APIs (no key) - XAUS primary"""
     global _fast_price_cache
     now = time.time()
     if _fast_price_cache["data"] and now - _fast_price_cache["time"] < 0.8:
         return _fast_price_cache["data"]
     client = get_oanda_client()
     if not client:
-        # REAL XAUUSD forex price from free APIs - no key needed
+        # REAL XAUUSD spot price from free APIs - no key needed - XAUS API primary
         real_price = None
         source = "unknown"
-        # 1. Currency-API XAU to USD - REAL XAUUSD forex price, free, no key, jsdelivr CDN
+        # 0. XAUS.com API v1/spot - REAL XAU/USD spot, free, no key, no fabricated data, trust policy
         try:
-            import requests as _req
-            r = _req.get("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/xau.json", timeout=4)
-            if r.status_code==200:
-                j=r.json()
-                # j['xau']['usd'] is XAU to USD = XAUUSD forex price
-                price=j.get('xau',{}).get('usd')
-                if price:
-                    real_price=float(price)
-                    source="Currency-API XAU to USD (jsdelivr) - REAL XAUUSD forex price, free"
+            xaus = fetch_xaus_spot()
+            if xaus and xaus.get("price"):
+                real_price = float(xaus["price"])
+                ds = xaus.get("data_state", {})
+                source = f"xaus.com API v1/spot - REAL XAUUSD spot, state={ds.get('status','fresh')} age={ds.get('age_seconds',0)}s, trust no fake"
         except Exception as e:
-            print(f"Currency-API XAU failed: {e}")
+            print(f"XAUS primary failed: {e}")
+        # 1. Currency-API XAU to USD - REAL XAUUSD forex price, free, no key, jsdelivr CDN
+        if not real_price:
+            try:
+                import requests as _req
+                r = _req.get("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/xau.json", timeout=4)
+                if r.status_code==200:
+                    j=r.json()
+                    price=j.get('xau',{}).get('usd')
+                    if price:
+                        real_price=float(price)
+                        source="Currency-API XAU to USD (jsdelivr) - REAL XAUUSD forex price, free"
+            except Exception as e:
+                print(f"Currency-API XAU failed: {e}")
         # 2. yfinance GC=F Gold Futures - REAL, close to XAUUSD
         if not real_price:
             try:
@@ -461,7 +534,7 @@ def fetch_fast_price():
         if real_price:
             data={"mid": real_price, "bid": real_price-0.5, "ask": real_price+0.5, "timestamp": now, "source": source}
             _fast_price_cache = {"data": data, "time": now}
-            print(f"✅ REAL XAUUSD forex price: {real_price} from {source}")
+            print(f"✅ REAL XAUUSD price: {real_price} from {source}")
             return data
         if _fast_price_cache["data"]:
             return _fast_price_cache["data"]
@@ -3408,5 +3481,198 @@ def history(granularity: str = "M15", count: int = 100, email: str = "free@astra
         "to": candles[-1]['time'],
         "latest_price": closes[-1],
         "candles": candles,
+        "user": email
+    }
+
+# === XAUS API Integration - REAL XAU/USD spot data, no key, trust no fabricated data ===
+# From https://github.com/misix-git/xaus-api - https://xaus.com/api/
+@app.get("/api/xauusd/xaus/spot")
+def xaus_spot(email: str = "free@astra6.com"):
+    """REAL XAU/USD spot from xaus.com API - free, no key, data_state contract"""
+    xaus = fetch_xaus_spot()
+    if xaus:
+        return {"status":"ok","source":"xaus.com/api/v1/spot","real":True,"trust_policy":"no fabricated data, stale flagged or 503","data":xaus,"user":email}
+    # Fallback to fetch_fast_price which includes xaus + Currency-API
+    fp = fetch_fast_price()
+    return {"status":"ok","source":fp.get("source","fallback") if fp else "fallback","real":True,"data":{"price":fp["mid"],"spot_usd_oz":fp["mid"],"data_state":{"status":"fallback","source":fp.get("source","")}},"fallback":True,"user":email,"note":"xaus.com usage_exceeded or unavailable, using fallback real price"}
+
+@app.get("/api/xauusd/xaus/intraday")
+def xaus_intraday(symbol: str = "xau", hours: int = 24, email: str = "free@astra6.com"):
+    """XAUS first-party recorded series sampled every 2 minutes - https://xaus.com/api/v1/intraday"""
+    try:
+        import requests as _req
+        r = _req.get(f"https://xaus.com/api/v1/intraday?symbol={symbol}&hours={hours}", timeout=6, headers={"User-Agent":"ASTRA6/1.0"})
+        if r.status_code==200:
+            j=r.json()
+            return {"status":"ok","source":"xaus.com/api/v1/intraday","symbol":symbol,"hours":hours,"real":True,"data":j,"user":email}
+        else:
+            try:
+                err=r.json()
+            except:
+                err={"text":r.text[:300]}
+            return {"status":"error","source":"xaus.com/api/v1/intraday","code":r.status_code,"error":err,"user":email,"note":"May be usage_exceeded - free API fair use"}
+    except Exception as e:
+        return {"status":"error","error":str(e),"user":email}
+
+@app.get("/api/xauusd/xaus/history")
+def xaus_history(email: str = "free@astra6.com"):
+    """XAUS up to 5 years daily closes with 52-week stats - https://xaus.com/api/v1/history"""
+    try:
+        import requests as _req
+        r = _req.get("https://xaus.com/api/v1/history", timeout=6, headers={"User-Agent":"ASTRA6/1.0"})
+        if r.status_code==200:
+            j=r.json()
+            return {"status":"ok","source":"xaus.com/api/v1/history","real":True,"data":j,"user":email}
+        else:
+            try:
+                err=r.json()
+            except:
+                err={"text":r.text[:300]}
+            return {"status":"error","source":"xaus.com/api/v1/history","code":r.status_code,"error":err,"user":email}
+    except Exception as e:
+        return {"status":"error","error":str(e),"user":email}
+
+@app.get("/api/xauusd/xaus/chart")
+def xaus_chart(symbol: str = "xau", range: str = "1mo", interval: str = "1d", email: str = "free@astra6.com"):
+    """XAUS multi-asset OHLCV - https://xaus.com/api/v1/chart?symbol=gold&range=1y"""
+    try:
+        import requests as _req
+        # Map symbols: xaus uses gold, silver, etc but also xau
+        r = _req.get(f"https://xaus.com/api/v1/chart?symbol={symbol}&range={range}&interval={interval}", timeout=6, headers={"User-Agent":"ASTRA6/1.0"})
+        if r.status_code==200:
+            j=r.json()
+            return {"status":"ok","source":"xaus.com/api/v1/chart","symbol":symbol,"range":range,"interval":interval,"real":True,"data":j,"user":email}
+        else:
+            try:
+                err=r.json()
+            except:
+                err={"text":r.text[:300]}
+            return {"status":"error","source":"xaus.com/api/v1/chart","code":r.status_code,"error":err,"user":email}
+    except Exception as e:
+        return {"status":"error","error":str(e),"user":email}
+
+@app.get("/api/xauusd/xaus/reserves")
+def xaus_reserves(email: str = "free@astra6.com"):
+    """XAUS central-bank gold holdings - https://xaus.com/api/v1/reserves"""
+    try:
+        import requests as _req
+        r = _req.get("https://xaus.com/api/v1/reserves", timeout=6, headers={"User-Agent":"ASTRA6/1.0"})
+        if r.status_code==200:
+            j=r.json()
+            return {"status":"ok","source":"xaus.com/api/v1/reserves","real":True,"data":j,"user":email}
+        else:
+            try:
+                err=r.json()
+            except:
+                err={"text":r.text[:300]}
+            return {"status":"error","source":"xaus.com/api/v1/reserves","code":r.status_code,"error":err,"user":email}
+    except Exception as e:
+        return {"status":"error","error":str(e),"user":email}
+
+@app.get("/api/xauusd/sources")
+def xauusd_sources(email: str = "free@astra6.com"):
+    """Compare all REAL XAUUSD price sources - XAUS + Currency-API + yfinance + gold-api + PAXG"""
+    sources = []
+    # 1 XAUS
+    try:
+        xaus = fetch_xaus_spot()
+        if xaus:
+            sources.append({"name":"xaus.com API v1/spot","price":xaus.get("price"),"source":"xaus.com - REAL spot, no key, trust no fake","state":xaus.get("data_state"),"real":True,"primary":True})
+    except Exception as e:
+        sources.append({"name":"xaus.com","error":str(e),"real":False})
+    # 2 Currency-API
+    try:
+        import requests as _req
+        r=_req.get("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/xau.json",timeout=4)
+        if r.status_code==200:
+            j=r.json()
+            price=j.get('xau',{}).get('usd')
+            if price:
+                sources.append({"name":"Currency-API XAU→USD","price":float(price),"source":"jsdelivr CDN - REAL XAUUSD forex, free","real":True})
+    except Exception as e:
+        sources.append({"name":"Currency-API","error":str(e)})
+    # 3 yfinance GC=F
+    try:
+        import yfinance as yf
+        ticker=yf.Ticker("GC=F")
+        hist=ticker.history(period="1d", interval="1m")
+        if not hist.empty:
+            price=float(hist['Close'].iloc[-1])
+            sources.append({"name":"yfinance GC=F","price":price,"source":"COMEX Gold Futures - REAL market","real":True})
+    except Exception as e:
+        sources.append({"name":"yfinance GC=F","error":str(e)})
+    # 4 gold-api.com
+    try:
+        import requests as _req
+        r=_req.get("https://api.gold-api.com/price/XAU",timeout=3)
+        if r.status_code==200:
+            j=r.json()
+            price=j.get('price')
+            if price:
+                sources.append({"name":"gold-api.com XAU","price":float(price),"source":"REAL spot","real":True})
+    except Exception as e:
+        sources.append({"name":"gold-api.com","error":str(e)})
+    # 5 Coingecko PAXG
+    try:
+        import requests as _req
+        r=_req.get("https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd",timeout=3)
+        if r.status_code==200:
+            j=r.json()
+            price=j.get('pax-gold',{}).get('usd')
+            if price:
+                sources.append({"name":"Coingecko PAXG","price":float(price),"source":"PAXG pegged to gold - REAL","real":True})
+    except Exception as e:
+        sources.append({"name":"Coingecko PAXG","error":str(e)})
+    # Current fast price
+    fp = fetch_fast_price()
+    avg_price = sum([s["price"] for s in sources if "price" in s]) / len([s for s in sources if "price" in s]) if [s for s in sources if "price" in s] else (fp["mid"] if fp else 0)
+    return {
+        "status":"ok",
+        "timestamp": time.time(),
+        "current_fast_price": fp,
+        "average_real_price": round(avg_price,2) if avg_price else None,
+        "sources": sources,
+        "count": len(sources),
+        "real_count": len([s for s in sources if s.get("real") and "price" in s]),
+        "integration":"xaus-api from https://github.com/misix-git/xaus-api.git - free, no key, CORS open, GET only, JSON, trust no fabricated data",
+        "user": email
+    }
+
+@app.get("/api/xauusd/xaus/info")
+def xaus_info(email: str = "free@astra6.com"):
+    """XAUS API info and docs"""
+    return {
+        "status":"ok",
+        "name":"XAUS Gold Data API",
+        "repo":"https://github.com/misix-git/xaus-api.git",
+        "website":"https://xaus.com/",
+        "docs":"https://xaus.com/api/",
+        "openapi":"https://xaus.com/api/openapi.json",
+        "local_openapi":"/xaus-api/openapi.yaml",
+        "features":[
+            "No API key, no registration, no enforced rate limits (fair use)",
+            "CORS open, GET only, JSON everywhere",
+            "Trust policy: no fabricated data, ever - during outage serves last real price flagged, or honest 503",
+            "Every response has data_state {status, as_of, source, age_seconds}",
+            "status fresh=live, stale=last real during outage, unavailable=no real value (503 not guess)"
+        ],
+        "endpoints":[
+            {"path":"/api/v1/spot","data":"Live XAU/USD spot, silver, ratios, tokenized gold","params":"currency=EUR, unit=oz|gram|kg, compact=1"},
+            {"path":"/api/v1/intraday","data":"First-party recorded series every 2 min","params":"symbol=xau|xag, hours=1..48"},
+            {"path":"/api/v1/history","data":"Up to 5 years daily closes, 52-week stats","params":"none"},
+            {"path":"/api/v1/chart","data":"Multi-asset OHLCV: gold, silver, BTC, S&P500, WTI","params":"symbol, range, interval"},
+            {"path":"/api/v1/reserves","data":"Central-bank gold holdings by country","params":"none"}
+        ],
+        "our_endpoints":[
+            "/api/xauusd/xaus/spot",
+            "/api/xauusd/xaus/intraday?symbol=xau&hours=24",
+            "/api/xauusd/xaus/history",
+            "/api/xauusd/xaus/chart?symbol=xau&range=1mo&interval=1d",
+            "/api/xauusd/xaus/reserves",
+            "/api/xauusd/sources",
+            "/api/xauusd/fast-price (now uses XAUS primary)",
+            "/api/xauusd/xaus/info"
+        ],
+        "integration":"Added to ASTRA6 as primary REAL spot source with Currency-API fallback",
         "user": email
     }
