@@ -12,7 +12,7 @@ RUN dpkg --add-architecture i386 && \
     wine64 \
     wine32 \
     winbind \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
