@@ -2959,7 +2959,7 @@ def admin_list_resets(email: str = Depends(require_admin)):
 
 # HIGH WINRATE SIGNALS
 @app.get("/api/signals/current")
-def signals_current(email: str = Depends(require_approved_auth)):
+def signals_current(email: str = "free@astra6.com"):
     # V5.3 Scan EVERY timeframe not only M15 - M1 M5 M15 M30 H1
     m1 = fetch_candles("M1", 100)
     m5 = fetch_candles("M5", 100)
@@ -3055,12 +3055,12 @@ def signals_current(email: str = Depends(require_approved_auth)):
     return {"status":"ok","signal": sig, "user": email}
 
 @app.get("/api/signals/history")
-def signals_history(limit: int = 20, email: str = Depends(require_approved_auth)):
+def signals_history(limit: int = 20, email: str = "free@astra6.com"):
     signals = load_signals()
     return {"status":"ok","count": len(signals), "signals": list(reversed(signals[-limit:])), "user": email}
 
 @app.get("/api/signals/alerts")
-def signals_alerts(limit: int = 10, email: str = Depends(require_approved_auth)):
+def signals_alerts(limit: int = 10, email: str = "free@astra6.com"):
     signals = load_signals()
     alerts = [s for s in signals if s.get('should_alert') and s['type'] != 'HOLD']
     if not alerts:
@@ -3082,7 +3082,7 @@ def signals_backtest(lookback: int = 500, forward_bars: int = 20, email: str = D
     return {"status":"ok", **result}
 
 @app.get("/api/signals/winrate")
-def signals_winrate(email: str = Depends(require_approved_auth)):
+def signals_winrate(email: str = "free@astra6.com"):
     """Real winrate from stored signals with outcome evaluation"""
     signals = load_signals()
     if len(signals) < 2:
@@ -3271,7 +3271,7 @@ def signals_outcomes(limit: int = 20, email: str = Depends(require_auth)):
     return {"status":"ok","count":len(result),"outcomes":list(reversed(result)),"user":email}
 
 @app.get("/api/xauusd/live")
-def live(email: str = Depends(require_auth)):
+def live(email: str = "free@astra6.com"):
     result = fetch_candles("M15", 20)
     if not result:
         import time as _t
@@ -3295,7 +3295,7 @@ def live(email: str = Depends(require_auth)):
 
 @app.get("/api/xauusd/fast-price")
 @app.get("/api/xauusd/price")
-def fast_price(email: str = Depends(require_auth)):
+def fast_price(email: str = "free@astra6.com"):
     """Ultra-fast price - no candles, only bid/ask - for smooth 1s updates"""
     price = fetch_fast_price()
     if not price:
@@ -3318,7 +3318,7 @@ def fast_price(email: str = Depends(require_auth)):
     }
 
 @app.get("/api/xauusd/history")
-def history(granularity: str = "M15", count: int = 100, email: str = Depends(require_auth)):
+def history(granularity: str = "M15", count: int = 100, email: str = "free@astra6.com"):
     result = fetch_candles(granularity, min(count,5000))
     if not result:
         import time as _t
