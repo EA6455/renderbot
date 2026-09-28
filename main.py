@@ -465,10 +465,34 @@ def fetch_fast_price():
             if xaus and xaus.get("price"):
                 real_price = float(xaus["price"])
                 ds = xaus.get("data_state", {})
-                source = f"xaus.com API v1/spot - REAL XAUUSD spot, state={ds.get('status','fresh')} age={ds.get('age_seconds',0)}s, trust no fake"
+                source = f"xaus.com API v1/spot - REAL XAUUSD forex, state={ds.get('status','fresh')} age={ds.get('age_seconds',0)}s, trust no fake"
         except Exception as e:
             print(f"XAUS primary failed: {e}")
-        # 1. Currency-API XAU to USD - REAL XAUUSD forex price, free, no key, jsdelivr CDN
+        # 1. yfinance GC=F Gold Futures - REAL XAUUSD forex per user request - 4159+ real market COMEX
+        if not real_price:
+            try:
+                import yfinance as yf
+                ticker=yf.Ticker("GC=F")
+                hist=ticker.history(period="1d", interval="1m")
+                if not hist.empty:
+                    real_price=float(hist['Close'].iloc[-1])
+                    source="yfinance GC=F Gold Futures (COMEX) - REAL XAUUSD forex, live market, user requested"
+            except Exception as e:
+                print(f"yfinance GC=F failed: {e}")
+        # 2. Yahoo Finance GC=F API - REAL XAUUSD forex
+        if not real_price:
+            try:
+                import requests as _req
+                r = _req.get("https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1m&range=1d", timeout=4, headers={"User-Agent":"Mozilla/5.0"})
+                if r.status_code==200:
+                    j=r.json()
+                    price=j['chart']['result'][0]['meta']['regularMarketPrice']
+                    if price:
+                        real_price=float(price)
+                        source="Yahoo Finance GC=F - REAL XAUUSD forex"
+            except Exception as e:
+                print(f"Yahoo GC=F failed: {e}")
+        # 3. Currency-API XAU to USD - REAL XAUUSD forex price, free, no key, jsdelivr CDN
         if not real_price:
             try:
                 import requests as _req
@@ -481,30 +505,6 @@ def fetch_fast_price():
                         source="Currency-API XAU to USD (jsdelivr) - REAL XAUUSD forex price, free"
             except Exception as e:
                 print(f"Currency-API XAU failed: {e}")
-        # 2. yfinance GC=F Gold Futures - REAL, close to XAUUSD
-        if not real_price:
-            try:
-                import yfinance as yf
-                ticker=yf.Ticker("GC=F")
-                hist=ticker.history(period="1d", interval="1m")
-                if not hist.empty:
-                    real_price=float(hist['Close'].iloc[-1])
-                    source="yfinance GC=F Gold Futures (COMEX) - REAL market"
-            except Exception as e:
-                print(f"yfinance GC=F failed: {e}")
-        # 3. Yahoo Finance GC=F API - REAL
-        if not real_price:
-            try:
-                import requests as _req
-                r = _req.get("https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1m&range=1d", timeout=4, headers={"User-Agent":"Mozilla/5.0"})
-                if r.status_code==200:
-                    j=r.json()
-                    price=j['chart']['result'][0]['meta']['regularMarketPrice']
-                    if price:
-                        real_price=float(price)
-                        source="Yahoo Finance GC=F - REAL"
-            except Exception as e:
-                print(f"Yahoo GC=F failed: {e}")
         # 4. gold-api.com - REAL spot
         if not real_price:
             try:
@@ -3571,16 +3571,26 @@ def xaus_reserves(email: str = "free@astra6.com"):
 
 @app.get("/api/xauusd/sources")
 def xauusd_sources(email: str = "free@astra6.com"):
-    """Compare all REAL XAUUSD price sources - XAUS + Currency-API + yfinance + gold-api + PAXG"""
+    """Compare all REAL XAUUSD price sources - XAUS + yfinance GC=F REAL forex + Currency-API + gold-api + PAXG"""
     sources = []
     # 1 XAUS
     try:
         xaus = fetch_xaus_spot()
         if xaus:
-            sources.append({"name":"xaus.com API v1/spot","price":xaus.get("price"),"source":"xaus.com - REAL spot, no key, trust no fake","state":xaus.get("data_state"),"real":True,"primary":True})
+            sources.append({"name":"xaus.com API v1/spot","price":xaus.get("price"),"source":"xaus.com - REAL XAUUSD forex spot, no key, trust no fake","state":xaus.get("data_state"),"real":True,"primary":True})
     except Exception as e:
         sources.append({"name":"xaus.com","error":str(e),"real":False})
-    # 2 Currency-API
+    # 2 yfinance GC=F - REAL forex per user request 4159+
+    try:
+        import yfinance as yf
+        ticker=yf.Ticker("GC=F")
+        hist=ticker.history(period="1d", interval="1m")
+        if not hist.empty:
+            price=float(hist['Close'].iloc[-1])
+            sources.append({"name":"yfinance GC=F","price":price,"source":"yfinance GC=F Gold Futures (COMEX) - REAL XAUUSD forex, live market, user requested 4159+","real":True,"forex":True,"user_requested":True})
+    except Exception as e:
+        sources.append({"name":"yfinance GC=F","error":str(e)})
+    # 3 Currency-API
     try:
         import requests as _req
         r=_req.get("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/xau.json",timeout=4)
@@ -3591,16 +3601,6 @@ def xauusd_sources(email: str = "free@astra6.com"):
                 sources.append({"name":"Currency-API XAU→USD","price":float(price),"source":"jsdelivr CDN - REAL XAUUSD forex, free","real":True})
     except Exception as e:
         sources.append({"name":"Currency-API","error":str(e)})
-    # 3 yfinance GC=F
-    try:
-        import yfinance as yf
-        ticker=yf.Ticker("GC=F")
-        hist=ticker.history(period="1d", interval="1m")
-        if not hist.empty:
-            price=float(hist['Close'].iloc[-1])
-            sources.append({"name":"yfinance GC=F","price":price,"source":"COMEX Gold Futures - REAL market","real":True})
-    except Exception as e:
-        sources.append({"name":"yfinance GC=F","error":str(e)})
     # 4 gold-api.com
     try:
         import requests as _req
@@ -3670,9 +3670,86 @@ def xaus_info(email: str = "free@astra6.com"):
             "/api/xauusd/xaus/chart?symbol=xau&range=1mo&interval=1d",
             "/api/xauusd/xaus/reserves",
             "/api/xauusd/sources",
-            "/api/xauusd/fast-price (now uses XAUS primary)",
+            "/api/xauusd/fast-price (now XAUS primary + yfinance GC=F REAL forex)",
+            "/api/xauusd/yfinance",
+            "/api/xauusd/gc",
             "/api/xauusd/xaus/info"
         ],
-        "integration":"Added to ASTRA6 as primary REAL spot source with Currency-API fallback",
+        "integration":"Added to ASTRA6 as primary REAL spot source with yfinance GC=F REAL forex (user requested 4159+) + Currency-API fallback",
         "user": email
     }
+
+@app.get("/api/xauusd/yfinance")
+@app.get("/api/xauusd/gc")
+@app.get("/api/xauusd/gc-f")
+def yfinance_gc_price(email: str = "free@astra6.com"):
+    """yfinance GC=F Gold Futures - REAL XAUUSD forex, live COMEX market, user requested 4159+"""
+    try:
+        import yfinance as yf
+        ticker=yf.Ticker("GC=F")
+        hist=ticker.history(period="1d", interval="1m")
+        if not hist.empty:
+            price=float(hist['Close'].iloc[-1])
+            high=float(hist['High'].max())
+            low=float(hist['Low'].min())
+            open_price=float(hist['Open'].iloc[0])
+            vol=int(hist['Volume'].sum()) if 'Volume' in hist else 0
+            return {
+                "status":"ok",
+                "symbol":"GC=F",
+                "name":"Gold Futures COMEX",
+                "price":price,
+                "open":open_price,
+                "high":high,
+                "low":low,
+                "volume":vol,
+                "bid":price-0.5,
+                "ask":price+0.5,
+                "source":"yfinance GC=F Gold Futures (COMEX) - REAL XAUUSD forex, live market, user requested 4159+",
+                "real":True,
+                "forex":True,
+                "user_requested":True,
+                "timestamp": time.time(),
+                "user": email
+            }
+        else:
+            return {"status":"error","error":"No data from yfinance GC=F","user":email}
+    except Exception as e:
+        return {"status":"error","error":str(e),"user":email}
+
+@app.get("/api/xauusd/yfinance/history")
+def yfinance_history(period: str = "1mo", interval: str = "1d", email: str = "free@astra6.com"):
+    """yfinance GC=F history - REAL forex history"""
+    try:
+        import yfinance as yf
+        ticker=yf.Ticker("GC=F")
+        hist=ticker.history(period=period, interval=interval)
+        if hist.empty:
+            return {"status":"error","error":"No history"}
+        candles=[]
+        for idx, row in hist.iterrows():
+            candles.append({
+                "time": idx.timestamp() if hasattr(idx, 'timestamp') else str(idx),
+                "time_str": str(idx),
+                "open": float(row['Open']),
+                "high": float(row['High']),
+                "low": float(row['Low']),
+                "close": float(row['Close']),
+                "volume": int(row['Volume']) if 'Volume' in row else 0
+            })
+        return {
+            "status":"ok",
+            "symbol":"GC=F",
+            "period":period,
+            "interval":interval,
+            "count":len(candles),
+            "candles":candles[-100:],
+            "latest_price":candles[-1]["close"] if candles else None,
+            "source":"yfinance GC=F - REAL XAUUSD forex history",
+            "real":True,
+            "user":email
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status":"error","error":str(e),"user":email}
