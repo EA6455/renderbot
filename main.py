@@ -385,17 +385,28 @@ def get_oanda_client():
         return None
 
 def fetch_fast_price():
-    """Ultra-fast price - real gold price from multiple free APIs (no key needed)"""
+    """Ultra-fast price - real gold price, free APIs when OANDA missing"""
     global _fast_price_cache
     now = time.time()
     if _fast_price_cache["data"] and now - _fast_price_cache["time"] < 0.8:
         return _fast_price_cache["data"]
     client = get_oanda_client()
     if not client:
-        # Real gold price from free APIs - no key needed, proves real price
-        real_price = None
-        source = "unknown"
-        # 1. Yahoo Finance GC=F Gold Futures (COMEX) - closest to OANDA XAUUSD
+        # Real gold price from free APIs - no OANDA key needed
+        # 1. yfinance GC=F Gold Futures - REAL, no key, works on Render
+        try:
+            import yfinance as yf
+            ticker=yf.Ticker("GC=F")
+            hist=ticker.history(period="1d", interval="1m")
+            if not hist.empty:
+                price=float(hist['Close'].iloc[-1])
+                data={"mid": price, "bid": price-0.5, "ask": price+0.5, "timestamp": now, "source": "yfinance GC=F Gold Futures (COMEX) - REAL market, closest to OANDA XAUUSD"}
+                _fast_price_cache = {"data": data, "time": now}
+                print(f"✅ REAL yfinance GC=F price: {price}")
+                return data
+        except Exception as e:
+            print(f"yfinance GC=F failed: {e}")
+        # 2. Yahoo Finance direct API - REAL
         try:
             import requests as _req
             r = _req.get("https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1m&range=1d", timeout=4, headers={"User-Agent":"Mozilla/5.0"})
@@ -403,70 +414,53 @@ def fetch_fast_price():
                 j=r.json()
                 price=j['chart']['result'][0]['meta']['regularMarketPrice']
                 if price:
-                    real_price=float(price)
-                    source="Yahoo Finance GC=F Gold Futures (COMEX) - real market, closest to OANDA"
+                    price=float(price)
+                    data={"mid": price, "bid": price-0.5, "ask": price+0.5, "timestamp": now, "source": "Yahoo Finance GC=F - REAL"}
+                    _fast_price_cache = {"data": data, "time": now}
+                    print(f"✅ REAL Yahoo GC=F price: {price}")
+                    return data
         except Exception as e:
             print(f"Yahoo GC=F failed: {e}")
-        # 2. gold-api.com XAU spot - real
-        if not real_price:
-            try:
-                import requests as _req
-                r = _req.get("https://api.gold-api.com/price/XAU", timeout=3)
-                if r.status_code==200:
-                    j=r.json()
-                    price=j.get('price')
-                    if price:
-                        real_price=float(price)
-                        source="gold-api.com XAU spot - real market"
-            except Exception as e:
-                print(f"gold-api.com failed: {e}")
-        # 3. Coingecko PAX Gold - real, pegged to gold
-        if not real_price:
-            try:
-                import requests as _req
-                r = _req.get("https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd", timeout=3)
-                if r.status_code==200:
-                    j=r.json()
-                    price=j.get('pax-gold',{}).get('usd')
-                    if price:
-                        real_price=float(price)
-                        source="Coingecko PAX Gold (PAXG) - real, pegged to physical gold"
-            except Exception as e:
-                print(f"Coingecko failed: {e}")
-        if real_price:
-            data={"mid": real_price, "bid": real_price-0.5, "ask": real_price+0.5, "timestamp": now, "source": source}
-            _fast_price_cache = {"data": data, "time": now}
-            print(f"✅ REAL gold price: {real_price} from {source}")
-            return data
+        # 3. gold-api.com - REAL spot
+        try:
+            import requests as _req
+            r = _req.get("https://api.gold-api.com/price/XAU", timeout=3)
+            if r.status_code==200:
+                j=r.json()
+                price=j.get('price')
+                if price:
+                    price=float(price)
+                    data={"mid": price, "bid": price-0.5, "ask": price+0.5, "timestamp": now, "source": "gold-api.com XAU - REAL spot"}
+                    _fast_price_cache = {"data": data, "time": now}
+                    print(f"✅ REAL gold-api.com price: {price}")
+                    return data
+        except Exception as e:
+            print(f"gold-api.com failed: {e}")
+        # 4. Coingecko PAXG - REAL
+        try:
+            import requests as _req
+            r = _req.get("https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd", timeout=3)
+            if r.status_code==200:
+                j=r.json()
+                price=j.get('pax-gold',{}).get('usd')
+                if price:
+                    price=float(price)
+                    data={"mid": price, "bid": price-0.5, "ask": price+0.5, "timestamp": now, "source": "Coingecko PAXG - REAL pegged to gold"}
+                    _fast_price_cache = {"data": data, "time": now}
+                    print(f"✅ REAL Coingecko PAXG price: {price}")
+                    return data
+        except Exception as e:
+            print(f"Coingecko failed: {e}")
         if _fast_price_cache["data"]:
             return _fast_price_cache["data"]
-        # Dynamic mock as last resort - still moves like real
+        # Last resort dynamic mock
         import math
         base = 4155.0
         variation = math.sin(now/30)*2 + math.sin(now/120)*5
         mock_price = base + variation
         data={"mid": mock_price, "bid": mock_price-0.5, "ask": mock_price+0.5, "timestamp": now, "source": "dynamic mock (free APIs failed)"}
         _fast_price_cache = {"data": data, "time": now}
-        print(f"⚠️ Using dynamic mock: {mock_price}")
         return data
-    try:
-        import oandapyV20.endpoints.pricing as pricing
-        params_price = {"instruments": "XAU_USD"}
-        r_price = pricing.PricingInfo(accountID=OANDA_ACCOUNT_ID, params=params_price)
-        client.request(r_price)
-        p = r_price.response['prices'][0]
-        data = {
-            "bid": float(p['bids'][0]['price']),
-            "ask": float(p['asks'][0]['price']),
-            "mid": (float(p['bids'][0]['price']) + float(p['asks'][0]['price']))/2,
-            "time": p['time'],
-            "timestamp": now
-        }
-        _fast_price_cache = {"data": data, "time": now}
-        return data
-    except Exception as e:
-        print(f"Fast price error {e}")
-        return _fast_price_cache["data"] if _fast_price_cache["data"] else None
 
 def fetch_candles(granularity="M15", count=100):
     global _price_cache

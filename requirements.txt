@@ -8,3 +8,5 @@ websocket-client==1.8.0
 scikit-learn
 pandas
 numpy
+yfinance
+requests
