@@ -3275,8 +3275,12 @@ def live(email: str = "free@astra6.com"):
     result = fetch_candles("M15", 20)
     if not result:
         import time as _t
-        mock_price = 4284.97
-        return {"status":"ok","price": mock_price,"bid": mock_price - 1.33,"ask": mock_price + 1.33,"live_price": {"mid": mock_price, "bid": mock_price - 1.33, "ask": mock_price + 1.33, "timestamp": _t.time()},"last_complete": {"close": mock_price, "open": mock_price - 1, "high": mock_price + 2, "low": mock_price - 2, "complete": True},"forming_candle": {"close": mock_price, "open": mock_price - 0.5, "high": mock_price + 1, "low": mock_price - 1, "complete": False},"last_10": [],"user": email,"preview": True}
+        import math
+        base = 4284.97
+        t = _t.time()
+        variation = math.sin(t/30)*2 + math.sin(t/120)*5 + ((t*10)%10 - 5)*0.2
+        mock_price = base + variation
+        return {"status":"ok","price": mock_price,"bid": mock_price - 1.33,"ask": mock_price + 1.33,"live_price": {"mid": mock_price, "bid": mock_price - 1.33, "ask": mock_price + 1.33, "timestamp": t},"last_complete": {"close": mock_price, "open": mock_price - 1, "high": mock_price + 2, "low": mock_price - 2, "complete": True},"forming_candle": {"close": mock_price, "open": mock_price - 0.5, "high": mock_price + 1, "low": mock_price - 1, "complete": False},"last_10": [],"user": email,"preview": True}
     candles, live_price = result
     if not candles: return {"status":"error","error":"No candles"}
     complete = [c for c in candles if c.get('complete')]
