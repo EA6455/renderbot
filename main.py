@@ -385,14 +385,30 @@ def get_oanda_client():
         return None
 
 def fetch_fast_price():
-    """Ultra-fast price only - 0.8 sec cache for no delay + free gold API fallback"""
+    """Ultra-fast price only - 0.8 sec cache + real price fallback chain"""
     global _fast_price_cache
     now = time.time()
     if _fast_price_cache["data"] and now - _fast_price_cache["time"] < 0.8:
         return _fast_price_cache["data"]
     client = get_oanda_client()
     if not client:
-        # Free gold API fallback - real price when OANDA missing
+        # Free real gold price fallback chain when OANDA missing
+        # 1. Yahoo Finance GC=F (Gold Futures) - closest to OANDA XAUUSD
+        try:
+            import requests as _req
+            r = _req.get("https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1m&range=1d", timeout=4, headers={"User-Agent":"Mozilla/5.0"})
+            if r.status_code==200:
+                j=r.json()
+                price=j['chart']['result'][0]['meta']['regularMarketPrice']
+                if price:
+                    price=float(price)
+                    data={"mid": price, "bid": price-0.5, "ask": price+0.5, "timestamp": now}
+                    _fast_price_cache = {"data": data, "time": now}
+                    print(f"✅ Yahoo GC=F real gold futures price: {price} (closest to OANDA XAUUSD)")
+                    return data
+        except Exception as e:
+            print(f"Yahoo GC=F failed: {e}")
+        # 2. gold-api.com spot
         try:
             import requests as _req
             r = _req.get("https://api.gold-api.com/price/XAU", timeout=3)
@@ -401,10 +417,9 @@ def fetch_fast_price():
                 price=j.get('price')
                 if price:
                     price=float(price)
-                    data={"mid": price, "bid": price-0.5, "ask": price+0.5, "timestamp": now, "time": _req.utils.default_headers}
                     data={"mid": price, "bid": price-0.5, "ask": price+0.5, "timestamp": now}
                     _fast_price_cache = {"data": data, "time": now}
-                    print(f"✅ Free gold-api.com real price: {price}")
+                    print(f"✅ gold-api.com real spot price: {price}")
                     return data
         except Exception as e:
             print(f"gold-api.com failed: {e}")
@@ -412,11 +427,12 @@ def fetch_fast_price():
             return _fast_price_cache["data"]
         # Dynamic mock as last resort
         import math
-        base = 4121.0
+        base = 4154.0
         variation = math.sin(now/30)*2 + math.sin(now/120)*5
         mock_price = base + variation
         data={"mid": mock_price, "bid": mock_price-0.5, "ask": mock_price+0.5, "timestamp": now}
         _fast_price_cache = {"data": data, "time": now}
+        print(f"⚠️ Using dynamic mock: {mock_price}")
         return data
     try:
         import oandapyV20.endpoints.pricing as pricing
